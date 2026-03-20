@@ -1,0 +1,60 @@
+{
+  "name": "lintel",
+  "displayName": "LINTEL Code",
+  "description": "Local-first IDE governance layer for safe AI-assisted development.",
+  "version": "0.1.0",
+  "private": true,
+  "publisher": "swd",
+  "license": "UNLICENSED",
+  "engines": {
+    "vscode": "^1.90.0",
+    "node": ">=20"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished",
+    "onCommand:lintel.reviewAudit",
+    "onCommand:lintel.reviewBlueprints",
+    "onCommand:lintel.reviewFalsePositives"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "lintel.reviewAudit",
+        "title": "LINTEL: Review Audit Log"
+      },
+      {
+        "command": "lintel.reviewBlueprints",
+        "title": "LINTEL: Review Blueprint Proofs"
+      },
+      {
+        "command": "lintel.reviewFalsePositives",
+        "title": "LINTEL: Review False-Positive Candidates"
+      }
+    ]
+  },
+  "main": "./dist/extension.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "rm -rf dist coverage",
+    "lint": "eslint . --ext .ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:unit": "vitest run tests/unit",
+    "test:integration": "vitest run tests/integration",
+    "test:e2e": "vitest run tests/e2e",
+    "test:governance": "vitest run tests/governance"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.30",
+    "@types/vscode": "^1.90.0",
+    "@typescript-eslint/eslint-plugin": "^8.28.0",
+    "@typescript-eslint/parser": "^8.28.0",
+    "eslint": "^9.23.0",
+    "prettier": "^3.5.3",
+    "typescript": "^5.8.2",
+    "vitest": "^3.0.8"
+  }
+}

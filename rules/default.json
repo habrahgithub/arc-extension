@@ -1,0 +1,41 @@
+[
+  {
+    "id": "rule-auth-path",
+    "riskFlag": "AUTH_CHANGE",
+    "scope": "PATH_SEGMENT_MATCH",
+    "severity": "HIGH",
+    "decisionFloor": "REQUIRE_PLAN",
+    "reason": "Authentication paths require explicit intent before save.",
+    "matchers": [
+      { "type": "PATH_SEGMENT_MATCH", "value": "auth" },
+      { "type": "PATH_SEGMENT_MATCH", "value": "session" }
+    ]
+  },
+  {
+    "id": "rule-schema-file",
+    "riskFlag": "SCHEMA_CHANGE",
+    "scope": "FILENAME_MATCH",
+    "severity": "MEDIUM",
+    "decisionFloor": "WARN",
+    "reason": "Schema files require review-aware handling.",
+    "matchers": [
+      { "type": "FILENAME_MATCH", "value": "schema.sql" },
+      { "type": "EXTENSION_MATCH", "value": ".sql" },
+      { "type": "EXTENSION_MATCH", "value": ".prisma" }
+    ]
+  },
+  {
+    "id": "rule-config-file",
+    "riskFlag": "CONFIG_CHANGE",
+    "scope": "FILENAME_MATCH",
+    "severity": "HIGH",
+    "decisionFloor": "REQUIRE_PLAN",
+    "reason": "Configuration files can alter runtime posture and require a plan.",
+    "matchers": [
+      { "type": "FILENAME_MATCH", "value": "package.json" },
+      { "type": "FILENAME_MATCH", "value": "tsconfig.json" },
+      { "type": "FILENAME_MATCH", "value": ".env" },
+      { "type": "EXTENSION_MATCH", "value": ".env" }
+    ]
+  }
+]
