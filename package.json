@@ -16,6 +16,7 @@
   "activationEvents": [
     "onStartupFinished",
     "onCommand:lintel.reviewAudit",
+    "onCommand:lintel.showRuntimeStatus",
     "onCommand:lintel.reviewBlueprints",
     "onCommand:lintel.reviewFalsePositives"
   ],
@@ -24,6 +25,10 @@
       {
         "command": "lintel.reviewAudit",
         "title": "LINTEL: Review Audit Log"
+      },
+      {
+        "command": "lintel.showRuntimeStatus",
+        "title": "LINTEL: Show Active Workspace Status"
       },
       {
         "command": "lintel.reviewBlueprints",
@@ -46,7 +51,8 @@
     "test:unit": "vitest run tests/unit",
     "test:integration": "vitest run tests/integration",
     "test:e2e": "vitest run tests/e2e",
-    "test:governance": "vitest run tests/governance"
+    "test:governance": "vitest run tests/governance",
+    "smoke:harness": "node ./scripts/smoke_harness.js"
   },
   "devDependencies": {
     "@types/node": "^20.17.30",

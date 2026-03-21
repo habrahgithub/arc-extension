@@ -1,4 +1,4 @@
-# LINTEL Phase 6.8 Architecture
+# LINTEL Phase 7.0 Architecture
 
 ## Core flow
 1. VS Code save events enter the extension lifecycle controller.
@@ -17,6 +17,8 @@
 14. The Phase 6.8 router shell remains single-path and fail-closed while allowing bounded `CLOUD_ASSISTED` fallback only after approved local fallback states.
 15. Vault-ready export generation and validation remain local-only and outside the save authorization path.
 16. Integrated activation review and rollback drill remain evidence-producing flows only and may not self-authorize sustained activation.
+17. Workspace-target resolution now selects the effective governed root per active file instead of assuming the first VS Code workspace folder.
+18. Runtime status diagnostics report active workspace targeting and route posture without mutating save behavior.
 
 ## Phase 6.8 additions
 - Context Bus v1 packet scaffolding with bounded excerpt, authority tag, data-class default, and packet hash
@@ -35,6 +37,13 @@
 - rollback drill and hardened-equivalent restoration evidence
 - advisory lane-by-lane activation recommendation output
 - preservation of Phase 5 save-time behavior while activation contracts are introduced
+
+## Phase 7.0 additions
+- workspace-target resolution that prefers the nearest nested boundary (`.git`, `package.json`, or existing `.arc/`) inside the active VS Code workspace
+- per-target orchestrator/controller/review-surface caching so nested projects do not incorrectly share a parent `.arc/`
+- observational runtime status surface for governed-root, audit-path, route-policy-path, and active posture visibility
+- deterministic local smoke harness for repeatable internal non-cloud validation
+- corrected internal install path centered on VSIX packaging and installation
 
 ## Blueprint policy boundary
 - Shared/team blueprint handling is not authorized in Phase 6.6.
@@ -101,6 +110,12 @@ Local-model activation in Phase 6.8 is bounded to the local lane only unless a s
 - CLI failure must not weaken or block save enforcement.
 - Vault-ready export bundles are local handoff only.
 - Phase 6.8 may prepare local evidence bundles only; it may not require ARC, Vault, or any remote service to authorize a save.
+
+## Workspace-targeting boundary
+- effective governed root must be truthful for the active file under evaluation
+- nested project targeting may refine evidence ownership but must not weaken route decisions
+- diagnostics may report workspace-target choice and route posture but may not mutate save outcomes
+- fallback root remains local-only and is used only when no matching workspace folder exists
 
 ## Audit Visibility CLI boundary
 - Commands are limited to `query`, `trace-directive`, `trace-route`, `perf`, `verify`, and `export`.

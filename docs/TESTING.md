@@ -5,11 +5,17 @@
 - integration: save orchestrator, lifecycle controller, audit rotation and verification, route-metadata truthfulness, router shell behavior, local-lane activation gate, cloud fallback gate, and Audit Visibility CLI command behavior
 - e2e: decision matrix, auto-save protection, proof-artifact enforcement, resilient local review behavior, Phase 6.2 observational CLI behavior preservation, Phase 6.3 Context Bus inertness preservation, Phase 6.4 router-shell preservation, Phase 6.5 local-lane activation gate, Phase 6.6 cloud fallback gate, Phase 6.7 Vault-ready export validation, and Phase 6.8 integrated rollback drill
 - governance: adapter posture, runtime artifact hygiene, contract truthfulness, documentation guardrails, and command-surface constraints
+- smoke harness: deterministic local-only operator validation for repeatable non-cloud checks
 
 ## Required contract
 All command gates in the active phase package must exist and pass before closure.
 
-## Phase 6.8 emphasis
+## Phase 7.0 emphasis
+- workspace-target resolution must prefer nested governed roots truthfully when boundary markers exist
+- runtime status diagnostics must remain observational only
+- nested-project audit targeting must not silently land in a parent `.arc/` when a nearer governed boundary exists
+- internal install/package path must remain documented and repeatable
+- `npm run smoke:harness` must remain deterministic and local-only
 - Lease v2 coverage must retain route-policy hash invalidation and route signature invalidation semantics.
 - Audit Visibility CLI coverage must retain CLI export contract correctness and malformed-entry partial-evidence handling.
 - Vault-ready export coverage must retain versioned schema generation, bundle validation, and local-only destination discipline.

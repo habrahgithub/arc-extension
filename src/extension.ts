@@ -2,9 +2,12 @@ import path from 'node:path';
 import * as vscode from 'vscode';
 import type { AssessedSave, DirectiveProofInput } from './contracts/types';
 import { isValidDirectiveId } from './core/blueprintArtifacts';
+import { RoutePolicyStore } from './core/routerPolicy';
 import { LocalReviewSurfaceService } from './extension/reviewSurfaces';
+import { renderRuntimeStatusMarkdown } from './extension/runtimeStatus';
 import { SaveLifecycleController } from './extension/saveLifecycleController';
 import { SaveOrchestrator } from './extension/saveOrchestrator';
+import { resolveWorkspaceTarget } from './extension/workspaceTargeting';
 
 function autoSaveMode(): 'off' | 'afterDelay' | 'onFocusChange' | 'onWindowChange' {
   const configured = vscode.workspace
@@ -145,14 +148,58 @@ async function collectRequirePlanProof(
 }
 
 export function activate(context: vscode.ExtensionContext): void {
-  const workspaceFolder =
-    vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? context.globalStorageUri.fsPath;
-  const orchestrator = new SaveOrchestrator(workspaceFolder);
-  const controller = new SaveLifecycleController(orchestrator);
-  const reviewSurfaces = new LocalReviewSurfaceService(workspaceFolder);
+  const workspaceFolderRoots =
+    vscode.workspace.workspaceFolders?.map((folder) => folder.uri.fsPath) ?? [];
+  const fallbackRoot = context.globalStorageUri.fsPath;
+  const orchestrators = new Map<string, SaveOrchestrator>();
+  const controllers = new Map<string, SaveLifecycleController>();
+  const reviewSurfaces = new Map<string, LocalReviewSurfaceService>();
+
+  function targetFor(filePath?: string) {
+    return resolveWorkspaceTarget(filePath, workspaceFolderRoots, fallbackRoot);
+  }
+
+  function orchestratorFor(filePath?: string): SaveOrchestrator {
+    const target = targetFor(filePath);
+    const cached = orchestrators.get(target.effectiveRoot);
+    if (cached) {
+      return cached;
+    }
+
+    const created = new SaveOrchestrator(target.effectiveRoot);
+    orchestrators.set(target.effectiveRoot, created);
+    return created;
+  }
+
+  function controllerFor(filePath?: string): SaveLifecycleController {
+    const target = targetFor(filePath);
+    const cached = controllers.get(target.effectiveRoot);
+    if (cached) {
+      return cached;
+    }
+
+    const created = new SaveLifecycleController(orchestratorFor(filePath));
+    controllers.set(target.effectiveRoot, created);
+    return created;
+  }
+
+  function reviewSurfaceFor(filePath?: string): LocalReviewSurfaceService {
+    const target = targetFor(filePath);
+    const cached = reviewSurfaces.get(target.effectiveRoot);
+    if (cached) {
+      return cached;
+    }
+
+    const created = new LocalReviewSurfaceService(target.effectiveRoot);
+    reviewSurfaces.set(target.effectiveRoot, created);
+    return created;
+  }
 
   for (const document of vscode.workspace.textDocuments) {
-    controller.primeCommittedSnapshot(document.uri.fsPath, document.getText());
+    controllerFor(document.uri.fsPath).primeCommittedSnapshot(
+      document.uri.fsPath,
+      document.getText(),
+    );
   }
 
   const mode = autoSaveMode();
@@ -164,26 +211,50 @@ export function activate(context: vscode.ExtensionContext): void {
 
   context.subscriptions.push(
     vscode.commands.registerCommand('lintel.reviewAudit', async () => {
-      await openMarkdownPreview('LINTEL Audit Review', reviewSurfaces.renderAuditReview());
+      const filePath = vscode.window.activeTextEditor?.document.uri.fsPath;
+      await openMarkdownPreview(
+        'LINTEL Audit Review',
+        reviewSurfaceFor(filePath).renderAuditReview(),
+      );
+    }),
+    vscode.commands.registerCommand('lintel.showRuntimeStatus', async () => {
+      const filePath = vscode.window.activeTextEditor?.document.uri.fsPath;
+      const target = targetFor(filePath);
+      const routePolicy = new RoutePolicyStore(target.effectiveRoot).load();
+      await openMarkdownPreview(
+        'LINTEL Active Workspace Status',
+        renderRuntimeStatusMarkdown({
+          target,
+          autoSaveMode: mode,
+          routePolicy,
+        }),
+      );
     }),
     vscode.commands.registerCommand('lintel.reviewBlueprints', async () => {
+      const filePath = vscode.window.activeTextEditor?.document.uri.fsPath;
       await openMarkdownPreview(
         'LINTEL Blueprint Review',
-        reviewSurfaces.renderBlueprintReview(),
+        reviewSurfaceFor(filePath).renderBlueprintReview(),
       );
     }),
     vscode.commands.registerCommand('lintel.reviewFalsePositives', async () => {
+      const filePath = vscode.window.activeTextEditor?.document.uri.fsPath;
       await openMarkdownPreview(
         'LINTEL False-Positive Review',
-        reviewSurfaces.renderFalsePositiveReview(),
+        reviewSurfaceFor(filePath).renderFalsePositiveReview(),
       );
     }),
     vscode.workspace.onDidOpenTextDocument((document) => {
-      controller.primeCommittedSnapshot(document.uri.fsPath, document.getText());
+      controllerFor(document.uri.fsPath).primeCommittedSnapshot(
+        document.uri.fsPath,
+        document.getText(),
+      );
     }),
     vscode.workspace.onWillSaveTextDocument((event) => {
       event.waitUntil(
         (async () => {
+          const controller = controllerFor(event.document.uri.fsPath);
+          const orchestrator = orchestratorFor(event.document.uri.fsPath);
           const currentText = event.document.getText();
           if (controller.consumeRestoreBypass(event.document.uri.fsPath, currentText)) {
             return [];
@@ -243,7 +314,10 @@ export function activate(context: vscode.ExtensionContext): void {
       );
     }),
     vscode.workspace.onDidSaveTextDocument(async (document) => {
-      const restore = controller.handleDidSave(document.uri.fsPath, document.getText());
+      const restore = controllerFor(document.uri.fsPath).handleDidSave(
+        document.uri.fsPath,
+        document.getText(),
+      );
       if (!restore) {
         return;
       }

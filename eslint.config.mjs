@@ -4,7 +4,13 @@ import tsParser from '@typescript-eslint/parser';
 
 export default [
   {
-    ignores: ['dist/**', 'node_modules/**', 'coverage/**'],
+    ignores: [
+      'dist/**',
+      'node_modules/**',
+      'coverage/**',
+      'scripts/**/*.js',
+      'tests/fixtures/**/*.js',
+    ],
   },
   js.configs.recommended,
   {

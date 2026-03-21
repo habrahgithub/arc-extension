@@ -1,8 +1,8 @@
 # LINTEL Code
 
-Phase 6.8 implementation of the LINTEL local-first IDE governance layer.
+Phase 7.0 implementation of the LINTEL local-first IDE governance layer.
 
-## Phase 6.8 scope
+## Phase 7.0 scope
 - VS Code save-time governance for `ALLOW / WARN / REQUIRE_PLAN / BLOCK`
 - optional local workspace mapping to refine local precision without weakening rule floors
 - local-only, read-only review surfaces for audit, proof, and false-positive analysis
@@ -23,6 +23,9 @@ Phase 6.8 implementation of the LINTEL local-first IDE governance layer.
 - cloud fallback gate with explicit, lab-only `CLOUD_ASSISTED` routing after approved local fallback only
 - integrated validation and rollback drill across assembled Phase 6 capabilities
 - advisory lane-by-lane activation recommendation memo backed by evidence only
+- truthful workspace-target resolution for nested projects inside a larger VS Code workspace
+- observational runtime status surface for active workspace/audit targeting
+- deterministic local smoke harness for repeatable non-cloud operator validation
 
 ## Important limitations
 - classification remains heuristic-first, with optional local mapping only
@@ -32,6 +35,14 @@ Phase 6.8 implementation of the LINTEL local-first IDE governance layer.
 - cloud fallback is optional, lab-only, and disabled by default
 - ARC Console and Vault are not runtime save-path dependencies
 - dashboards, MCP, and public release work remain deferred
+- diagnostics are observational only and must not be treated as authorization
+
+## Phase 7.0 operator hardening boundary
+1. Effective governed workspace root must be truthful and visible to the operator.
+2. Nested project boundaries may become the governed root inside a larger VS Code workspace.
+3. Runtime status surfaces remain observational only and must not widen route behavior.
+4. Internal install/run guidance must reflect the actually validated local workflow.
+5. Internal smoke/UAT harnesses must remain deterministic and must not auto-repair malformed evidence.
 
 ## Phase 6.8 activation-contract boundary
 1. LINTEL may load route-policy config from `.arc/router.json`.
@@ -58,8 +69,39 @@ Phase 6.8 implementation of the LINTEL local-first IDE governance layer.
 
 ## Local review commands
 - `LINTEL: Review Audit Log`
+- `LINTEL: Show Active Workspace Status`
 - `LINTEL: Review Blueprint Proofs`
 - `LINTEL: Review False-Positive Candidates`
+
+## Workspace targeting
+- LINTEL now chooses the effective governed root truthfully per active file.
+- It prefers the nearest nested project boundary inside the active VS Code workspace when a child root contains one of:
+  - `.git`
+  - `package.json`
+  - `.arc/`
+- If no nested boundary exists, LINTEL uses the active VS Code workspace folder root.
+- Use `LINTEL: Show Active Workspace Status` to inspect:
+  - active file
+  - workspace folder root
+  - effective governed root
+  - audit path
+  - route-policy path
+  - active route posture
+
+## Internal install / run path
+Validated local/internal path:
+1. `npm install`
+2. `npm run build`
+3. package the extension:
+   - `npx @vscode/vsce package --allow-missing-repository`
+4. install the generated VSIX in VS Code
+   - Extensions → `...` → `Install from VSIX...`
+5. reload the VS Code window
+
+Notes:
+- some `code` CLI environments do not support `--extensionDevelopmentPath`
+- the VSIX path is the validated internal install path for this repo
+- use `LINTEL: Show Active Workspace Status` after install to verify audit targeting
 
 ## Audit Visibility CLI
 - Run with `npm run audit:cli -- <command> [options]`
@@ -116,6 +158,7 @@ Phase 6.8 implementation of the LINTEL local-first IDE governance layer.
 
 ## Commands
 - `npm run audit:cli -- help`
+- `npm run smoke:harness`
 - `npm run lint`
 - `npm run typecheck`
 - `npm run test:unit`
