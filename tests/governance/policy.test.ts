@@ -71,7 +71,7 @@ describe('governance guards', () => {
     );
 
     expect(readme).toContain('shared/team blueprint handling remains unauthorized');
-    expect(architecture).toContain('Local-model activation in Phase 6.7 is bounded to the local lane only');
+    expect(architecture).toContain('Local-model activation in Phase 6.8 is bounded to the local lane only');
   });
 
   it('documents RULE_ONLY defaults and no ARC/Vault save-path dependency for Phase 6.0', () => {
@@ -192,13 +192,32 @@ describe('governance guards', () => {
       'utf8',
     );
 
-    expect(readme).toContain('Phase 6.7');
+    expect(readme).toContain('Phase 6.8');
     expect(readme).toContain('Vault-ready evidence export');
     expect(readme).toContain('phase-6.7-v1');
     expect(architecture).toContain('Vault-ready means schema alignment for later handoff, not direct Vault write');
     expect(architecture).toContain('direct evidence sections remain distinguishable from derived summary sections');
     expect(testing).toContain('Vault-ready export coverage must retain versioned schema generation');
     expect(testing).toContain('malformed or incomplete export inputs must surface as `PARTIAL`');
+  });
+
+  it('documents Phase 6.8 controlled activation review and rollback drill boundaries', () => {
+    const readme = fs.readFileSync(path.join(projectRoot, 'README.md'), 'utf8');
+    const architecture = fs.readFileSync(
+      path.join(projectRoot, 'docs', 'ARCHITECTURE.md'),
+      'utf8',
+    );
+    const testing = fs.readFileSync(
+      path.join(projectRoot, 'docs', 'TESTING.md'),
+      'utf8',
+    );
+
+    expect(readme).toContain('Phase 6.8');
+    expect(readme).toContain('rollback target is hardened-equivalent posture');
+    expect(architecture).toContain('rollback target remains hardened-equivalent posture');
+    expect(architecture).toContain('recommendation output is advisory only');
+    expect(testing).toContain('integrated validation coverage must prove no assembled path is looser than the hardened baseline');
+    expect(testing).toContain('rollback drill must restore hardened-equivalent posture and preserve audit continuity');
   });
 
   it('removes the obsolete createIfMissing proof-input contract field', () => {

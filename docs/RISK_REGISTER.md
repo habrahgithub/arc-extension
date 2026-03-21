@@ -45,6 +45,11 @@
 - partial local evidence may still be handed off intentionally, so operators must understand `PARTIAL` as incomplete evidence rather than full clearance
 - local export files contain governed evidence and therefore require deliberate operator handling after generation
 
+## Accepted Phase 6.8 risks
+- integrated validation may expose latent coupling between routing, proof enforcement, export, and rollback flows that were not visible in isolated phase tests
+- rollback drill depends on evidence-backed state comparison; weak instrumentation could understate residual risk
+- advisory activation recommendations could be misread as operational approval if not kept explicitly non-self-activating
+
 ## Mitigated in Phase 5
 - spread-order ambiguity in proof enforcement via explicit `LOCAL_ONLY` normalization
 - stale proof-input contract expectations via removal of obsolete `createIfMissing`
@@ -100,6 +105,12 @@
 - bundle validation marks malformed or incomplete source evidence as `PARTIAL` rather than silently normalizing it
 - raw evidence, derived summaries, and validation-result sections are now structurally distinct in the export contract
 - save authorization remains independent from export success, Vault availability, and ARC availability
+
+## Mitigated in Phase 6.8
+- integrated validation now exercises assembled Phase 6 behavior together rather than relying solely on isolated micro-phase tests
+- rollback drill evidence verifies restoration to hardened-equivalent posture instead of relying on narrative rollback claims
+- audit continuity is explicitly checked across route activation, denial, export, and rollback transitions
+- lane-by-lane activation output is documented as advisory only and cannot self-authorize sustained activation
 
 ## Deferred mitigations
 - shared/team blueprint deployment after a separate data-handling policy review

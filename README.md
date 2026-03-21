@@ -1,8 +1,8 @@
 # LINTEL Code
 
-Phase 6.7 implementation of the LINTEL local-first IDE governance layer.
+Phase 6.8 implementation of the LINTEL local-first IDE governance layer.
 
-## Phase 6.7 scope
+## Phase 6.8 scope
 - VS Code save-time governance for `ALLOW / WARN / REQUIRE_PLAN / BLOCK`
 - optional local workspace mapping to refine local precision without weakening rule floors
 - local-only, read-only review surfaces for audit, proof, and false-positive analysis
@@ -21,17 +21,19 @@ Phase 6.7 implementation of the LINTEL local-first IDE governance layer.
 - Context Bus v1 contract hardening with validation, canonical serialization, and fail-closed trust-boundary defaults
 - local-lane activation gate with explicit local-only `LOCAL_PREFERRED` enablement for explicit saves only
 - cloud fallback gate with explicit, lab-only `CLOUD_ASSISTED` routing after approved local fallback only
+- integrated validation and rollback drill across assembled Phase 6 capabilities
+- advisory lane-by-lane activation recommendation memo backed by evidence only
 
 ## Important limitations
 - classification remains heuristic-first, with optional local mapping only
 - audit verification is **file-level integrity only** and does not prove archive-existence completeness
-- shared/team blueprint handling remains unauthorized in Phase 6.7
-- local-model activation is authorized only for explicitly enabled local-lane saves in Phase 6.7
+- shared/team blueprint handling remains unauthorized in Phase 6.8
+- local-model activation is authorized only for explicitly enabled local-lane saves in Phase 6.8
 - cloud fallback is optional, lab-only, and disabled by default
 - ARC Console and Vault are not runtime save-path dependencies
 - dashboards, MCP, and public release work remain deferred
 
-## Phase 6.7 activation-contract boundary
+## Phase 6.8 activation-contract boundary
 1. LINTEL may load route-policy config from `.arc/router.json`.
 2. Missing or invalid route-policy config fails closed to `RULE_ONLY`.
 3. Context Bus v1 packets remain minimal, local, and bounded to excerpt-level context.
@@ -44,8 +46,9 @@ Phase 6.7 implementation of the LINTEL local-first IDE governance layer.
 10. Audit Visibility CLI remains read-only / export-only and is not part of save authorization.
 11. Context Bus v1 remains bounded; no full-file payload may leave the machine.
 12. Auto-save assessments fail closed to `RULE_ONLY` even when `LOCAL_PREFERRED` or `CLOUD_ASSISTED` is configured.
-13. The Phase 6.7 router shell remains fail-closed and annotation-truthful; it must not weaken the rule floor.
+13. The Phase 6.8 router shell remains fail-closed and annotation-truthful; it must not weaken the rule floor.
 14. Vault-ready evidence export is local-only, versioned, and validation-backed; it does not write to Vault or call ARC.
+15. Integrated validation and rollback drill are advisory and evidence-backed only; they do not self-authorize sustained activation.
 
 ## Proof workflow
 1. `REQUIRE_PLAN` requests a directive ID.
@@ -99,6 +102,17 @@ Phase 6.7 implementation of the LINTEL local-first IDE governance layer.
 - bundle validation runs locally and marks malformed or incomplete source evidence as `PARTIAL`
 - exported trust-boundary values remain observational only and must not imply new permission
 - save authorization remains independent from export success, Vault availability, or ARC availability
+
+## Controlled activation review and rollback drill
+- integrated validation must not produce any outcome looser than the hardened baseline
+- rollback target is hardened-equivalent posture:
+  - `RULE_ONLY`
+  - no sustained local or cloud lane activity
+  - unchanged proof enforcement
+  - local review surfaces intact
+  - no ARC/Vault runtime dependency
+- rollback must preserve audit continuity and may not rewrite history
+- the lane-by-lane activation recommendation memo is advisory only and requires post-review Axis/Prime decisioning for any sustained activation
 
 ## Commands
 - `npm run audit:cli -- help`

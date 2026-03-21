@@ -1,4 +1,4 @@
-# LINTEL Phase 6.7 Architecture
+# LINTEL Phase 6.8 Architecture
 
 ## Core flow
 1. VS Code save events enter the extension lifecycle controller.
@@ -14,10 +14,11 @@
 11. Local performance instrumentation records save-path and review-surface timing to `.arc/perf.jsonl`.
 12. Audit Visibility CLI reads local evidence only and remains outside the save authorization path.
 13. Context Bus v1 packets are validated, canonically serialized, and fail closed when trust-boundary defaults are violated.
-14. The Phase 6.7 router shell remains single-path and fail-closed while allowing bounded `CLOUD_ASSISTED` fallback only after approved local fallback states.
+14. The Phase 6.8 router shell remains single-path and fail-closed while allowing bounded `CLOUD_ASSISTED` fallback only after approved local fallback states.
 15. Vault-ready export generation and validation remain local-only and outside the save authorization path.
+16. Integrated activation review and rollback drill remain evidence-producing flows only and may not self-authorize sustained activation.
 
-## Phase 6.7 additions
+## Phase 6.8 additions
 - Context Bus v1 packet scaffolding with bounded excerpt, authority tag, data-class default, and packet hash
 - route-policy config scaffolding with explicit `RULE_ONLY` fail-closed defaults
 - route-related audit metadata scaffolding with deterministic inactive values
@@ -30,6 +31,9 @@
 - bounded cloud fallback using the same orchestrator pipeline, explicit packet data-class gating, and unchanged enforcement floor
 - versioned Vault-ready export schema with explicit section classes for direct evidence, derived summaries, and validation results
 - local bundle validation and explicit partial/incomplete evidence signaling for malformed export inputs
+- integrated validation matrix covering assembled Phase 6.0–6.7 behavior together
+- rollback drill and hardened-equivalent restoration evidence
+- advisory lane-by-lane activation recommendation output
 - preservation of Phase 5 save-time behavior while activation contracts are introduced
 
 ## Blueprint policy boundary
@@ -41,7 +45,7 @@
 `verifyChain()` is **file-level integrity only**. It verifies the hash chain across the files that are present, but it does **not** prove archive-existence completeness or detect wholesale deletion of the `.arc/` history.
 
 ## Local-model activation boundary
-Local-model activation in Phase 6.7 is bounded to the local lane only unless a separately approved phase widens it.
+Local-model activation in Phase 6.8 is bounded to the local lane only unless a separately approved phase widens it.
 - endpoint constraints for the local lane must remain local-only or be explicitly re-approved
 - prompt-injection exposure from bounded excerpts must be documented with schema-validation plus enforcement-floor mitigations
 - stronger audit-integrity claims require a separately approved trust-boundary design
@@ -96,7 +100,7 @@ Local-model activation in Phase 6.7 is bounded to the local lane only unless a s
 - ARC Console and Vault are not runtime save-path dependencies.
 - CLI failure must not weaken or block save enforcement.
 - Vault-ready export bundles are local handoff only.
-- Phase 6.7 may prepare local evidence bundles only; it may not require ARC, Vault, or any remote service to authorize a save.
+- Phase 6.8 may prepare local evidence bundles only; it may not require ARC, Vault, or any remote service to authorize a save.
 
 ## Audit Visibility CLI boundary
 - Commands are limited to `query`, `trace-directive`, `trace-route`, `perf`, `verify`, and `export`.
@@ -113,6 +117,13 @@ Local-model activation in Phase 6.7 is bounded to the local lane only unless a s
 - exported route, packet, and trust-boundary fields remain observational only and must not overstate execution, permission, or clearance
 - Vault-ready means schema alignment for later handoff, not direct Vault write, API submission, or automatic upload
 - no background transport path, uploader, or ARC runtime dependency may be introduced in Phase 6.7
+
+## Controlled activation review boundary
+- integrated validation must compare every assembled path against the hardened baseline
+- no routed or exported path may be accepted if it is looser than the hardened baseline
+- rollback target remains hardened-equivalent posture with `RULE_ONLY`, no sustained lanes, unchanged proof enforcement, local review surfaces intact, and no ARC/Vault runtime dependency
+- rollback must preserve audit continuity and may not rewrite audit history
+- recommendation output is advisory only and must not self-activate any sustained posture
 
 ## Still deferred
 - actual team/shared-repo deployment of blueprint proof workflow
