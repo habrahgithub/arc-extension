@@ -129,6 +129,12 @@ export class AuditLogWriter {
             lease_status: entry.lease_status,
             directive_id: entry.directive_id,
             blueprint_id: entry.blueprint_id,
+            route_mode: entry.route_mode,
+            route_lane: entry.route_lane,
+            route_reason: entry.route_reason,
+            route_clarity: entry.route_clarity,
+            route_fallback: entry.route_fallback,
+            route_policy_hash: entry.route_policy_hash,
           },
           entry.prev_hash,
         );
@@ -202,24 +208,59 @@ export class AuditLogWriter {
     entry: Omit<AuditEntry, 'prev_hash' | 'hash'>,
     prevHash: string,
   ): string {
-    const serialized = JSON.stringify({
-      prev_hash: prevHash,
-      ts: entry.ts,
-      file_path: entry.file_path,
-      risk_flags: entry.risk_flags,
-      matched_rules: entry.matched_rules,
-      decision: entry.decision,
-      reason: entry.reason,
-      risk_level: entry.risk_level,
-      violated_rules: entry.violated_rules,
-      next_action: entry.next_action,
-      source: entry.source,
-      fallback_cause: entry.fallback_cause,
-      lease_status: entry.lease_status,
-      directive_id: entry.directive_id ?? null,
-      blueprint_id: entry.blueprint_id ?? null,
-    });
+    const serialized = hasRouteMetadata(entry)
+      ? JSON.stringify({
+          prev_hash: prevHash,
+          ts: entry.ts,
+          file_path: entry.file_path,
+          risk_flags: entry.risk_flags,
+          matched_rules: entry.matched_rules,
+          decision: entry.decision,
+          reason: entry.reason,
+          risk_level: entry.risk_level,
+          violated_rules: entry.violated_rules,
+          next_action: entry.next_action,
+          source: entry.source,
+          fallback_cause: entry.fallback_cause,
+          lease_status: entry.lease_status,
+          directive_id: entry.directive_id ?? null,
+          blueprint_id: entry.blueprint_id ?? null,
+          route_mode: entry.route_mode ?? null,
+          route_lane: entry.route_lane ?? null,
+          route_reason: entry.route_reason ?? null,
+          route_clarity: entry.route_clarity ?? null,
+          route_fallback: entry.route_fallback ?? null,
+          route_policy_hash: entry.route_policy_hash ?? null,
+        })
+      : JSON.stringify({
+          prev_hash: prevHash,
+          ts: entry.ts,
+          file_path: entry.file_path,
+          risk_flags: entry.risk_flags,
+          matched_rules: entry.matched_rules,
+          decision: entry.decision,
+          reason: entry.reason,
+          risk_level: entry.risk_level,
+          violated_rules: entry.violated_rules,
+          next_action: entry.next_action,
+          source: entry.source,
+          fallback_cause: entry.fallback_cause,
+          lease_status: entry.lease_status,
+          directive_id: entry.directive_id ?? null,
+          blueprint_id: entry.blueprint_id ?? null,
+        });
 
     return crypto.createHash('sha256').update(serialized).digest('hex');
   }
+}
+
+function hasRouteMetadata(entry: Partial<AuditEntry>): boolean {
+  return (
+    entry.route_mode !== undefined ||
+    entry.route_lane !== undefined ||
+    entry.route_reason !== undefined ||
+    entry.route_clarity !== undefined ||
+    entry.route_fallback !== undefined ||
+    entry.route_policy_hash !== undefined
+  );
 }

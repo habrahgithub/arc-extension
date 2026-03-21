@@ -1,4 +1,9 @@
-import { DisabledModelAdapter, ModelAdapterError, type ModelAdapter } from '../adapters/modelAdapter';
+import {
+  DisabledModelAdapter,
+  ModelAdapterError,
+  OllamaModelAdapter,
+  type ModelAdapter,
+} from '../adapters/modelAdapter';
 import type {
   AssessedSave,
   AuditEntry,
@@ -18,9 +23,11 @@ import {
 } from '../core/blueprintArtifacts';
 import { classifyFile } from '../core/classifier';
 import { buildContext } from '../core/contextBuilder';
+import { buildContextPacket } from '../core/contextPacket';
 import { enforceMinimumFloor } from '../core/decisionPolicy';
 import { DecisionLeaseStore } from '../core/decisionLease';
 import { LocalPerformanceRecorder, measureAsync, measureSync } from '../core/performance';
+import { buildRouteMetadata, RoutePolicyStore, RouterShell } from '../core/routerPolicy';
 import { DEFAULT_RULES } from '../core/rules';
 import { evaluateRules } from '../core/ruleEngine';
 import { WorkspaceMappingStore } from '../core/workspaceMapping';
@@ -29,16 +36,25 @@ export class SaveOrchestrator {
   private readonly blueprintArtifacts: BlueprintArtifactStore;
   private readonly workspaceMapping: WorkspaceMappingStore;
   private readonly performanceRecorder: LocalPerformanceRecorder;
+  private readonly routePolicy: RoutePolicyStore;
+  private readonly routerShell: RouterShell;
+  private readonly disabledModelAdapter: ModelAdapter;
 
   constructor(
     private readonly workspaceRoot: string,
-    private readonly modelAdapter: ModelAdapter = new DisabledModelAdapter(),
+    private readonly localModelAdapter: ModelAdapter = new OllamaModelAdapter({
+      enabledByDefault: true,
+    }),
+    private readonly cloudModelAdapter: ModelAdapter = new DisabledModelAdapter(),
     private readonly leaseStore = new DecisionLeaseStore(),
     private readonly auditLog = new AuditLogWriter(workspaceRoot),
   ) {
     this.blueprintArtifacts = new BlueprintArtifactStore(workspaceRoot);
     this.workspaceMapping = new WorkspaceMappingStore(workspaceRoot);
     this.performanceRecorder = new LocalPerformanceRecorder(workspaceRoot);
+    this.routePolicy = new RoutePolicyStore(workspaceRoot);
+    this.routerShell = new RouterShell();
+    this.disabledModelAdapter = new DisabledModelAdapter();
   }
 
   async assessSave(input: SaveInput): Promise<AssessedSave> {
@@ -57,16 +73,24 @@ export class SaveOrchestrator {
           [...DEFAULT_RULES, ...mapping.rules],
           { additionalUiSegments: mapping.uiSegments },
         );
+        const routePolicy = this.routePolicy.load();
         const context = buildContext(classification, input);
-        const ruleDecision = evaluateRules(classification, input);
+        const contextPacket = buildContextPacket(classification, input, undefined, routePolicy);
+        const routerShell = this.routerShell.resolve(routePolicy, contextPacket, input);
+        const ruleDecision = this.withRouteMetadata(
+          evaluateRules(classification, input),
+          routerShell,
+        );
 
-        const reusedLease = this.getReusableDecision(input, classification, ruleDecision.decision);
+        const reusedLease = this.getReusableDecision(input, classification, ruleDecision);
         if (reusedLease) {
           return {
             classification,
             context,
-            decision: reusedLease,
+            contextPacket,
+            decision: this.withRouteMetadata(reusedLease, routerShell),
             input,
+            routePolicy,
             leaseReusable: true,
             shouldPrompt: false,
             reducedGuaranteeNotice: reducedGuaranteeNotice(input),
@@ -77,13 +101,16 @@ export class SaveOrchestrator {
           classification,
           context,
           ruleDecision,
+          routerShell,
         );
 
         return {
           classification,
           context,
+          contextPacket,
           decision: evaluatedDecision,
           input,
+          routePolicy,
           leaseReusable: false,
           shouldPrompt:
             input.saveMode === 'EXPLICIT' &&
@@ -141,7 +168,7 @@ export class SaveOrchestrator {
   private getReusableDecision(
     input: SaveInput,
     classification: Classification,
-    decision: DecisionPayload['decision'],
+    decision: DecisionPayload,
   ): DecisionPayload | undefined {
     const reusedLease = this.leaseStore.getReusableDecision(
       input,
@@ -171,34 +198,29 @@ export class SaveOrchestrator {
     classification: Classification,
     context: ContextPayload,
     ruleDecision: DecisionPayload,
+    routerShell: ReturnType<RouterShell['resolve']>,
   ): Promise<DecisionPayload> {
-    if (!this.modelAdapter.enabledByDefault) {
-      return {
-        ...ruleDecision,
-        source: 'MODEL_DISABLED',
-        fallback_cause: 'MODEL_DISABLED',
-      };
+    const localDecision = await this.evaluateLane(
+      'LOCAL',
+      this.localModelAdapterFor(routerShell),
+      classification,
+      context,
+      ruleDecision,
+    );
+
+    if (!shouldAttemptCloud(routerShell, localDecision)) {
+      return this.withRouteMetadata(localDecision, routerShell);
     }
 
-    try {
-      const modelDecision = await this.modelAdapter.evaluate(context);
-      if (!modelDecision) {
-        return {
-          ...ruleDecision,
-          source: 'FALLBACK',
-          fallback_cause: 'RULE_ONLY',
-        };
-      }
+    const cloudDecision = await this.evaluateLane(
+      'CLOUD',
+      this.cloudModelAdapterFor(routerShell),
+      classification,
+      context,
+      ruleDecision,
+    );
 
-      return enforceMinimumFloor(ruleDecision, classification, modelDecision);
-    } catch (error) {
-      const fallbackCause = mapModelErrorToFallback(error);
-      return {
-        ...ruleDecision,
-        source: 'FALLBACK',
-        fallback_cause: fallbackCause,
-      };
-    }
+    return this.withRouteMetadata(cloudDecision, routerShell);
   }
 
   private finalizeDecision(
@@ -261,6 +283,80 @@ export class SaveOrchestrator {
 
     return this.leaseStore.store(assessment.input, assessment.classification, decision);
   }
+
+  private withRouteMetadata(
+    decision: DecisionPayload,
+    routerShell: ReturnType<RouterShell['resolve']>,
+  ): DecisionPayload {
+    return {
+      ...decision,
+      ...buildRouteMetadata(routerShell, decision),
+    };
+  }
+
+  private localModelAdapterFor(
+    routerShell: ReturnType<RouterShell['resolve']>,
+  ): ModelAdapter {
+    if (!routerShell.shouldUseModel) {
+      return this.disabledModelAdapter;
+    }
+
+    return this.localModelAdapter;
+  }
+
+  private cloudModelAdapterFor(
+    routerShell: ReturnType<RouterShell['resolve']>,
+  ): ModelAdapter {
+    if (!routerShell.shouldUseCloudModel) {
+      return this.disabledModelAdapter;
+    }
+
+    return this.cloudModelAdapter;
+  }
+
+  private async evaluateLane(
+    lane: 'LOCAL' | 'CLOUD',
+    modelAdapter: ModelAdapter,
+    classification: Classification,
+    context: ContextPayload,
+    ruleDecision: DecisionPayload,
+  ): Promise<DecisionPayload> {
+    if (!modelAdapter.enabledByDefault) {
+      return {
+        ...ruleDecision,
+        source: 'MODEL_DISABLED',
+        fallback_cause: 'MODEL_DISABLED',
+        evaluation_lane: lane,
+      };
+    }
+
+    try {
+      const modelDecision = await modelAdapter.evaluate(context);
+      if (!modelDecision) {
+        return {
+          ...ruleDecision,
+          source: 'FALLBACK',
+          fallback_cause: 'RULE_ONLY',
+          evaluation_lane: lane,
+        };
+      }
+
+      const enforced = enforceMinimumFloor(ruleDecision, classification, modelDecision);
+      return {
+        ...enforced,
+        source: lane === 'CLOUD' ? 'CLOUD_MODEL' : enforced.source,
+        evaluation_lane: lane,
+      };
+    } catch (error) {
+      const fallbackCause = mapModelErrorToFallback(error);
+      return {
+        ...ruleDecision,
+        source: 'FALLBACK',
+        fallback_cause: fallbackCause,
+        evaluation_lane: lane,
+      };
+    }
+  }
 }
 
 function policyFailureDecision(
@@ -311,6 +407,35 @@ function mapModelErrorToFallback(error: unknown): FallbackCause {
   }
 
   return 'UNAVAILABLE';
+}
+
+function shouldAttemptCloud(
+  routerShell: ReturnType<RouterShell['resolve']>,
+  localDecision: DecisionPayload,
+): boolean {
+  if (!routerShell.shouldUseCloudModel) {
+    return false;
+  }
+
+  if (localDecision.evaluation_lane !== 'LOCAL') {
+    return false;
+  }
+
+  if (localDecision.source === 'MODEL') {
+    return false;
+  }
+
+  if (localDecision.source === 'CLOUD_MODEL') {
+    return false;
+  }
+
+  return (
+    localDecision.fallback_cause === 'MODEL_DISABLED' ||
+    localDecision.fallback_cause === 'UNAVAILABLE' ||
+    localDecision.fallback_cause === 'TIMEOUT' ||
+    localDecision.fallback_cause === 'PARSE_FAILURE' ||
+    localDecision.fallback_cause === 'RULE_ONLY'
+  );
 }
 
 function localOnlyProof(proof?: DirectiveProofInput): DirectiveProofInput {

@@ -37,6 +37,7 @@
   },
   "main": "./dist/extension.js",
   "scripts": {
+    "audit:cli": "node ./dist/cli.js",
     "build": "tsc -p tsconfig.json",
     "clean": "rm -rf dist coverage",
     "lint": "eslint . --ext .ts",

@@ -12,7 +12,21 @@ export class DecisionLeaseStore {
 
   constructor(private readonly ttlMs = 5 * 60 * 1000) {}
 
-  fingerprint(input: SaveInput, classification: Classification): string {
+  fingerprint(
+    input: SaveInput,
+    classification: Classification,
+    decision: Pick<
+      DecisionPayload,
+      | 'decision'
+      | 'directive_id'
+      | 'blueprint_id'
+      | 'route_mode'
+      | 'route_lane'
+      | 'route_clarity'
+      | 'route_fallback'
+      | 'route_policy_hash'
+    >,
+  ): string {
     return crypto
       .createHash('sha256')
       .update(
@@ -21,6 +35,13 @@ export class DecisionLeaseStore {
           text: input.text,
           riskFlags: classification.riskFlags,
           matchedRuleIds: classification.matchedRuleIds,
+          riskLevel: classification.riskLevel,
+          demoted: classification.demoted,
+          decision: decision.decision,
+          directiveId: decision.directive_id ?? null,
+          blueprintId: decision.blueprint_id ?? null,
+          routePolicyHash: decision.route_policy_hash ?? null,
+          routeSignature: routeSignatureForDecision(decision),
         }),
       )
       .digest('hex');
@@ -29,16 +50,28 @@ export class DecisionLeaseStore {
   getReusableDecision(
     input: SaveInput,
     classification: Classification,
-    decision: Decision,
+    decision: DecisionPayload,
   ): DecisionPayload | undefined {
-    if (!this.isLeaseEligible(decision)) {
+    if (!this.isLeaseEligible(decision.decision)) {
       return undefined;
     }
 
-    const fingerprint = this.fingerprint(input, classification);
     const record = this.leases.get(classification.filePath);
+    if (!record || record.decision.decision !== decision.decision) {
+      return undefined;
+    }
 
-    if (!record || record.fingerprint !== fingerprint) {
+    const comparisonDecision =
+      decision.decision === 'REQUIRE_PLAN'
+        ? {
+            ...decision,
+            directive_id: record.decision.directive_id,
+            blueprint_id: record.decision.blueprint_id,
+          }
+        : decision;
+    const fingerprint = this.fingerprint(input, classification, comparisonDecision);
+
+    if (record.fingerprint !== fingerprint) {
       return undefined;
     }
 
@@ -65,7 +98,7 @@ export class DecisionLeaseStore {
       };
     }
 
-    const fingerprint = this.fingerprint(input, classification);
+    const fingerprint = this.fingerprint(input, classification, decision);
     const storedDecision: DecisionPayload = {
       ...decision,
       lease_status: 'NEW',
@@ -83,4 +116,23 @@ export class DecisionLeaseStore {
   isLeaseEligible(decision: Decision): boolean {
     return decision === 'WARN' || decision === 'REQUIRE_PLAN';
   }
+}
+
+export function routeSignatureForDecision(
+  decision: Pick<
+    DecisionPayload,
+    'route_mode' | 'route_lane' | 'route_clarity' | 'route_fallback'
+  >,
+): string {
+  return crypto
+    .createHash('sha256')
+    .update(
+      JSON.stringify({
+        route_mode: decision.route_mode ?? null,
+        route_lane: decision.route_lane ?? null,
+        route_clarity: decision.route_clarity ?? null,
+        route_fallback: decision.route_fallback ?? null,
+      }),
+    )
+    .digest('hex');
 }

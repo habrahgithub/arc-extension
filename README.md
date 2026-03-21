@@ -1,8 +1,8 @@
 # LINTEL Code
 
-Phase 5 implementation of the LINTEL local-first IDE governance layer.
+Phase 6.6 implementation of the LINTEL local-first IDE governance layer.
 
-## Phase 5 scope
+## Phase 6.6 scope
 - VS Code save-time governance for `ALLOW / WARN / REQUIRE_PLAN / BLOCK`
 - optional local workspace mapping to refine local precision without weakening rule floors
 - local-only, read-only review surfaces for audit, proof, and false-positive analysis
@@ -11,16 +11,41 @@ Phase 5 implementation of the LINTEL local-first IDE governance layer.
 - blueprint-backed `REQUIRE_PLAN` proof at `.arc/blueprints/<directive_id>.md`
 - content-level blueprint validation using a named governance threshold constant
 - resilient review-surface parsing for malformed local audit lines
-- local Ollama adapter present but disabled by default
+- local Ollama adapter present but disabled by default unless an approved route selects it
+- Context Bus v1 packet scaffolding with bounded excerpts only
+- route-policy and audit metadata scaffolding locked to fail-closed defaults
+- fail-closed route-policy config handling at `.arc/router.json`
+- Lease v2 exact-governed-state fingerprinting with route-policy hash and route-signature invalidation
+- Audit Visibility CLI for read-only / export-only local evidence access
+- Context Bus v1 contract hardening with validation, canonical serialization, and fail-closed trust-boundary defaults
+- local-lane activation gate with explicit local-only `LOCAL_PREFERRED` enablement for explicit saves only
+- cloud fallback gate with explicit, lab-only `CLOUD_ASSISTED` routing after approved local fallback only
 
 ## Important limitations
 - classification remains heuristic-first, with optional local mapping only
 - audit verification is **file-level integrity only** and does not prove archive-existence completeness
-- shared/team blueprint handling remains unauthorized in Phase 5
-- local-model activation remains out of scope and disabled by default
-- dashboards, MCP, cloud routing, and public release work remain deferred
+- shared/team blueprint handling remains unauthorized in Phase 6.6
+- local-model activation is authorized only for explicitly enabled local-lane saves in Phase 6.6
+- cloud fallback is optional, lab-only, and disabled by default
+- ARC Console and Vault are not runtime save-path dependencies
+- dashboards, MCP, and public release work remain deferred
 
-## Phase 5 proof workflow
+## Phase 6.6 activation-contract boundary
+1. LINTEL may load route-policy config from `.arc/router.json`.
+2. Missing or invalid route-policy config fails closed to `RULE_ONLY`.
+3. Context Bus v1 packets remain minimal, local, and bounded to excerpt-level context.
+4. Route-related audit metadata must remain truthful and must not imply that local or cloud routing executed when it did not.
+5. Lease v2 may use route-policy hash and route signature for invalidation only, not activation.
+6. `LOCAL_PREFERRED` is local-only and may execute only for explicit saves when `.arc/router.json` enables the local lane and keeps the cloud lane disabled.
+7. `CLOUD_ASSISTED` may be considered only after approved local fallback states and only for explicit saves.
+8. `CLOUD_ELIGIBLE` must be operator-configured and must never become the default packet class.
+9. `GOVERNED_CHANGE` remains deny-cloud and does not become a permissive signal in Phase 6.6.
+10. Audit Visibility CLI remains read-only / export-only and is not part of save authorization.
+11. Context Bus v1 remains bounded; no full-file payload may leave the machine.
+12. Auto-save assessments fail closed to `RULE_ONLY` even when `LOCAL_PREFERRED` or `CLOUD_ASSISTED` is configured.
+13. The Phase 6.6 router shell remains fail-closed and annotation-truthful; it must not weaken the rule floor.
+
+## Proof workflow
 1. `REQUIRE_PLAN` requests a directive ID.
 2. LINTEL validates the canonical artifact path `.arc/blueprints/<directive_id>.md` under enforced `LOCAL_ONLY` mode.
 3. Save may proceed only when the blueprint is complete, local-only, and linked in the audit entry via `directive_id` and `blueprint_id`.
@@ -31,7 +56,39 @@ Phase 5 implementation of the LINTEL local-first IDE governance layer.
 - `LINTEL: Review Blueprint Proofs`
 - `LINTEL: Review False-Positive Candidates`
 
+## Audit Visibility CLI
+- Run with `npm run audit:cli -- <command> [options]`
+- Supported commands: `query`, `trace-directive`, `trace-route`, `perf`, `verify`, `export`
+- Read-only / export-only boundary:
+  - reads `.arc/audit.jsonl`
+  - reads `.arc/archive/*.jsonl`
+  - reads `.arc/perf.jsonl`
+  - reads `.arc/blueprints/<directive_id>.md` for directive trace only
+  - writes only to stdout or an explicit local `--out <file>` destination for export
+- Audit Visibility CLI does not mutate audit or blueprint state.
+- Audit Visibility CLI does not write to Vault, call ARC Console, or participate in save authorization.
+
+## Context Bus v1 contract hardening
+- `authority_tag` is locally asserted by trusted code and remains `LINTEL_LOCAL_ENFORCEMENT`
+- `data_class` remains fail-closed to `LOCAL_ONLY` unless explicit cloud policy marks packets as `CLOUD_ELIGIBLE`
+- `sensitivity_marker` remains fail-closed to `UNASSESSED`
+- packet construction uses bounded excerpt input only and does not read full document text when no selection is present
+- cloud policy may change packet `data_class`, but packet presence alone is not a routing activation signal
+- retrieval, embeddings, vector stores, and uncontrolled workspace search remain out of scope
+
+## Router shell
+- route resolution remains on a single authoritative path based on the existing route-policy surface
+- router shell metadata distinguishes configured intent from actual lane use
+- `LOCAL_PREFERRED` is local-only and explicit saves only
+- `CLOUD_ASSISTED` is local-first, explicit saves only, and lab-only
+- `CLOUD_ELIGIBLE` is operator-configured and never default
+- auto-save assessments fail closed to `RULE_ONLY`
+- the cloud lane executes only after approved local fallback and only for `CLOUD_ELIGIBLE` packets
+- ambiguity and invalid route state fail closed
+- router shell does not weaken the existing rule-first enforcement floor
+
 ## Commands
+- `npm run audit:cli -- help`
 - `npm run lint`
 - `npm run typecheck`
 - `npm run test:unit`

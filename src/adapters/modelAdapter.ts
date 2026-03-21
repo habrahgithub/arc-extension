@@ -34,6 +34,14 @@ interface OllamaOptions {
   readonly enabledByDefault?: boolean;
 }
 
+interface CloudOptions {
+  readonly endpoint?: string;
+  readonly model?: string;
+  readonly timeoutMs?: number;
+  readonly enabledByDefault?: boolean;
+  readonly apiKey?: string;
+}
+
 export class OllamaModelAdapter implements ModelAdapter {
   readonly enabledByDefault: boolean;
   private readonly endpoint: string;
@@ -89,6 +97,84 @@ export class OllamaModelAdapter implements ModelAdapter {
       }
 
       throw new ModelAdapterError('Ollama unavailable.', 'UNAVAILABLE');
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+}
+
+export class CloudModelAdapter implements ModelAdapter {
+  readonly enabledByDefault: boolean;
+  private readonly endpoint?: string;
+  private readonly model?: string;
+  private readonly timeoutMs: number;
+  private readonly apiKey?: string;
+
+  constructor(options: CloudOptions = {}) {
+    this.endpoint = options.endpoint;
+    this.model = options.model;
+    this.timeoutMs = options.timeoutMs ?? 2_000;
+    this.enabledByDefault = options.enabledByDefault ?? false;
+    this.apiKey = options.apiKey;
+  }
+
+  async evaluate(context: ContextPayload): Promise<ModelEvaluationResult | undefined> {
+    if (!this.endpoint) {
+      throw new ModelAdapterError('Cloud endpoint not configured.', 'UNAVAILABLE');
+    }
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
+
+    try {
+      const response = await fetch(this.endpoint, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          ...(this.apiKey ? { authorization: `Bearer ${this.apiKey}` } : {}),
+        },
+        body: JSON.stringify({
+          model: this.model ?? null,
+          context,
+        }),
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        throw new ModelAdapterError(
+          `Cloud adapter unavailable with status ${response.status}`,
+          'UNAVAILABLE',
+        );
+      }
+
+      const payload = (await response.json()) as
+        | { response?: string }
+        | ModelEvaluationResult;
+
+      if (isModelEvaluationResult(payload)) {
+        return payload;
+      }
+
+      if (
+        typeof payload === 'object' &&
+        payload !== null &&
+        'response' in payload &&
+        typeof payload.response === 'string'
+      ) {
+        return parseModelResponse(payload.response);
+      }
+
+      throw new ModelAdapterError('Missing cloud response body.', 'PARSE_FAILURE');
+    } catch (error) {
+      if (error instanceof ModelAdapterError) {
+        throw error;
+      }
+
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new ModelAdapterError('Cloud adapter timed out.', 'TIMEOUT');
+      }
+
+      throw new ModelAdapterError('Cloud adapter unavailable.', 'UNAVAILABLE');
     } finally {
       clearTimeout(timeout);
     }

@@ -1,10 +1,29 @@
 export type Decision = 'ALLOW' | 'WARN' | 'REQUIRE_PLAN' | 'BLOCK';
 export type RiskLevel = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+export type RouteMode = 'RULE_ONLY' | 'LOCAL_PREFERRED' | 'CLOUD_ASSISTED';
+export type RouteLane = 'RULE_ONLY' | 'LOCAL' | 'CLOUD';
+export type RoutePolicyStatus = 'MISSING' | 'LOADED' | 'INVALID';
+export type RouteClarity = 'CLEAR' | 'AMBIGUOUS';
+export type RouteFallback =
+  | 'NONE'
+  | 'CONFIG_MISSING'
+  | 'CONFIG_INVALID'
+  | 'AUTO_SAVE_BLOCKED'
+  | 'PACKET_INVALID'
+  | 'DATA_CLASS_DENIED';
+export type DataClass = 'LOCAL_ONLY' | 'CLOUD_ELIGIBLE' | 'RESTRICTED';
+export type SensitivityMarker = 'UNASSESSED' | 'GOVERNED_CHANGE';
+export type AuthorityTag = 'LINTEL_LOCAL_ENFORCEMENT';
 export type RuleScopeType =
   | 'PATH_SEGMENT_MATCH'
   | 'FILENAME_MATCH'
   | 'EXTENSION_MATCH';
-export type DecisionSource = 'RULE' | 'MODEL' | 'MODEL_DISABLED' | 'FALLBACK';
+export type DecisionSource =
+  | 'RULE'
+  | 'MODEL'
+  | 'CLOUD_MODEL'
+  | 'MODEL_DISABLED'
+  | 'FALLBACK';
 export type FallbackCause =
   | 'NONE'
   | 'MODEL_DISABLED'
@@ -55,6 +74,13 @@ export interface DecisionPayload {
   lease_status: LeaseStatus;
   directive_id?: string;
   blueprint_id?: string;
+  route_mode?: RouteMode;
+  route_lane?: RouteLane;
+  route_reason?: string;
+  route_clarity?: RouteClarity;
+  route_fallback?: RouteFallback;
+  route_policy_hash?: string;
+  evaluation_lane?: Exclude<RouteLane, 'RULE_ONLY'>;
 }
 
 export interface ContextPayload {
@@ -64,6 +90,44 @@ export interface ContextPayload {
   last_decision?: Decision;
   excerpt?: string;
   heuristic_only: true;
+}
+
+export interface ContextPacket {
+  packet_id: string;
+  ts: string;
+  file_path: string;
+  risk_flags: RiskFlag[];
+  matched_rule_ids: string[];
+  last_decision?: Decision;
+  excerpt?: string;
+  heuristic_only: true;
+  directive_id?: string;
+  blueprint_id?: string;
+  authority_tag: AuthorityTag;
+  data_class: DataClass;
+  sensitivity_marker: SensitivityMarker;
+  packet_hash: string;
+}
+
+export type ContextPacketValidationCode =
+  | 'MISSING_REQUIRED_FIELD'
+  | 'INVALID_PACKET_ID'
+  | 'INVALID_PACKET_HASH'
+  | 'INVALID_HEURISTIC_ONLY'
+  | 'INVALID_AUTHORITY_TAG'
+  | 'INVALID_DATA_CLASS'
+  | 'INVALID_SENSITIVITY_MARKER'
+  | 'INVALID_EXCERPT_BOUNDS';
+
+export interface ContextPacketValidationIssue {
+  code: ContextPacketValidationCode;
+  field: keyof ContextPacket | 'excerpt';
+  reason: string;
+}
+
+export interface ContextPacketValidationResult {
+  ok: boolean;
+  issues: ContextPacketValidationIssue[];
 }
 
 export interface SaveInput {
@@ -95,6 +159,44 @@ export interface LeaseRecord {
   expiresAt: number;
 }
 
+export interface RoutePolicyConfig {
+  mode?: RouteMode;
+  local_lane_enabled?: boolean;
+  cloud_lane_enabled?: boolean;
+  cloud_data_class?: DataClass;
+}
+
+export interface NormalizedRoutePolicy {
+  mode: RouteMode;
+  localLaneEnabled: boolean;
+  cloudLaneEnabled: boolean;
+  cloudDataClass: DataClass;
+}
+
+export interface RoutePolicyResolution {
+  status: RoutePolicyStatus;
+  config: NormalizedRoutePolicy;
+  reason: string;
+  policyHash: string;
+}
+
+export interface RouteLaneDescriptor {
+  lane: Exclude<RouteLane, 'RULE_ONLY'>;
+  enabled: boolean;
+  executable: boolean;
+  reason: string;
+  routeFallback?: RouteFallback;
+}
+
+export interface RouterShellResolution {
+  routePolicy: RoutePolicyResolution;
+  localLane: RouteLaneDescriptor;
+  cloudLane: RouteLaneDescriptor;
+  shouldUseModel: boolean;
+  shouldUseCloudModel: boolean;
+  packetValid: boolean;
+}
+
 export interface AuditEntry extends DecisionPayload {
   ts: string;
   file_path: string;
@@ -107,8 +209,10 @@ export interface AuditEntry extends DecisionPayload {
 export interface AssessedSave {
   classification: Classification;
   context: ContextPayload;
+  contextPacket: ContextPacket;
   decision: DecisionPayload;
   input: SaveInput;
+  routePolicy: RoutePolicyResolution;
   leaseReusable: boolean;
   shouldPrompt: boolean;
   reducedGuaranteeNotice?: string;
@@ -158,4 +262,138 @@ export interface PerformanceEntry {
     | 'load_workspace_map';
   duration_ms: number;
   metadata?: Record<string, string | number | boolean | null>;
+}
+
+export interface AuditFilterInput {
+  decision?: Decision;
+  directiveId?: string;
+  filePathIncludes?: string;
+  routeMode?: string;
+  routeLane?: string;
+  routeClarity?: string;
+  routeFallback?: string;
+  sinceTs?: string;
+  untilTs?: string;
+  limit?: number;
+  offset?: number;
+}
+
+export interface PerfFilterInput {
+  operation?: PerformanceEntry['operation'];
+  sinceTs?: string;
+  untilTs?: string;
+  limit?: number;
+}
+
+export interface AuditHistoryWarning {
+  kind: 'MALFORMED_AUDIT_LINE' | 'MALFORMED_PERF_LINE' | 'MISSING_FILE';
+  file_path: string;
+  line_number?: number;
+  detail: string;
+}
+
+export interface AuditHistoryMatch {
+  entry: AuditEntry;
+  source_file: string;
+  line_number: number;
+}
+
+export interface PerfHistoryMatch {
+  entry: PerformanceEntry;
+  source_file: string;
+  line_number: number;
+}
+
+export interface AuditQueryResult {
+  filters: AuditFilterInput;
+  files_read: string[];
+  matched: AuditHistoryMatch[];
+  warnings: AuditHistoryWarning[];
+  partial: boolean;
+}
+
+export interface DirectiveTraceResult {
+  directive_id: string;
+  blueprint_id: string;
+  blueprint_path: string;
+  blueprint_status:
+    | 'VALID'
+    | 'MISSING_DIRECTIVE'
+    | 'INVALID_DIRECTIVE'
+    | 'MISSING_ARTIFACT'
+    | 'MISMATCHED_BLUEPRINT_ID'
+    | 'MALFORMED_ARTIFACT'
+    | 'INCOMPLETE_ARTIFACT'
+    | 'UNAUTHORIZED_MODE';
+  blueprint_reason: string;
+  files_read: string[];
+  matched: AuditHistoryMatch[];
+  warnings: AuditHistoryWarning[];
+  partial: boolean;
+}
+
+export interface RouteTraceSummary {
+  route_mode: string;
+  route_lane: string;
+  route_clarity: string;
+  route_fallback: string;
+  route_policy_hash: string | null;
+  count: number;
+}
+
+export interface RouteTraceResult {
+  filters: AuditFilterInput;
+  files_read: string[];
+  matched: AuditHistoryMatch[];
+  summaries: RouteTraceSummary[];
+  warnings: AuditHistoryWarning[];
+  partial: boolean;
+}
+
+export interface PerfSummaryResult {
+  filters: PerfFilterInput;
+  files_read: string[];
+  matched: PerfHistoryMatch[];
+  warnings: AuditHistoryWarning[];
+  partial: boolean;
+  operation_summary: Array<{
+    operation: PerformanceEntry['operation'];
+    count: number;
+    avg_duration_ms: number;
+    max_duration_ms: number;
+  }>;
+}
+
+export interface AuditVerificationResult {
+  status: 'VALID' | 'INVALID' | 'PARTIAL';
+  files_read: string[];
+  warnings: AuditHistoryWarning[];
+  partial: boolean;
+  verified_entries: number;
+  failure?: {
+    file_path: string;
+    line_number: number;
+    reason: string;
+  };
+}
+
+export interface AuditExportBundle {
+  export_version: 'phase-6.2-v1';
+  generated_at: string;
+  workspace_root: string;
+  posture: {
+    route_mode: 'RULE_ONLY';
+    local_lane_enabled: false;
+    cloud_lane_enabled: false;
+    note: string;
+  };
+  audit_query: AuditQueryResult;
+  route_trace: RouteTraceResult;
+  directive_trace?: DirectiveTraceResult;
+  perf_summary: PerfSummaryResult;
+  verification: AuditVerificationResult;
+  vault_ready: true;
+  direct_vault_write: false;
+  direct_arc_dependency: false;
+  warnings: AuditHistoryWarning[];
 }

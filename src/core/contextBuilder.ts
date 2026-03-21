@@ -2,7 +2,7 @@ import type { Classification, ContextPayload, SaveInput } from '../contracts/typ
 
 const EXCERPT_LIMIT = 160;
 
-function trimExcerpt(value?: string): string | undefined {
+export function trimExcerpt(value?: string): string | undefined {
   if (!value) {
     return undefined;
   }
