@@ -71,7 +71,7 @@ describe('governance guards', () => {
     );
 
     expect(readme).toContain('shared/team blueprint handling remains unauthorized');
-    expect(architecture).toContain('Local-model activation in Phase 6.6 is bounded to the local lane only');
+    expect(architecture).toContain('Local-model activation in Phase 6.7 is bounded to the local lane only');
   });
 
   it('documents RULE_ONLY defaults and no ARC/Vault save-path dependency for Phase 6.0', () => {
@@ -181,6 +181,26 @@ describe('governance guards', () => {
     expect(testing).toContain('cloud fallback must occur only after approved local fallback states');
   });
 
+  it('documents Phase 6.7 Vault-ready export validation as local-only and non-mutating', () => {
+    const readme = fs.readFileSync(path.join(projectRoot, 'README.md'), 'utf8');
+    const architecture = fs.readFileSync(
+      path.join(projectRoot, 'docs', 'ARCHITECTURE.md'),
+      'utf8',
+    );
+    const testing = fs.readFileSync(
+      path.join(projectRoot, 'docs', 'TESTING.md'),
+      'utf8',
+    );
+
+    expect(readme).toContain('Phase 6.7');
+    expect(readme).toContain('Vault-ready evidence export');
+    expect(readme).toContain('phase-6.7-v1');
+    expect(architecture).toContain('Vault-ready means schema alignment for later handoff, not direct Vault write');
+    expect(architecture).toContain('direct evidence sections remain distinguishable from derived summary sections');
+    expect(testing).toContain('Vault-ready export coverage must retain versioned schema generation');
+    expect(testing).toContain('malformed or incomplete export inputs must surface as `PARTIAL`');
+  });
+
   it('removes the obsolete createIfMissing proof-input contract field', () => {
     const types = fs.readFileSync(
       path.join(projectRoot, 'src', 'contracts', 'types.ts'),
@@ -223,6 +243,20 @@ describe('governance guards', () => {
     expect(cliSource).not.toMatch(/\b(delete|repair|rewrite|rotate)\b/);
     expect(cliSource).not.toMatch(/https?:\/\//);
     expect(cliSource).not.toContain('fetch(');
+  });
+
+  it('keeps Vault-ready export local-only and free of direct transport clients', () => {
+    const visibilitySource = fs.readFileSync(
+      path.join(projectRoot, 'src', 'core', 'auditVisibility.ts'),
+      'utf8',
+    );
+
+    expect(visibilitySource).toContain('phase-6.7-v1');
+    expect(visibilitySource).toContain('LINTEL_VAULT_READY_EXPORT');
+    expect(visibilitySource).toContain("allowed_destinations: ['stdout', 'local_file']");
+    expect(visibilitySource).not.toMatch(/https?:\/\//);
+    expect(visibilitySource).not.toContain('fetch(');
+    expect(visibilitySource).not.toContain('writeFileSync(');
   });
 
   it('keeps Context Bus packet construction bounded and free of retrieval or file-read behavior', () => {

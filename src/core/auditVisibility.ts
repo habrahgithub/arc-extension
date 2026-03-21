@@ -4,18 +4,22 @@ import path from 'node:path';
 import type {
   AuditEntry,
   AuditExportBundle,
+  AuditExportSection,
   AuditFilterInput,
   AuditHistoryMatch,
   AuditHistoryWarning,
   AuditQueryResult,
   AuditVerificationResult,
   DirectiveTraceResult,
+  ExportBundleValidationIssue,
+  ExportBundleValidationResult,
   PerfFilterInput,
   PerformanceEntry,
   PerfHistoryMatch,
   PerfSummaryResult,
   RouteTraceResult,
   RouteTraceSummary,
+  VaultReadyExportMetadata,
 } from '../contracts/types';
 import { BlueprintArtifactStore } from './blueprintArtifacts';
 
@@ -175,33 +179,158 @@ export class AuditVisibilityService {
       : undefined;
     const perfSummary = this.summarizePerformance(options.perfFilters);
     const verification = this.verifyAuditHistory();
+    const metadata: VaultReadyExportMetadata = {
+      package_phase: '6.7',
+      source: 'LINTEL_AUDIT_VISIBILITY_CLI',
+      local_only: true,
+      direct_vault_write: false,
+      direct_arc_dependency: false,
+      allowed_destinations: ['stdout', 'local_file'],
+    };
 
-    return {
-      export_version: 'phase-6.2-v1',
+    const warnings = dedupeWarnings([
+      ...auditQuery.warnings,
+      ...routeTrace.warnings,
+      ...perfSummary.warnings,
+      ...(directiveTrace?.warnings ?? []),
+      ...verification.warnings,
+    ]);
+
+    const sections: AuditExportBundle['sections'] = {
+      export_metadata: createSection(
+        'export_metadata',
+        'EXPORT_METADATA',
+        false,
+        'Local-only export metadata describing package phase, source surface, and destination policy.',
+        metadata,
+      ),
+      audit_slice: createSection(
+        'audit_slice',
+        'DIRECT_EVIDENCE',
+        auditQuery.partial,
+        'Direct evidence slice from local audit history matching the requested filters.',
+        auditQuery,
+      ),
+      route_trace: createSection(
+        'route_trace',
+        'DIRECT_EVIDENCE',
+        routeTrace.partial,
+        'Observed route evidence from local audit history, excluding derived summaries.',
+        {
+          filters: routeTrace.filters,
+          files_read: routeTrace.files_read,
+          matched: routeTrace.matched,
+          warnings: routeTrace.warnings,
+          partial: routeTrace.partial,
+        },
+      ),
+      route_summary: createSection(
+        'route_summary',
+        'DERIVED_SUMMARY',
+        routeTrace.partial,
+        'Derived route summary counts computed from the local route-trace evidence.',
+        routeTrace.summaries,
+      ),
+      perf_slice: createSection(
+        'perf_slice',
+        'DIRECT_EVIDENCE',
+        perfSummary.partial,
+        'Direct performance evidence from local perf history excluding derived operation summaries.',
+        {
+          filters: perfSummary.filters,
+          files_read: perfSummary.files_read,
+          matched: perfSummary.matched,
+          warnings: perfSummary.warnings,
+          partial: perfSummary.partial,
+        },
+      ),
+      perf_operation_summary: createSection(
+        'perf_operation_summary',
+        'DERIVED_SUMMARY',
+        perfSummary.partial,
+        'Derived performance summary computed from the local perf evidence slice.',
+        perfSummary.operation_summary,
+      ),
+      audit_integrity: createSection(
+        'audit_integrity',
+        'VALIDATION_RESULT',
+        verification.partial,
+        'Audit hash-chain verification result over the files present locally.',
+        verification,
+      ),
+      ...(directiveTrace
+        ? {
+            directive_linkage: createSection(
+              'directive_linkage',
+              'DIRECT_EVIDENCE',
+              directiveTrace.partial,
+              'Directive linkage evidence derived from local audit matches and blueprint resolution inputs.',
+              {
+                directive_id: directiveTrace.directive_id,
+                files_read: directiveTrace.files_read,
+                matched_count: directiveTrace.matched.length,
+                warnings: directiveTrace.warnings,
+                partial: directiveTrace.partial,
+              },
+            ),
+            blueprint_linkage: createSection(
+              'blueprint_linkage',
+              'DIRECT_EVIDENCE',
+              directiveTrace.partial,
+              'Blueprint linkage evidence describing the locally resolved blueprint path and validation status.',
+              {
+                blueprint_id: directiveTrace.blueprint_id,
+                blueprint_path: directiveTrace.blueprint_path,
+                blueprint_status: directiveTrace.blueprint_status,
+                blueprint_reason: directiveTrace.blueprint_reason,
+                partial: directiveTrace.partial,
+              },
+            ),
+          }
+        : {}),
+      bundle_validation: createSection(
+        'bundle_validation',
+        'VALIDATION_RESULT',
+        false,
+        'Local validation result over the versioned Vault-ready export bundle structure.',
+        { status: 'VALID', issues: [] },
+      ),
+    };
+
+    const provisionalBundle: AuditExportBundle = {
+      export_version: 'phase-6.7-v1',
+      bundle_type: 'LINTEL_VAULT_READY_EXPORT',
       generated_at: new Date().toISOString(),
       workspace_root: this.workspaceRoot,
-      posture: {
-        route_mode: 'RULE_ONLY',
-        local_lane_enabled: false,
-        cloud_lane_enabled: false,
-        note: 'Phase 6.2 remains observational only; no local or cloud lane is active.',
-      },
-      audit_query: auditQuery,
-      route_trace: routeTrace,
-      directive_trace: directiveTrace,
-      perf_summary: perfSummary,
-      verification,
       vault_ready: true,
       direct_vault_write: false,
       direct_arc_dependency: false,
-      warnings: dedupeWarnings([
-        ...auditQuery.warnings,
-        ...routeTrace.warnings,
-        ...perfSummary.warnings,
-        ...(directiveTrace?.warnings ?? []),
-        ...verification.warnings,
-      ]),
+      metadata,
+      sections,
+      bundle_validation: { status: 'VALID', issues: [] },
+      warnings,
     };
+
+    const bundleValidation = validateExportBundle(provisionalBundle);
+    provisionalBundle.bundle_validation = bundleValidation;
+    provisionalBundle.sections.bundle_validation = createSection(
+      'bundle_validation',
+      'VALIDATION_RESULT',
+      bundleValidation.status === 'PARTIAL',
+      'Local validation result over the versioned Vault-ready export bundle structure.',
+      bundleValidation,
+    );
+
+    if (bundleValidation.status === 'INVALID') {
+      const firstIssue = bundleValidation.issues[0];
+      throw new Error(
+        firstIssue
+          ? `Export bundle validation failed (${firstIssue.section}: ${firstIssue.reason})`
+          : 'Export bundle validation failed.',
+      );
+    }
+
+    return provisionalBundle;
   }
 }
 
@@ -506,6 +635,95 @@ function summarizePerfOperations(matches: ParsedPerfEntry[]): PerfSummaryResult[
       max_duration_ms: Number(summary.max.toFixed(3)),
     }))
     .sort((left, right) => left.operation.localeCompare(right.operation));
+}
+
+function createSection<T>(
+  section_id: string,
+  evidence_class: AuditExportSection<T>['evidence_class'],
+  partial: boolean,
+  description: string,
+  data: T,
+): AuditExportSection<T> {
+  return {
+    section_id,
+    evidence_class,
+    partial,
+    description,
+    data,
+  };
+}
+
+export function validateExportBundle(bundle: AuditExportBundle): ExportBundleValidationResult {
+  const issues: ExportBundleValidationIssue[] = [];
+
+  if (bundle.export_version !== 'phase-6.7-v1') {
+    issues.push({
+      code: 'INVALID_EXPORT_VERSION',
+      section: 'bundle',
+      reason: 'unexpected export version.',
+    });
+  }
+
+  if (bundle.bundle_type !== 'LINTEL_VAULT_READY_EXPORT') {
+    issues.push({
+      code: 'INVALID_BUNDLE_TYPE',
+      section: 'bundle',
+      reason: 'unexpected bundle type.',
+    });
+  }
+
+  if (
+    !bundle.metadata.local_only ||
+    bundle.metadata.direct_vault_write ||
+    bundle.metadata.direct_arc_dependency ||
+    bundle.metadata.allowed_destinations[0] !== 'stdout' ||
+    bundle.metadata.allowed_destinations[1] !== 'local_file'
+  ) {
+    issues.push({
+      code: 'INVALID_DESTINATION_POLICY',
+      section: 'metadata',
+      reason: 'export metadata no longer reflects strict local-only destination policy.',
+    });
+  }
+
+  const requiredSections = [
+    'export_metadata',
+    'audit_slice',
+    'route_trace',
+    'route_summary',
+    'perf_slice',
+    'perf_operation_summary',
+    'audit_integrity',
+    'bundle_validation',
+  ] satisfies Array<keyof AuditExportBundle['sections']>;
+
+  for (const section of requiredSections) {
+    if (!bundle.sections[section]) {
+      issues.push({
+        code: 'MISSING_SECTION',
+        section,
+        reason: 'required export section is absent.',
+      });
+    }
+  }
+
+  const partialSections = Object.values(bundle.sections).filter((section) => section?.partial);
+  if (partialSections.length > 0 || bundle.warnings.length > 0) {
+    issues.push({
+      code: 'PARTIAL_SOURCE_EVIDENCE',
+      section: partialSections.map((section) => section.section_id).join(',') || 'warnings',
+      reason: 'source evidence contains malformed, incomplete, or missing local inputs and is exported as partial evidence.',
+    });
+  }
+
+  return {
+    status: issues.some((issue) => issue.code !== 'PARTIAL_SOURCE_EVIDENCE')
+      ? 'INVALID'
+      : issues.length > 0
+        ? 'PARTIAL'
+        : 'VALID',
+    issues,
+  };
 }
 
 function normalizeAuditFilters(filters: AuditFilterInput): AuditFilterInput {

@@ -18,7 +18,7 @@ interface ParsedArgs {
 }
 
 const HELP_TEXT = [
-  'LINTEL Audit Visibility CLI (Phase 6.2)',
+  'LINTEL Audit Visibility CLI (Phase 6.7)',
   '',
   'Read-only / export-only commands:',
   '  query            Query local audit history',
@@ -26,7 +26,7 @@ const HELP_TEXT = [
   '  trace-route      Summarize route metadata from local audit history',
   '  perf             Summarize local perf history',
   '  verify           Verify the local audit hash chain',
-  '  export           Export a local Vault-ready evidence bundle to stdout or --out',
+  '  export           Export a versioned local Vault-ready evidence bundle to stdout or --out',
   '',
   'Common options:',
   '  --workspace <path>         Workspace root (defaults to current working directory)',
@@ -45,6 +45,7 @@ const HELP_TEXT = [
   '  --out <file>               Write export bundle to an explicit local file',
   '',
   'This CLI never mutates audit or blueprint state and never writes to Vault or ARC.',
+  'Export remains local-only and writes only to stdout or an explicit local file path.',
 ].join('\n');
 
 export function runCli(
@@ -91,7 +92,7 @@ export function runCli(
           const target = path.resolve(parsed.workspaceRoot, parsed.outputPath);
           fs.mkdirSync(path.dirname(target), { recursive: true });
           fs.writeFileSync(target, `${rendered}\n`, 'utf8');
-          io.stdout(`${JSON.stringify({ wrote: target, export_version: 'phase-6.2-v1' }, null, 2)}\n`);
+          io.stdout(`${JSON.stringify({ wrote: target, export_version: 'phase-6.7-v1' }, null, 2)}\n`);
           return 0;
         }
         io.stdout(`${rendered}\n`);

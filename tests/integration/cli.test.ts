@@ -80,7 +80,7 @@ describe('audit visibility cli', () => {
     expect(fs.readFileSync(auditPath, 'utf8')).toBe(beforeAudit);
   });
 
-  it('exports a local Vault-ready bundle only to the explicit output path', async () => {
+  it('exports a versioned local Vault-ready bundle only to the explicit output path', async () => {
     const workspace = makeWorkspace();
     await seedWorkspace(workspace);
     const exportPath = path.join('artifacts', 'visibility-export.json');
@@ -111,10 +111,17 @@ describe('audit visibility cli', () => {
     expect(exportIo.stderr()).toBe('');
     expect(fs.existsSync(fullExportPath)).toBe(true);
     expect(JSON.parse(fs.readFileSync(fullExportPath, 'utf8'))).toMatchObject({
-      export_version: 'phase-6.2-v1',
+      export_version: 'phase-6.7-v1',
+      bundle_type: 'LINTEL_VAULT_READY_EXPORT',
       vault_ready: true,
       direct_vault_write: false,
       direct_arc_dependency: false,
+      bundle_validation: {
+        status: 'VALID',
+      },
+      metadata: {
+        local_only: true,
+      },
     });
     expect(fs.readFileSync(blueprintPath, 'utf8')).toBe(beforeBlueprint);
   });

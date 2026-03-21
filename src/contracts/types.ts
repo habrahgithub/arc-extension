@@ -377,23 +377,80 @@ export interface AuditVerificationResult {
   };
 }
 
+export type ExportEvidenceClass =
+  | 'EXPORT_METADATA'
+  | 'DIRECT_EVIDENCE'
+  | 'DERIVED_SUMMARY'
+  | 'VALIDATION_RESULT';
+
+export type ExportBundleValidationCode =
+  | 'MISSING_SECTION'
+  | 'INVALID_EXPORT_VERSION'
+  | 'INVALID_BUNDLE_TYPE'
+  | 'INVALID_DESTINATION_POLICY'
+  | 'PARTIAL_SOURCE_EVIDENCE';
+
+export interface ExportBundleValidationIssue {
+  code: ExportBundleValidationCode;
+  section: string;
+  reason: string;
+}
+
+export interface ExportBundleValidationResult {
+  status: 'VALID' | 'INVALID' | 'PARTIAL';
+  issues: ExportBundleValidationIssue[];
+}
+
+export interface AuditExportSection<T> {
+  section_id: string;
+  evidence_class: ExportEvidenceClass;
+  partial: boolean;
+  description: string;
+  data: T;
+}
+
+export interface VaultReadyExportMetadata {
+  package_phase: '6.7';
+  source: 'LINTEL_AUDIT_VISIBILITY_CLI';
+  local_only: true;
+  direct_vault_write: false;
+  direct_arc_dependency: false;
+  allowed_destinations: ['stdout', 'local_file'];
+}
+
 export interface AuditExportBundle {
-  export_version: 'phase-6.2-v1';
+  export_version: 'phase-6.7-v1';
+  bundle_type: 'LINTEL_VAULT_READY_EXPORT';
   generated_at: string;
   workspace_root: string;
-  posture: {
-    route_mode: 'RULE_ONLY';
-    local_lane_enabled: false;
-    cloud_lane_enabled: false;
-    note: string;
-  };
-  audit_query: AuditQueryResult;
-  route_trace: RouteTraceResult;
-  directive_trace?: DirectiveTraceResult;
-  perf_summary: PerfSummaryResult;
-  verification: AuditVerificationResult;
   vault_ready: true;
   direct_vault_write: false;
   direct_arc_dependency: false;
+  metadata: VaultReadyExportMetadata;
+  sections: {
+    export_metadata: AuditExportSection<VaultReadyExportMetadata>;
+    audit_slice: AuditExportSection<AuditQueryResult>;
+    route_trace: AuditExportSection<Omit<RouteTraceResult, 'summaries'>>;
+    route_summary: AuditExportSection<RouteTraceSummary[]>;
+    perf_slice: AuditExportSection<Omit<PerfSummaryResult, 'operation_summary'>>;
+    perf_operation_summary: AuditExportSection<PerfSummaryResult['operation_summary']>;
+    audit_integrity: AuditExportSection<AuditVerificationResult>;
+    directive_linkage?: AuditExportSection<{
+      directive_id: string;
+      files_read: string[];
+      matched_count: number;
+      warnings: AuditHistoryWarning[];
+      partial: boolean;
+    }>;
+    blueprint_linkage?: AuditExportSection<{
+      blueprint_id: string;
+      blueprint_path: string;
+      blueprint_status: DirectiveTraceResult['blueprint_status'];
+      blueprint_reason: string;
+      partial: boolean;
+    }>;
+    bundle_validation: AuditExportSection<ExportBundleValidationResult>;
+  };
+  bundle_validation: ExportBundleValidationResult;
   warnings: AuditHistoryWarning[];
 }

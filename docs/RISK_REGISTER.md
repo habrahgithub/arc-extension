@@ -40,6 +40,11 @@
 - `CLOUD_ASSISTED` is now active for lab-only explicit saves, so route metadata must distinguish denial, attempt, and cloud execution truthfully
 - packet-class policy drift could accidentally widen cloud eligibility if operator-configured `CLOUD_ELIGIBLE` semantics are not kept fail-closed
 
+## Accepted Phase 6.7 risks
+- Vault-ready export formalizes an external evidence boundary, so schema drift could mislead downstream consumers if section classes stop being explicit
+- partial local evidence may still be handed off intentionally, so operators must understand `PARTIAL` as incomplete evidence rather than full clearance
+- local export files contain governed evidence and therefore require deliberate operator handling after generation
+
 ## Mitigated in Phase 5
 - spread-order ambiguity in proof enforcement via explicit `LOCAL_ONLY` normalization
 - stale proof-input contract expectations via removal of obsolete `createIfMissing`
@@ -88,6 +93,13 @@
 - cloud payload is bounded to `ContextPayload` only and cannot include full-file content or packet governance metadata
 - cloud output passes through the unchanged enforcement floor and cannot weaken the rule-first decision
 - the orchestrator uses a single adapter pipeline, preventing competing direct cloud invocation paths
+
+## Mitigated in Phase 6.7
+- Vault-ready export remains local-only with stdout or explicit local-file destinations only
+- versioned bundle schema makes export structure explicit and detectable for downstream consumers
+- bundle validation marks malformed or incomplete source evidence as `PARTIAL` rather than silently normalizing it
+- raw evidence, derived summaries, and validation-result sections are now structurally distinct in the export contract
+- save authorization remains independent from export success, Vault availability, and ARC availability
 
 ## Deferred mitigations
 - shared/team blueprint deployment after a separate data-handling policy review
