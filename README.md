@@ -1,6 +1,6 @@
 # LINTEL Code
 
-Phase 7.0 implementation of the LINTEL local-first IDE governance layer.
+Phase 7.1 governance hardening of the LINTEL local-first IDE governance layer.
 
 ## Phase 7.0 scope
 - VS Code save-time governance for `ALLOW / WARN / REQUIRE_PLAN / BLOCK`
@@ -43,6 +43,13 @@ Phase 7.0 implementation of the LINTEL local-first IDE governance layer.
 3. Runtime status surfaces remain observational only and must not widen route behavior.
 4. Internal install/run guidance must reflect the actually validated local workflow.
 5. Internal smoke/UAT harnesses must remain deterministic and must not auto-repair malformed evidence.
+
+## Phase 7.1 governance hardening boundary
+1. `LINTEL: Show Active Workspace Status` remains an observational-only diagnostic surface.
+2. Cloud-related fields in runtime status are factual configuration/reporting values only.
+3. Runtime status must not imply cloud readiness, approval, or authorization.
+4. Fail-closed posture reporting must remain truthful for missing/invalid policy, fallback, and auto-save cases.
+5. Governance tests must anchor the runtime-status command and its disclaimer contract against silent removal.
 
 ## Phase 6.8 activation-contract boundary
 1. LINTEL may load route-policy config from `.arc/router.json`.
@@ -87,6 +94,7 @@ Phase 7.0 implementation of the LINTEL local-first IDE governance layer.
   - audit path
   - route-policy path
   - active route posture
+- Runtime status is descriptive only; its cloud-related fields do not imply readiness, approval, or authorization.
 
 ## Internal install / run path
 Validated local/internal path:

@@ -45,6 +45,11 @@
 - deterministic local smoke harness for repeatable internal non-cloud validation
 - corrected internal install path centered on VSIX packaging and installation
 
+## Phase 7.1 additions
+- governance-test anchoring for `lintel.showRuntimeStatus`
+- explicit runtime-status disclaimer constants guarding observational-only wording
+- hardened runtime-status notes covering cloud non-authorization and fail-closed baseline preservation
+
 ## Blueprint policy boundary
 - Shared/team blueprint handling is not authorized in Phase 6.6.
 - Template scaffolds are intentionally marked as incomplete until every required section is filled with directive-specific content.
@@ -116,6 +121,8 @@ Local-model activation in Phase 6.8 is bounded to the local lane only unless a s
 - nested project targeting may refine evidence ownership but must not weaken route decisions
 - diagnostics may report workspace-target choice and route posture but may not mutate save outcomes
 - fallback root remains local-only and is used only when no matching workspace folder exists
+- runtime-status command output must remain governance-anchored so observational-only wording cannot be silently removed
+- cloud-related diagnostic fields are descriptive configuration facts only and do not imply readiness, approval, or authorization
 
 ## Audit Visibility CLI boundary
 - Commands are limited to `query`, `trace-directive`, `trace-route`, `perf`, `verify`, and `export`.

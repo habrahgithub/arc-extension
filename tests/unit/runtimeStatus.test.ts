@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { renderRuntimeStatusMarkdown } from '../../src/extension/runtimeStatus';
+import {
+  RUNTIME_STATUS_CLOUD_NOTICE,
+  RUNTIME_STATUS_FAIL_CLOSED_NOTE,
+  RUNTIME_STATUS_OBSERVATIONAL_NOTICE,
+  renderRuntimeStatusMarkdown,
+} from '../../src/extension/runtimeStatus';
 
 describe('renderRuntimeStatusMarkdown', () => {
   it('renders workspace target and route posture clearly', () => {
@@ -29,6 +34,40 @@ describe('renderRuntimeStatusMarkdown', () => {
     expect(markdown).toContain('/workspace/projects/demo');
     expect(markdown).toContain('Nearest nested project boundary');
     expect(markdown).toContain('LOCAL_PREFERRED');
-    expect(markdown).toContain('Diagnostics are observational only');
+    expect(markdown).toContain(RUNTIME_STATUS_OBSERVATIONAL_NOTICE);
+    expect(markdown).toContain(RUNTIME_STATUS_CLOUD_NOTICE);
+    expect(markdown).toContain(
+      'Auto-save remains reduced-guarantee and would still fail closed to `RULE_ONLY`',
+    );
+  });
+
+  it('keeps fail-closed reporting explicit when route policy is missing', () => {
+    const markdown = renderRuntimeStatusMarkdown({
+      target: {
+        filePath: '/workspace/README.md',
+        workspaceFolderRoot: '/workspace',
+        effectiveRoot: '/workspace',
+        reason: 'WORKSPACE_FOLDER',
+        markers: [],
+      },
+      autoSaveMode: 'off',
+      routePolicy: {
+        status: 'MISSING',
+        config: {
+          mode: 'RULE_ONLY',
+          localLaneEnabled: false,
+          cloudLaneEnabled: false,
+          cloudDataClass: 'LOCAL_ONLY',
+        },
+        reason: 'No route policy config was found.',
+        policyHash: 'root',
+      },
+    });
+
+    expect(markdown).toContain(RUNTIME_STATUS_FAIL_CLOSED_NOTE);
+    expect(markdown).toContain(
+      'Current route policy state would fail closed to `RULE_ONLY` because the configured route policy is missing or invalid.',
+    );
+    expect(markdown).toContain(RUNTIME_STATUS_CLOUD_NOTICE);
   });
 });

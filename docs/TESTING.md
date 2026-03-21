@@ -40,3 +40,10 @@ All command gates in the active phase package must exist and pass before closure
 - no direct Vault write path, ARC dependency, or remote upload path may appear in export flows
 - rollback drill must restore hardened-equivalent posture and preserve audit continuity
 - cloud denial matrix must be exercised during integrated validation, not merely documented
+
+## Phase 7.1 emphasis
+- runtime status command must remain governance-anchored in `test:governance`
+- runtime status diagnostics must retain explicit observational-only disclaimer text
+- cloud-related runtime status fields must remain factual and non-authorizing
+- fail-closed reporting for missing/invalid policy and reduced-guarantee auto-save must remain explicit
+- command-surface changes for operator diagnostics must not silently weaken the established non-cloud enforcement floor

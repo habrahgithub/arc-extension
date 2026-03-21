@@ -233,15 +233,45 @@ describe('governance guards', () => {
     const packageJson = JSON.parse(
       fs.readFileSync(path.join(projectRoot, 'package.json'), 'utf8'),
     ) as {
+      activationEvents?: string[];
       contributes?: { commands?: Array<{ command: string }> };
     };
 
     const commands =
       packageJson.contributes?.commands?.map((entry) => entry.command) ?? [];
+    const activationEvents = packageJson.activationEvents ?? [];
 
     expect(commands).toContain('lintel.reviewAudit');
+    expect(commands).toContain('lintel.showRuntimeStatus');
     expect(commands).toContain('lintel.reviewBlueprints');
     expect(commands).toContain('lintel.reviewFalsePositives');
+    expect(activationEvents).toContain('onCommand:lintel.showRuntimeStatus');
+  });
+
+  it('anchors the runtime-status command to an explicit observational-only diagnostic contract', () => {
+    const runtimeStatus = fs.readFileSync(
+      path.join(projectRoot, 'src', 'extension', 'runtimeStatus.ts'),
+      'utf8',
+    );
+    const readme = fs.readFileSync(path.join(projectRoot, 'README.md'), 'utf8');
+    const testing = fs.readFileSync(
+      path.join(projectRoot, 'docs', 'TESTING.md'),
+      'utf8',
+    );
+
+    expect(runtimeStatus).toContain('RUNTIME_STATUS_OBSERVATIONAL_NOTICE');
+    expect(runtimeStatus).toContain(
+      'Diagnostics are observational only. They do not authorize, widen, or bypass save decisions.',
+    );
+    expect(runtimeStatus).toContain(
+      'Cloud note: this diagnostic must not be interpreted as cloud readiness, approval, or authorization.',
+    );
+    expect(runtimeStatus).toContain(
+      'Fail-closed note: missing/invalid route policy still degrades to `RULE_ONLY` and does not loosen baseline enforcement.',
+    );
+    expect(readme).toContain('Show Active Workspace Status');
+    expect(readme).toContain('cloud readiness, approval, or authorization');
+    expect(testing).toContain('runtime status command must remain governance-anchored');
   });
 
   it('defines a local audit visibility cli script without mutation commands or remote endpoints', () => {

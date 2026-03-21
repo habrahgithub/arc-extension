@@ -8,6 +8,18 @@ export interface RuntimeStatusSnapshot {
   routePolicy: RoutePolicyResolution;
 }
 
+export const RUNTIME_STATUS_OBSERVATIONAL_NOTICE =
+  'Diagnostics are observational only. They do not authorize, widen, or bypass save decisions.';
+
+export const RUNTIME_STATUS_CLOUD_NOTICE =
+  'Cloud note: this diagnostic must not be interpreted as cloud readiness, approval, or authorization.';
+
+export const RUNTIME_STATUS_FAIL_CLOSED_NOTE =
+  'Fail-closed note: missing/invalid route policy still degrades to `RULE_ONLY` and does not loosen baseline enforcement.';
+
+export const RUNTIME_STATUS_BASELINE_NOTE =
+  'Baseline note: route posture shown here is descriptive only; proof enforcement, rule floors, and fallback gates remain authoritative.';
+
 function describeReason(reason: WorkspaceTargetResolution['reason']): string {
   switch (reason) {
     case 'NESTED_BOUNDARY':
@@ -18,6 +30,18 @@ function describeReason(reason: WorkspaceTargetResolution['reason']): string {
     default:
       return 'Active VS Code workspace folder root';
   }
+}
+
+function describeSaveContext(snapshot: RuntimeStatusSnapshot): string {
+  if (snapshot.routePolicy.status !== 'LOADED') {
+    return 'Current route policy state would fail closed to `RULE_ONLY` because the configured route policy is missing or invalid.';
+  }
+
+  if (snapshot.autoSaveMode !== 'off' && snapshot.routePolicy.config.mode !== 'RULE_ONLY') {
+    return 'Auto-save remains reduced-guarantee and would still fail closed to `RULE_ONLY` even when a less strict routed mode is configured.';
+  }
+
+  return 'Current posture preserves the established fail-closed enforcement floor for the active workspace root.';
 }
 
 export function renderRuntimeStatusMarkdown(snapshot: RuntimeStatusSnapshot): string {
@@ -31,7 +55,7 @@ export function renderRuntimeStatusMarkdown(snapshot: RuntimeStatusSnapshot): st
   return [
     '# LINTEL Active Workspace Status',
     '',
-    '> Diagnostics are observational only. They do not authorize, widen, or bypass save decisions.',
+    `> ${RUNTIME_STATUS_OBSERVATIONAL_NOTICE}`,
     '',
     '## Workspace targeting',
     `- Active file: \`${snapshot.target.filePath ?? 'n/a'}\``,
@@ -53,7 +77,9 @@ export function renderRuntimeStatusMarkdown(snapshot: RuntimeStatusSnapshot): st
     '## Save behavior context',
     `- Auto-save mode: \`${snapshot.autoSaveMode}\``,
     `- Reduced-guarantee notice active: \`${snapshot.autoSaveMode !== 'off'}\``,
-    '- Fail-closed note: missing/invalid route policy still degrades to `RULE_ONLY`.',
-    '- Cloud note: this diagnostic must not be interpreted as cloud readiness or authorization.',
+    `- Save-context note: ${describeSaveContext(snapshot)}`,
+    `- ${RUNTIME_STATUS_FAIL_CLOSED_NOTE}`,
+    `- ${RUNTIME_STATUS_BASELINE_NOTE}`,
+    `- ${RUNTIME_STATUS_CLOUD_NOTICE}`,
   ].join('\n');
 }
