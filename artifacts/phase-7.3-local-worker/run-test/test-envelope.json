@@ -1,0 +1,10 @@
+{
+  "directive_id": "LINTEL-PH7-3-TEST-001",
+  "repo_root": "/home/habib/workspace/projects/lintel",
+  "allowed_paths": ["package.json", "README.md"],
+  "objective": "Test: Update README title to include 'ARC Audit Ready Core' branding",
+  "constraints": ["Keep changes minimal", "Only modify README.md"],
+  "acceptance_tests": [],
+  "write_mode": "apply",
+  "evidence_output_path": "/home/habib/workspace/projects/lintel/artifacts/phase-7.3-local-worker/run-test"
+}

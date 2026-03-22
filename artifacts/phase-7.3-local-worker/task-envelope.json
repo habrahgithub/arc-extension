@@ -1,0 +1,31 @@
+{
+  "directive_id": "LINTEL-PH7-3-001",
+  "repo_root": "/home/habib/workspace/projects/lintel",
+  "allowed_paths": [
+    "package.json",
+    "README.md",
+    "docs",
+    "tests",
+    "src"
+  ],
+  "objective": "Execute Phase 7.3 — Extension Identity and Manifest Rebrand in the nested LINTEL repo. Freeze extension identity around ARC — Audit Ready Core while keeping runtime authority unchanged and command ids stable (lintel.*). Update manifest identity fields, bounded command titles if needed, and canonical docs only. Do not introduce welcome screen work, dashboards, cloud behavior, ARC Console coupling, Vault dependency, or command id migration. WRD-0066: ensure naming does not imply ARC control-plane integration or Vault/console dependency. OBS-S-7008: keep command ids stable and treat any id migration as out of scope.",
+  "constraints": [
+    "Keep command ids stable as lintel.*",
+    "Do not add new commands, panels, or onboarding/welcome work",
+    "Do not change route, proof, fallback, or save authority",
+    "Do not imply cloud readiness, ARC Console coupling, control-plane integration, or Vault dependency",
+    "Keep all changes within package.json, README, docs, tests, and minimal src only if title/label alignment requires it",
+    "Produce truthful evidence and preserve governance coverage"
+  ],
+  "acceptance_tests": [
+    "npm run lint",
+    "npm run typecheck",
+    "npm run test:unit",
+    "npm run test:integration",
+    "npm run test:e2e",
+    "npm run test:governance",
+    "npm run build"
+  ],
+  "write_mode": "apply",
+  "evidence_output_path": "/home/habib/workspace/projects/lintel/artifacts/phase-7.3-local-worker/run"
+}
