@@ -1,6 +1,6 @@
 # LINTEL Code
 
-Phase 7.1 governance hardening of the LINTEL local-first IDE governance layer.
+Phase 7.2 operator-surface refinement of the LINTEL local-first IDE governance layer.
 
 ## Phase 7.0 scope
 - VS Code save-time governance for `ALLOW / WARN / REQUIRE_PLAN / BLOCK`
@@ -51,6 +51,13 @@ Phase 7.1 governance hardening of the LINTEL local-first IDE governance layer.
 4. Fail-closed posture reporting must remain truthful for missing/invalid policy, fallback, and auto-save cases.
 5. Governance tests must anchor the runtime-status command and its disclaimer contract against silent removal.
 
+## Phase 7.2 operator-surface boundary
+1. Existing review commands may become clearer and more coherent, but they remain local-only, read-only, and non-authorizing.
+2. Review wording may clarify fail-closed, fallback, and proof-required states only if governance tests anchor the meaning, not just the presence of text.
+3. False-positive review remains advisory only and does not demote recorded decisions or rewrite audit history.
+4. Blueprint review must reflect real local artifact state only; placeholder or inferred proof state never counts as valid.
+5. No new dashboards, panels, or broader product UI are authorized in this phase.
+
 ## Phase 6.8 activation-contract boundary
 1. LINTEL may load route-policy config from `.arc/router.json`.
 2. Missing or invalid route-policy config fails closed to `RULE_ONLY`.
@@ -79,6 +86,13 @@ Phase 7.1 governance hardening of the LINTEL local-first IDE governance layer.
 - `LINTEL: Show Active Workspace Status`
 - `LINTEL: Review Blueprint Proofs`
 - `LINTEL: Review False-Positive Candidates`
+
+## Review-surface contract
+- review surfaces summarize existing local evidence only
+- review surfaces remain local-only, read-only, and non-authorizing
+- governed-root and route-posture summaries are descriptive only
+- proof-required states remain blocked until the linked local blueprint artifact is valid
+- false-positive candidates are advisory only and do not lower the enforcement floor
 
 ## Workspace targeting
 - LINTEL now chooses the effective governed root truthfully per active file.

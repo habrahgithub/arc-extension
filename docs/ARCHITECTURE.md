@@ -50,6 +50,11 @@
 - explicit runtime-status disclaimer constants guarding observational-only wording
 - hardened runtime-status notes covering cloud non-authorization and fail-closed baseline preservation
 
+## Phase 7.2 additions
+- coherent operator-context summaries across the existing review surfaces
+- explicit review-surface contract constants for local-only, read-only, non-authorizing behavior
+- stronger proof-required and false-positive advisory wording anchored in governance tests
+
 ## Blueprint policy boundary
 - Shared/team blueprint handling is not authorized in Phase 6.6.
 - Template scaffolds are intentionally marked as incomplete until every required section is filled with directive-specific content.
@@ -123,6 +128,8 @@ Local-model activation in Phase 6.8 is bounded to the local lane only unless a s
 - fallback root remains local-only and is used only when no matching workspace folder exists
 - runtime-status command output must remain governance-anchored so observational-only wording cannot be silently removed
 - cloud-related diagnostic fields are descriptive configuration facts only and do not imply readiness, approval, or authorization
+- review-surface wording remains descriptive or advisory only and must not imply approval, clearance, or save authorization
+- existing review commands may show governed-root and route-posture context, but those summaries do not change route or proof authority
 
 ## Audit Visibility CLI boundary
 - Commands are limited to `query`, `trace-directive`, `trace-route`, `perf`, `verify`, and `export`.

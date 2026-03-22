@@ -47,3 +47,10 @@ All command gates in the active phase package must exist and pass before closure
 - cloud-related runtime status fields must remain factual and non-authorizing
 - fail-closed reporting for missing/invalid policy and reduced-guarantee auto-save must remain explicit
 - command-surface changes for operator diagnostics must not silently weaken the established non-cloud enforcement floor
+
+## Phase 7.2 emphasis
+- enforcement-related review-surface wording must remain governance-anchored
+- review surfaces must stay local-only, read-only, and non-authorizing
+- proof-required messaging must remain truthful to actual local blueprint validity
+- false-positive candidate wording must remain advisory only and must not imply decision demotion
+- governed-root and route-posture summaries in review surfaces must remain descriptive only

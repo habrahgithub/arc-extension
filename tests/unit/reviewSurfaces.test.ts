@@ -2,7 +2,12 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { LocalReviewSurfaceService } from '../../src/extension/reviewSurfaces';
+import {
+  LocalReviewSurfaceService,
+  REVIEW_SURFACE_FALSE_POSITIVE_NOTICE,
+  REVIEW_SURFACE_LOCAL_ONLY_NOTICE,
+  REVIEW_SURFACE_PROOF_REQUIRED_NOTICE,
+} from '../../src/extension/reviewSurfaces';
 import { SaveOrchestrator } from '../../src/extension/saveOrchestrator';
 import { createBlueprintArtifact, fixtureDirectiveIds } from '../fixtures/blueprints';
 import { fixtureInputs } from '../fixtures/saveInputs';
@@ -45,11 +50,19 @@ describe('local review surfaces', () => {
     const falsePositives = reviews.renderFalsePositiveReview();
 
     expect(audit).toContain('LINTEL Audit Review');
+    expect(audit).toContain('## Operator context');
+    expect(audit).toContain('Governed root');
+    expect(audit).toContain(REVIEW_SURFACE_LOCAL_ONLY_NOTICE);
+    expect(audit).toContain('Route posture: `RULE_ONLY` / `RULE_ONLY`');
     expect(audit).toContain('REQUIRE_PLAN');
     expect(proof).toContain('LOCAL_ONLY');
     expect(proof).toContain('Validation: VALID');
+    expect(proof).toContain(REVIEW_SURFACE_PROOF_REQUIRED_NOTICE);
+    expect(proof).toContain('Artifact path:');
     expect(falsePositives).toContain('Candidate entries');
     expect(falsePositives).toContain('src/auth/session.ts');
+    expect(falsePositives).toContain(REVIEW_SURFACE_FALSE_POSITIVE_NOTICE);
+    expect(falsePositives).toContain('Next action:');
   });
 
   it('keeps review surfaces available when audit history contains malformed lines', () => {
@@ -68,7 +81,9 @@ describe('local review surfaces', () => {
 
     expect(audit).toContain('Malformed lines skipped: 1');
     expect(audit).toContain('review is partial');
+    expect(audit).toContain(REVIEW_SURFACE_LOCAL_ONLY_NOTICE);
     expect(falsePositives).toContain('Malformed lines skipped: 1');
     expect(falsePositives).toContain('partial');
+    expect(falsePositives).toContain(REVIEW_SURFACE_FALSE_POSITIVE_NOTICE);
   });
 });

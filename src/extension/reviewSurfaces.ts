@@ -3,6 +3,7 @@ import path from 'node:path';
 import type { AuditEntry } from '../contracts/types';
 import { BlueprintArtifactStore } from '../core/blueprintArtifacts';
 import { LocalPerformanceRecorder, measureSync } from '../core/performance';
+import { RoutePolicyStore } from '../core/routerPolicy';
 import { WorkspaceMappingStore } from '../core/workspaceMapping';
 
 interface AuditReadResult {
@@ -10,15 +11,29 @@ interface AuditReadResult {
   malformedCount: number;
 }
 
+export const REVIEW_SURFACE_LOCAL_ONLY_NOTICE =
+  'Review surfaces are local-only and read-only. They summarize existing evidence but do not authorize, widen, or bypass save decisions.';
+
+export const REVIEW_SURFACE_ENFORCEMENT_NOTE =
+  'Enforcement note: fail-closed routing, proof requirements, and rule floors remain authoritative even when the operator wording becomes easier to read.';
+
+export const REVIEW_SURFACE_PROOF_REQUIRED_NOTICE =
+  'Proof-required states remain blocked until the linked local blueprint artifact is valid; placeholder, inferred, or silently repaired proof state never counts as sufficient.';
+
+export const REVIEW_SURFACE_FALSE_POSITIVE_NOTICE =
+  'False-positive candidates are advisory only. They do not rewrite audit history, demote recorded decisions, or weaken the enforcement floor.';
+
 export class LocalReviewSurfaceService {
   private readonly blueprintArtifacts: BlueprintArtifactStore;
   private readonly workspaceMapping: WorkspaceMappingStore;
   private readonly performanceRecorder: LocalPerformanceRecorder;
+  private readonly routePolicy: RoutePolicyStore;
 
   constructor(private readonly workspaceRoot: string) {
     this.blueprintArtifacts = new BlueprintArtifactStore(workspaceRoot);
     this.workspaceMapping = new WorkspaceMappingStore(workspaceRoot);
     this.performanceRecorder = new LocalPerformanceRecorder(workspaceRoot);
+    this.routePolicy = new RoutePolicyStore(workspaceRoot);
   }
 
   renderAuditReview(): string {
@@ -34,9 +49,14 @@ export class LocalReviewSurfaceService {
         const audit = readAuditEntries(auditPath);
         const recent = audit.entries.slice(-10).reverse();
         const counts = summarizeDecisionCounts(audit.entries);
+        const operatorContext = this.renderOperatorContext([
+          REVIEW_SURFACE_ENFORCEMENT_NOTE,
+        ]);
 
         return [
           '# LINTEL Audit Review',
+          '',
+          ...operatorContext,
           '',
           `- Total valid entries: ${audit.entries.length}`,
           `- Malformed lines skipped: ${audit.malformedCount}`,
@@ -57,9 +77,12 @@ export class LocalReviewSurfaceService {
             `### ${entry.ts} — ${entry.decision}`,
             `- File: ${entry.file_path}`,
             `- Risk: ${entry.risk_level}`,
+            `- Route posture: \`${entry.route_mode ?? 'RULE_ONLY'}\` / \`${entry.route_lane ?? 'RULE_ONLY'}\``,
+            `- Route fallback: \`${entry.route_fallback ?? 'NONE'}\``,
             `- Matched rules: ${entry.matched_rules.join(', ') || 'none'}`,
             `- Directive: ${entry.directive_id ?? 'none'}`,
             `- Blueprint: ${entry.blueprint_id ?? 'none'}`,
+            `- Next action: ${entry.next_action}`,
             '',
           ]),
         ].join('\n');
@@ -78,9 +101,15 @@ export class LocalReviewSurfaceService {
         const files = fs.existsSync(blueprintsDir)
           ? fs.readdirSync(blueprintsDir).filter((file) => file.endsWith('.md')).sort()
           : [];
+        const operatorContext = this.renderOperatorContext([
+          `Workspace mapping status: \`${mapping.status}\``,
+          REVIEW_SURFACE_PROOF_REQUIRED_NOTICE,
+        ]);
 
         const sections = [
           '# LINTEL Blueprint Review',
+          '',
+          ...operatorContext,
           '',
           `- Blueprint mode: ${mapping.mode}`,
           `- Mode status: ${mapping.status}`,
@@ -109,8 +138,11 @@ export class LocalReviewSurfaceService {
 
           sections.push(
             `### ${fileName}`,
+            `- Directive: ${directiveId}`,
             `- Validation: ${resolution.status}`,
             `- Reason: ${resolution.reason}`,
+            `- Next action: ${resolution.nextAction}`,
+            `- Artifact path: \`${resolution.link?.blueprintPath ?? this.blueprintArtifacts.blueprintPath(directiveId)}\``,
             '',
           );
         }
@@ -135,9 +167,15 @@ export class LocalReviewSurfaceService {
           .filter((entry) => entry.decision !== 'ALLOW')
           .slice(-10)
           .reverse();
+        const operatorContext = this.renderOperatorContext([
+          `Workspace mapping status: \`${mapping.status}\``,
+          REVIEW_SURFACE_FALSE_POSITIVE_NOTICE,
+        ]);
 
         return [
           '# LINTEL False-Positive Review',
+          '',
+          ...operatorContext,
           '',
           `- Workspace mapping status: ${mapping.status}`,
           `- Local review only: yes`,
@@ -156,15 +194,31 @@ export class LocalReviewSurfaceService {
             : candidates.flatMap((entry) => [
                 `### ${entry.file_path}`,
                 `- Decision: ${entry.decision}`,
+                `- Route posture: \`${entry.route_mode ?? 'RULE_ONLY'}\` / \`${entry.route_lane ?? 'RULE_ONLY'}\``,
+                `- Route fallback: \`${entry.route_fallback ?? 'NONE'}\``,
                 `- Reason: ${entry.reason}`,
                 `- Matched rules: ${entry.matched_rules.join(', ') || 'none'}`,
                 `- Directive linkage: ${entry.directive_id ?? 'none'}`,
+                `- Next action: ${entry.next_action}`,
                 '',
               ])),
         ].join('\n');
       },
       { workspace_root: this.workspaceRoot },
     );
+  }
+
+  private renderOperatorContext(notes: string[]): string[] {
+    const routePolicy = this.routePolicy.load();
+    return [
+      '## Operator context',
+      `- Governed root: \`${this.workspaceRoot}\``,
+      `- Route policy status: \`${routePolicy.status}\``,
+      `- Effective route mode: \`${routePolicy.config.mode}\``,
+      `- Route note: ${routePolicy.reason}`,
+      `- Review contract: ${REVIEW_SURFACE_LOCAL_ONLY_NOTICE}`,
+      ...notes.map((note) => `- ${note}`),
+    ];
   }
 }
 

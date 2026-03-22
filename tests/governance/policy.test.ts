@@ -274,6 +274,38 @@ describe('governance guards', () => {
     expect(testing).toContain('runtime status command must remain governance-anchored');
   });
 
+  it('anchors enforcement-related review-surface messaging to read-only, non-authorizing semantics', () => {
+    const reviewSurfaces = fs.readFileSync(
+      path.join(projectRoot, 'src', 'extension', 'reviewSurfaces.ts'),
+      'utf8',
+    );
+    const readme = fs.readFileSync(path.join(projectRoot, 'README.md'), 'utf8');
+    const architecture = fs.readFileSync(
+      path.join(projectRoot, 'docs', 'ARCHITECTURE.md'),
+      'utf8',
+    );
+    const testing = fs.readFileSync(
+      path.join(projectRoot, 'docs', 'TESTING.md'),
+      'utf8',
+    );
+
+    expect(reviewSurfaces).toContain('REVIEW_SURFACE_LOCAL_ONLY_NOTICE');
+    expect(reviewSurfaces).toContain(
+      'Review surfaces are local-only and read-only. They summarize existing evidence but do not authorize, widen, or bypass save decisions.',
+    );
+    expect(reviewSurfaces).toContain('REVIEW_SURFACE_PROOF_REQUIRED_NOTICE');
+    expect(reviewSurfaces).toContain(
+      'Proof-required states remain blocked until the linked local blueprint artifact is valid; placeholder, inferred, or silently repaired proof state never counts as sufficient.',
+    );
+    expect(reviewSurfaces).toContain('REVIEW_SURFACE_FALSE_POSITIVE_NOTICE');
+    expect(reviewSurfaces).toContain(
+      'False-positive candidates are advisory only. They do not rewrite audit history, demote recorded decisions, or weaken the enforcement floor.',
+    );
+    expect(readme).toContain('review surfaces remain local-only, read-only, and non-authorizing');
+    expect(architecture).toContain('review-surface wording remains descriptive or advisory only');
+    expect(testing).toContain('enforcement-related review-surface wording must remain governance-anchored');
+  });
+
   it('defines a local audit visibility cli script without mutation commands or remote endpoints', () => {
     const packageJson = JSON.parse(
       fs.readFileSync(path.join(projectRoot, 'package.json'), 'utf8'),

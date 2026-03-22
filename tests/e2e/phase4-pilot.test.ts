@@ -47,7 +47,9 @@ describe('phase 4 pilot scenarios', () => {
     const falsePositiveReview = reviews.renderFalsePositiveReview();
     expect(blueprintReview).toContain('LOCAL_ONLY');
     expect(blueprintReview).toContain('not authorized in Phase 5');
+    expect(blueprintReview).toContain('Proof-required states remain blocked');
     expect(falsePositiveReview).toContain('False-Positive Review');
+    expect(falsePositiveReview).toContain('advisory only');
 
     fs.rmSync(workspace, { recursive: true, force: true });
   });
