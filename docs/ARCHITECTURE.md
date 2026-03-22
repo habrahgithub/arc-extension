@@ -1,6 +1,7 @@
 # ARC — Audit Ready Core Architecture
 
 ## Core flow
+
 1. VS Code save events enter the extension lifecycle controller.
 2. The controller reads the last committed snapshot and current save mode.
 3. The save orchestrator loads optional local workspace mapping and route-policy config.
@@ -21,6 +22,7 @@
 18. Runtime status diagnostics report active workspace targeting and route posture without mutating save behavior.
 
 ## Phase 6.8 additions
+
 - Context Bus v1 packet scaffolding with bounded excerpt, authority tag, data-class default, and packet hash
 - route-policy config scaffolding with explicit `RULE_ONLY` fail-closed defaults
 - route-related audit metadata scaffolding with deterministic inactive values
@@ -39,6 +41,7 @@
 - preservation of Phase 5 save-time behavior while activation contracts are introduced
 
 ## Phase 7.0 additions
+
 - workspace-target resolution that prefers the nearest nested boundary (`.git`, `package.json`, or existing `.arc/`) inside the active VS Code workspace
 - per-target orchestrator/controller/review-surface caching so nested projects do not incorrectly share a parent `.arc/`
 - observational runtime status surface for governed-root, audit-path, route-policy-path, and active posture visibility
@@ -46,36 +49,75 @@
 - corrected internal install path centered on VSIX packaging and installation
 
 ## Phase 7.1 additions
+
 - governance-test anchoring for `lintel.showRuntimeStatus`
 - explicit runtime-status disclaimer constants guarding observational-only wording
 - hardened runtime-status notes covering cloud non-authorization and fail-closed baseline preservation
 
 ## Phase 7.2 additions
+
 - coherent operator-context summaries across the existing review surfaces
 - explicit review-surface contract constants for local-only, read-only, non-authorizing behavior
 - stronger proof-required and false-positive advisory wording anchored in governance tests
 
 ## Phase 7.3 additions
+
 - manifest identity freeze to `ARC — Audit Ready Core`
 - user-facing command titles aligned to `ARC:` while internal command ids remain `lintel.*`
 - explicit compatibility wording distinguishing the extension identity from ARC Console, Vault, or broader control-plane authority
 
 ## Phase 7.4 additions
+
 - bounded retry and timeout handling for the local model adapter
 - parser hardening that treats malformed or contradictory model output as explicit `PARSE_FAILURE`
 - local-only environment-backed runtime configuration for host, model, timeout, and retry count
 - expanded local performance instrumentation covering classification, rule evaluation, model evaluation, and total save assessment timing
 
+## Phase 7.5 additions
+
+- bounded welcome/onboarding surface for first-use operator guidance
+- `lintel.showWelcome` command (`ARC: Show Welcome Guide`) for onboarding
+- explicit onboarding wording distinguishing extension identity from ARC Console, Vault, or control-plane
+- governance tests anchoring onboarding truthfulness (no authorization, cloud, or coupling implication)
+
+## Phase 7.6 additions
+
+- proof-state messaging clarity refinements (7 states preserved, no redesign)
+- explicit distinction between local blueprints (`.arc/blueprints/`) and Axis execution packages
+- clarified template creation semantics (starting point, not authorization)
+- governance tests anchoring fail-closed messaging preservation
+
 ## Blueprint policy boundary
-- Shared/team blueprint handling is not authorized in Phase 6.6.
+
+- Shared/team blueprint handling is not authorized in Phase 5.
 - Template scaffolds are intentionally marked as incomplete until every required section is filled with directive-specific content.
 - Structural presence alone is insufficient for `REQUIRE_PLAN` authorization.
 
+## Proof-resolution states
+
+The extension validates REQUIRE_PLAN saves against 8 proof states:
+
+| State                     | Meaning                                                                      | Operator Action                                                                                   |
+| ------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `VALID`                   | Blueprint linkage is valid. All sections contain directive-specific content. | Proceed with plan-backed save.                                                                    |
+| `MISSING_DIRECTIVE`       | No directive ID provided. Hard enforcement block.                            | Provide directive ID (e.g., `LINTEL-PH5-001`) and create local blueprint.                         |
+| `INVALID_DIRECTIVE`       | Directive ID format is invalid.                                              | Use uppercase, hyphenated format (e.g., `LINTEL-PH5-001`).                                        |
+| `MISSING_ARTIFACT`        | No local blueprint file exists. Hard enforcement block.                      | Create `.arc/blueprints/<directive>.md`. Template is starting point — must complete all sections. |
+| `MISMATCHED_BLUEPRINT_ID` | Supplied blueprint path doesn't match canonical path.                        | Link to canonical path `.arc/blueprints/<directive>.md`.                                          |
+| `MALFORMED_ARTIFACT`      | Blueprint missing required sections or directive metadata.                   | Repair blueprint to include directive ID and all required sections.                               |
+| `INCOMPLETE_ARTIFACT`     | Blueprint contains placeholder text or `INCOMPLETE_TEMPLATE` banner.         | Replace all `[REQUIRED]` placeholders with directive-specific content.                            |
+| `UNAUTHORIZED_MODE`       | Non-LOCAL_ONLY mode requested.                                               | Use `LOCAL_ONLY` mode or request new Axis directive.                                              |
+
+**Note:** The extension validates only local blueprint files in `.arc/blueprints/`. Axis execution packages (in `agents/axis/`) are outside the extension's runtime.
+
 ## Audit integrity boundary
+
 `verifyChain()` is **file-level integrity only**. It verifies the hash chain across the files that are present, but it does **not** prove archive-existence completeness or detect wholesale deletion of the `.arc/` history.
 
 ## Local-model activation boundary
+
 Local-model activation in Phase 6.8 is bounded to the local lane only unless a separately approved phase widens it.
+
 - endpoint constraints for the local lane must remain local-only or be explicitly re-approved
 - prompt-injection exposure from bounded excerpts must be documented with schema-validation plus enforcement-floor mitigations
 - stronger audit-integrity claims require a separately approved trust-boundary design
@@ -83,6 +125,7 @@ Local-model activation in Phase 6.8 is bounded to the local lane only unless a s
 - non-local `OLLAMA_HOST` configuration must fail closed or remain explicitly operator-responsibility only; it must not imply cloud-lane activation
 
 ## Cloud fallback boundary
+
 - cloud fallback is optional, lab-only, and disabled by default
 - cloud evaluation may occur only for explicit saves
 - cloud evaluation may occur only after approved local fallback states:
@@ -95,6 +138,7 @@ Local-model activation in Phase 6.8 is bounded to the local lane only unless a s
 - cloud payload is bounded to `ContextPayload` only; full-file content, packet governance metadata, and workspace-wide context do not leave the machine
 
 ## Route-policy boundary
+
 - The default route mode is `RULE_ONLY`.
 - `.arc/router.json` may exist as an activation-contract file, but missing or invalid config fails closed to `RULE_ONLY`.
 - `LOCAL_PREFERRED` is local-only and may be accepted only when `local_lane_enabled: true` and `cloud_lane_enabled: false`.
@@ -109,6 +153,7 @@ Local-model activation in Phase 6.8 is bounded to the local lane only unless a s
 - `CLOUD_ELIGIBLE` and `CLOUD_ASSISTED` are bounded to the explicit cloud fallback contract of Phase 6.6; any broader exercise requires a Warden gate.
 
 ## Context Bus boundary
+
 - `authority_tag` must be locally asserted by trusted code and must remain `LINTEL_LOCAL_ENFORCEMENT`.
 - packet validation rejects non-default `data_class` values unless active cloud policy explicitly authorizes the configured packet class in Phase 6.6.
 - packet validation rejects non-default `sensitivity_marker` values in Phase 6.6.
@@ -117,6 +162,7 @@ Local-model activation in Phase 6.8 is bounded to the local lane only unless a s
 - no retrieval, embeddings, vector stores, remote transport, or uncontrolled workspace search may participate in packet construction.
 
 ## Router shell boundary
+
 - the router shell remains single-path and fail-closed.
 - the router shell uses the existing route-policy resolution path as its single authoritative source.
 - route metadata is truthful about configured mode, actual lane use, and fallback.
@@ -129,12 +175,14 @@ Local-model activation in Phase 6.8 is bounded to the local lane only unless a s
 - ambiguity and invalid route state fail closed and must never weaken the enforcement floor.
 
 ## Control-plane dependency boundary
+
 - ARC Console and Vault are not runtime save-path dependencies.
 - CLI failure must not weaken or block save enforcement.
 - Vault-ready export bundles are local handoff only.
 - Phase 6.8 may prepare local evidence bundles only; it may not require ARC, Vault, or any remote service to authorize a save.
 
 ## Runtime configuration and instrumentation boundary
+
 - local runtime configuration is bounded to host, model identifier, timeout, and retry count
 - missing or invalid runtime configuration fails closed to the established local baseline
 - non-local host configuration does not imply cloud readiness, cloud execution, or broader remote authority
@@ -142,6 +190,7 @@ Local-model activation in Phase 6.8 is bounded to the local lane only unless a s
 - warmup/readiness behavior must remain bounded support behavior and must not introduce autonomous decisioning or background save authorization
 
 ## Workspace-targeting boundary
+
 - effective governed root must be truthful for the active file under evaluation
 - nested project targeting may refine evidence ownership but must not weaken route decisions
 - diagnostics may report workspace-target choice and route posture but may not mutate save outcomes
@@ -152,12 +201,14 @@ Local-model activation in Phase 6.8 is bounded to the local lane only unless a s
 - existing review commands may show governed-root and route-posture context, but those summaries do not change route or proof authority
 
 ## Identity boundary
+
 - ARC naming identifies the VS Code extension only; it does not imply ARC Console coupling, Vault dependency, or control-plane authority
 - command ids remain `lintel.*` until a separately approved package authorizes migration
 - branding may strengthen product identity but must not imply cloud readiness, marketplace readiness, or broader runtime permission
 - welcome and onboarding work remain outside the identity-freeze package boundary
 
 ## Audit Visibility CLI boundary
+
 - Commands are limited to `query`, `trace-directive`, `trace-route`, `perf`, `verify`, and `export`.
 - The CLI reads `.arc/audit.jsonl`, `.arc/archive/*.jsonl`, `.arc/perf.jsonl`, and `.arc/blueprints/<directive_id>.md` when directive trace is requested.
 - Malformed audit or perf lines are surfaced as partial/incomplete evidence and are never silently normalized into valid history.
@@ -165,6 +216,7 @@ Local-model activation in Phase 6.8 is bounded to the local lane only unless a s
 - Route visibility is observational only and remains truthful to the current routing posture.
 
 ## Vault-ready export boundary
+
 - export schema version is explicit and must be detectable by downstream consumers
 - bundle type is explicit and distinct from runtime audit files
 - direct evidence sections remain distinguishable from derived summary sections and validation-result sections
@@ -174,6 +226,7 @@ Local-model activation in Phase 6.8 is bounded to the local lane only unless a s
 - no background transport path, uploader, or ARC runtime dependency may be introduced in Phase 6.7
 
 ## Controlled activation review boundary
+
 - integrated validation must compare every assembled path against the hardened baseline
 - no routed or exported path may be accepted if it is looser than the hardened baseline
 - rollback target remains hardened-equivalent posture with `RULE_ONLY`, no sustained lanes, unchanged proof enforcement, local review surfaces intact, and no ARC/Vault runtime dependency
@@ -181,6 +234,7 @@ Local-model activation in Phase 6.8 is bounded to the local lane only unless a s
 - recommendation output is advisory only and must not self-activate any sustained posture
 
 ## Still deferred
+
 - actual team/shared-repo deployment of blueprint proof workflow
 - dashboards or remote review surfaces
 - router-shell execution beyond approved phases and broader cloud enablement

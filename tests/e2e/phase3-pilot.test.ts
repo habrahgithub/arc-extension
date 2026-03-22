@@ -52,7 +52,9 @@ describe('phase 3 pilot scenarios', () => {
       },
     );
     expect(malformedArtifact.decision.lease_status).toBe('BYPASSED');
-    expect(malformedArtifact.decision.reason).toContain('missing required Phase 5 sections');
+    expect(malformedArtifact.decision.reason).toContain(
+      'missing required Phase 5 sections',
+    );
 
     const malformedDirective = orchestrator.commitAssessment(
       await orchestrator.assessSave(fixtureInputs.auth),
@@ -62,7 +64,8 @@ describe('phase 3 pilot scenarios', () => {
       },
     );
     expect(malformedDirective.decision.lease_status).toBe('BYPASSED');
-    expect(malformedDirective.decision.reason).toContain('not valid for Phase 5 linkage');
+    expect(malformedDirective.decision.reason).toContain('not valid');
+    expect(malformedDirective.decision.reason).toContain('uppercase');
 
     fs.rmSync(workspace, { recursive: true, force: true });
   });

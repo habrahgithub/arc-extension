@@ -7,11 +7,30 @@ import type {
 } from '../contracts/types';
 
 const REQUIRED_SECTIONS = [
-  { heading: '## Objective', placeholder: '[REQUIRED] Describe the specific change intent for this save.' },
-  { heading: '## Scope', placeholder: '[REQUIRED] List the files or surfaces this directive covers.' },
-  { heading: '## Constraints', placeholder: '[REQUIRED] Record the non-scope, risk bounds, and governance constraints.' },
-  { heading: '## Acceptance Criteria', placeholder: '[REQUIRED] Define how this change will be reviewed, tested, and validated.' },
-  { heading: '## Rollback Note', placeholder: '[REQUIRED] Describe how to revert the change locally if the save must be undone.' },
+  {
+    heading: '## Objective',
+    placeholder:
+      '[REQUIRED] Describe the specific change intent for this save.',
+  },
+  {
+    heading: '## Scope',
+    placeholder: '[REQUIRED] List the files or surfaces this directive covers.',
+  },
+  {
+    heading: '## Constraints',
+    placeholder:
+      '[REQUIRED] Record the non-scope, risk bounds, and governance constraints.',
+  },
+  {
+    heading: '## Acceptance Criteria',
+    placeholder:
+      '[REQUIRED] Define how this change will be reviewed, tested, and validated.',
+  },
+  {
+    heading: '## Rollback Note',
+    placeholder:
+      '[REQUIRED] Describe how to revert the change locally if the save must be undone.',
+  },
 ] as const;
 
 export const DIRECTIVE_ID_PATTERN = /^[A-Z0-9]+(?:-[A-Z0-9]+)+$/;
@@ -44,7 +63,10 @@ export class BlueprintArtifactStore {
   }
 
   blueprintPath(directiveId: string): string {
-    return path.join(this.workspaceRoot, this.canonicalBlueprintId(directiveId));
+    return path.join(
+      this.workspaceRoot,
+      this.canonicalBlueprintId(directiveId),
+    );
   }
 
   ensureBlueprintTemplate(directiveId: string): BlueprintArtifactLink {
@@ -56,7 +78,11 @@ export class BlueprintArtifactStore {
     fs.mkdirSync(path.dirname(blueprintPath), { recursive: true });
 
     if (!fs.existsSync(blueprintPath)) {
-      fs.writeFileSync(blueprintPath, renderBlueprintTemplate(directiveId), 'utf8');
+      fs.writeFileSync(
+        blueprintPath,
+        renderBlueprintTemplate(directiveId),
+        'utf8',
+      );
     }
 
     return {
@@ -72,8 +98,10 @@ export class BlueprintArtifactStore {
       return {
         ok: false,
         status: 'UNAUTHORIZED_MODE',
-        reason: 'Shared or team blueprint handling is not authorized in Phase 5.',
-        nextAction: 'Use LOCAL_ONLY blueprint handling or request a new Axis directive.',
+        reason:
+          'Shared or team blueprint handling is not authorized in Phase 5. The extension operates in LOCAL_ONLY mode.',
+        nextAction:
+          'Use LOCAL_ONLY blueprint handling or request a new Axis directive for team features.',
       };
     }
 
@@ -81,9 +109,10 @@ export class BlueprintArtifactStore {
       return {
         ok: false,
         status: 'MISSING_DIRECTIVE',
-        reason: 'REQUIRE_PLAN saves need a directive ID and linked local blueprint artifact.',
+        reason:
+          'REQUIRE_PLAN saves need a directive ID (e.g., LINTEL-PH5-001) and a linked local blueprint artifact.',
         nextAction:
-          'Provide a directive ID such as LINTEL-PH5-001 and create the local blueprint before saving.',
+          'Provide a directive ID and create the local blueprint before saving. Note: This is a hard enforcement block, not a warning.',
       };
     }
 
@@ -91,9 +120,9 @@ export class BlueprintArtifactStore {
       return {
         ok: false,
         status: 'INVALID_DIRECTIVE',
-        reason: `Directive ID "${proof.directiveId}" is not valid for Phase 5 linkage.`,
+        reason: `Directive ID "${proof.directiveId}" is not valid. Phase 5 requires uppercase, hyphenated format (e.g., LINTEL-PH5-001).`,
         nextAction:
-          'Use an uppercase, hyphenated directive ID such as LINTEL-PH5-001.',
+          'Use an uppercase, hyphenated directive ID. Example: LINTEL-PH5-001',
       };
     }
 
@@ -102,8 +131,9 @@ export class BlueprintArtifactStore {
       return {
         ok: false,
         status: 'MISMATCHED_BLUEPRINT_ID',
-        reason: 'The supplied blueprint linkage does not match the canonical Phase 5 artifact path.',
-        nextAction: `Link the save to ${canonicalBlueprintId}.`,
+        reason:
+          'The supplied blueprint linkage does not match the canonical Phase 5 artifact path.',
+        nextAction: `Link the save to ${canonicalBlueprintId}. The extension validates only local blueprint files in .arc/blueprints/, not Axis execution packages.`,
       };
     }
 
@@ -112,8 +142,9 @@ export class BlueprintArtifactStore {
       return {
         ok: false,
         status: 'MISSING_ARTIFACT',
-        reason: 'No local blueprint artifact exists for this REQUIRE_PLAN save.',
-        nextAction: `Create ${canonicalBlueprintId} before saving.`,
+        reason:
+          'No local blueprint artifact exists for this REQUIRE_PLAN save.',
+        nextAction: `Create ${canonicalBlueprintId} before saving. Note: Template creation is the starting point — you must replace all placeholder content before the blueprint can authorize a save.`,
       };
     }
 
@@ -122,9 +153,10 @@ export class BlueprintArtifactStore {
       return {
         ok: false,
         status: 'MALFORMED_ARTIFACT',
-        reason: 'The linked blueprint artifact is missing required Phase 5 sections or directive metadata.',
+        reason:
+          'The linked blueprint artifact is missing required Phase 5 sections or directive metadata.',
         nextAction:
-          'Repair the local blueprint so it includes the directive id and all required sections.',
+          'Repair the local blueprint so it includes the directive ID and all required sections (Objective, Scope, Constraints, Acceptance Criteria, Rollback Note).',
       };
     }
 
@@ -133,16 +165,17 @@ export class BlueprintArtifactStore {
       return {
         ok: false,
         status: 'INCOMPLETE_ARTIFACT',
-        reason: completeness.reason,
+        reason: `${completeness.reason} The blueprint must contain directive-specific content, not placeholder text.`,
         nextAction:
-          'Replace all placeholder guidance with directive-specific content before saving.',
+          'Replace all placeholder guidance (marked [REQUIRED]) with directive-specific content. The INCOMPLETE_TEMPLATE status banner must be removed by completing all sections.',
       };
     }
 
     return {
       ok: true,
       status: 'VALID',
-      reason: 'Blueprint linkage is valid.',
+      reason:
+        'Blueprint linkage is valid. All required sections contain directive-specific content.',
       nextAction: 'Proceed with the plan-backed save.',
       link: {
         directiveId: proof.directiveId,
@@ -173,12 +206,17 @@ export function renderBlueprintTemplate(directiveId: string): string {
   ].join('\n');
 }
 
-export function hasBlueprintStructure(contents: string, directiveId: string): boolean {
+export function hasBlueprintStructure(
+  contents: string,
+  directiveId: string,
+): boolean {
   if (!contents.includes(`**Directive ID:** ${directiveId}`)) {
     return false;
   }
 
-  return REQUIRED_SECTIONS.every((section) => contents.includes(section.heading));
+  return REQUIRED_SECTIONS.every((section) =>
+    contents.includes(section.heading),
+  );
 }
 
 export function validateBlueprintContent(
