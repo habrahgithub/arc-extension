@@ -110,8 +110,8 @@ LINTEL uses local-only configuration for runtime parameters. No cloud defaults o
 |----------|---------|-------------|
 | \`OLLAMA_HOST\` | \`127.0.0.1:11434\` | Local Ollama endpoint |
 | \`SWD_SUBAGENT_MODEL\` | \`llama3.2:3b\` | Local model for AI-assisted decisions |
-| \`OLLAMA_TIMEOUT_MS\` | \`300000\` | Timeout for model requests (ms) |
-| \`OLLAMA_RETRIES\` | \`2\` | Number of retry attempts |
+| \`OLLAMA_TIMEOUT_MS\` | \`2000\` | Timeout for model requests (2 seconds) |
+| \`OLLAMA_RETRIES\` | \`1\` | Number of retry attempts |
 
 ---
 
