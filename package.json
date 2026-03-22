@@ -1,7 +1,7 @@
 {
   "name": "lintel",
-  "displayName": "LINTEL Code",
-  "description": "Local-first IDE governance layer for safe AI-assisted development.",
+  "displayName": "ARC — Audit Ready Core",
+  "description": "Governed code enforcement for AI-assisted development in a local-first VS Code extension.",
   "version": "0.1.0",
   "private": true,
   "publisher": "swd",
@@ -24,19 +24,19 @@
     "commands": [
       {
         "command": "lintel.reviewAudit",
-        "title": "LINTEL: Review Audit Log"
+        "title": "ARC: Review Audit Log"
       },
       {
         "command": "lintel.showRuntimeStatus",
-        "title": "LINTEL: Show Active Workspace Status"
+        "title": "ARC: Show Active Workspace Status"
       },
       {
         "command": "lintel.reviewBlueprints",
-        "title": "LINTEL: Review Blueprint Proofs"
+        "title": "ARC: Review Blueprint Proofs"
       },
       {
         "command": "lintel.reviewFalsePositives",
-        "title": "LINTEL: Review False-Positive Candidates"
+        "title": "ARC: Review False-Positive Candidates"
       }
     ]
   },

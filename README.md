@@ -1,6 +1,6 @@
-# LINTEL Code
+# ARC — Audit Ready Core
 
-Phase 7.2 operator-surface refinement of the LINTEL local-first IDE governance layer.
+Phase 7.3 identity freeze of the ARC local-first VS Code governance extension, formerly labeled LINTEL Code.
 
 ## Phase 7.0 scope
 - VS Code save-time governance for `ALLOW / WARN / REQUIRE_PLAN / BLOCK`
@@ -45,7 +45,7 @@ Phase 7.2 operator-surface refinement of the LINTEL local-first IDE governance l
 5. Internal smoke/UAT harnesses must remain deterministic and must not auto-repair malformed evidence.
 
 ## Phase 7.1 governance hardening boundary
-1. `LINTEL: Show Active Workspace Status` remains an observational-only diagnostic surface.
+1. `ARC: Show Active Workspace Status` remains an observational-only diagnostic surface.
 2. Cloud-related fields in runtime status are factual configuration/reporting values only.
 3. Runtime status must not imply cloud readiness, approval, or authorization.
 4. Fail-closed posture reporting must remain truthful for missing/invalid policy, fallback, and auto-save cases.
@@ -58,8 +58,14 @@ Phase 7.2 operator-surface refinement of the LINTEL local-first IDE governance l
 4. Blueprint review must reflect real local artifact state only; placeholder or inferred proof state never counts as valid.
 5. No new dashboards, panels, or broader product UI are authorized in this phase.
 
+## Phase 7.3 identity boundary
+1. ARC is the extension identity only; it does not imply ARC Console coupling, Vault dependency, or control-plane authority.
+2. Internal command ids remain `lintel.*` for compatibility until a separately approved package authorizes migration.
+3. ARC naming must not imply cloud readiness, marketplace readiness, or broader authorization than the extension actually has.
+4. Welcome and onboarding work remain deferred until a separate package authorizes them.
+
 ## Phase 6.8 activation-contract boundary
-1. LINTEL may load route-policy config from `.arc/router.json`.
+1. ARC may load route-policy config from `.arc/router.json`.
 2. Missing or invalid route-policy config fails closed to `RULE_ONLY`.
 3. Context Bus v1 packets remain minimal, local, and bounded to excerpt-level context.
 4. Route-related audit metadata must remain truthful and must not imply that local or cloud routing executed when it did not.
@@ -77,15 +83,15 @@ Phase 7.2 operator-surface refinement of the LINTEL local-first IDE governance l
 
 ## Proof workflow
 1. `REQUIRE_PLAN` requests a directive ID.
-2. LINTEL validates the canonical artifact path `.arc/blueprints/<directive_id>.md` under enforced `LOCAL_ONLY` mode.
+2. ARC validates the canonical artifact path `.arc/blueprints/<directive_id>.md` under enforced `LOCAL_ONLY` mode.
 3. Save may proceed only when the blueprint is complete, local-only, and linked in the audit entry via `directive_id` and `blueprint_id`.
 4. Local review surfaces remain available even if malformed audit lines are present; malformed lines are skipped and reported as partial review warnings.
 
 ## Local review commands
-- `LINTEL: Review Audit Log`
-- `LINTEL: Show Active Workspace Status`
-- `LINTEL: Review Blueprint Proofs`
-- `LINTEL: Review False-Positive Candidates`
+- `ARC: Review Audit Log`
+- `ARC: Show Active Workspace Status`
+- `ARC: Review Blueprint Proofs`
+- `ARC: Review False-Positive Candidates`
 
 ## Review-surface contract
 - review surfaces summarize existing local evidence only
@@ -95,13 +101,13 @@ Phase 7.2 operator-surface refinement of the LINTEL local-first IDE governance l
 - false-positive candidates are advisory only and do not lower the enforcement floor
 
 ## Workspace targeting
-- LINTEL now chooses the effective governed root truthfully per active file.
+- ARC now chooses the effective governed root truthfully per active file.
 - It prefers the nearest nested project boundary inside the active VS Code workspace when a child root contains one of:
   - `.git`
   - `package.json`
   - `.arc/`
-- If no nested boundary exists, LINTEL uses the active VS Code workspace folder root.
-- Use `LINTEL: Show Active Workspace Status` to inspect:
+- If no nested boundary exists, ARC uses the active VS Code workspace folder root.
+- Use `ARC: Show Active Workspace Status` to inspect:
   - active file
   - workspace folder root
   - effective governed root
@@ -109,6 +115,7 @@ Phase 7.2 operator-surface refinement of the LINTEL local-first IDE governance l
   - route-policy path
   - active route posture
 - Runtime status is descriptive only; its cloud-related fields do not imply readiness, approval, or authorization.
+- ARC naming identifies the VS Code extension only. It does not imply ARC Console coupling, Vault dependency, or new control-plane authority.
 
 ## Internal install / run path
 Validated local/internal path:
@@ -123,7 +130,8 @@ Validated local/internal path:
 Notes:
 - some `code` CLI environments do not support `--extensionDevelopmentPath`
 - the VSIX path is the validated internal install path for this repo
-- use `LINTEL: Show Active Workspace Status` after install to verify audit targeting
+- use `ARC: Show Active Workspace Status` after install to verify audit targeting
+- package name and internal command ids remain `lintel` / `lintel.*` for compatibility in this phase
 
 ## Audit Visibility CLI
 - Run with `npm run audit:cli -- <command> [options]`

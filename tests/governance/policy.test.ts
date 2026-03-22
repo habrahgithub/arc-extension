@@ -306,6 +306,45 @@ describe('governance guards', () => {
     expect(testing).toContain('enforcement-related review-surface wording must remain governance-anchored');
   });
 
+  it('anchors the Phase 7.3 identity freeze without command-id migration or control-plane implication', () => {
+    const packageJson = JSON.parse(
+      fs.readFileSync(path.join(projectRoot, 'package.json'), 'utf8'),
+    ) as {
+      name: string;
+      displayName: string;
+      description: string;
+      contributes?: { commands?: Array<{ command: string; title: string }> };
+    };
+    const readme = fs.readFileSync(path.join(projectRoot, 'README.md'), 'utf8');
+    const architecture = fs.readFileSync(
+      path.join(projectRoot, 'docs', 'ARCHITECTURE.md'),
+      'utf8',
+    );
+    const testing = fs.readFileSync(
+      path.join(projectRoot, 'docs', 'TESTING.md'),
+      'utf8',
+    );
+
+    const commands = packageJson.contributes?.commands ?? [];
+
+    expect(packageJson.name).toBe('lintel');
+    expect(packageJson.displayName).toBe('ARC — Audit Ready Core');
+    expect(packageJson.description).toContain('Governed code enforcement');
+    expect(commands).toEqual(
+      expect.arrayContaining([
+        { command: 'lintel.reviewAudit', title: 'ARC: Review Audit Log' },
+        { command: 'lintel.showRuntimeStatus', title: 'ARC: Show Active Workspace Status' },
+        { command: 'lintel.reviewBlueprints', title: 'ARC: Review Blueprint Proofs' },
+        { command: 'lintel.reviewFalsePositives', title: 'ARC: Review False-Positive Candidates' },
+      ]),
+    );
+    expect(readme).toContain('Internal command ids remain `lintel.*` for compatibility');
+    expect(readme).toContain('ARC naming identifies the VS Code extension only.');
+    expect(architecture).toContain('command ids remain `lintel.*` until a separately approved package authorizes migration');
+    expect(testing).toContain('user-facing command titles may change, but command ids must remain `lintel.*`');
+    expect(testing).toContain('ARC naming must not imply ARC Console coupling, Vault dependency, cloud readiness, or broader runtime authority');
+  });
+
   it('defines a local audit visibility cli script without mutation commands or remote endpoints', () => {
     const packageJson = JSON.parse(
       fs.readFileSync(path.join(projectRoot, 'package.json'), 'utf8'),

@@ -1,4 +1,4 @@
-# LINTEL Phase 7.0 Architecture
+# ARC — Audit Ready Core Architecture
 
 ## Core flow
 1. VS Code save events enter the extension lifecycle controller.
@@ -54,6 +54,11 @@
 - coherent operator-context summaries across the existing review surfaces
 - explicit review-surface contract constants for local-only, read-only, non-authorizing behavior
 - stronger proof-required and false-positive advisory wording anchored in governance tests
+
+## Phase 7.3 additions
+- manifest identity freeze to `ARC — Audit Ready Core`
+- user-facing command titles aligned to `ARC:` while internal command ids remain `lintel.*`
+- explicit compatibility wording distinguishing the extension identity from ARC Console, Vault, or broader control-plane authority
 
 ## Blueprint policy boundary
 - Shared/team blueprint handling is not authorized in Phase 6.6.
@@ -130,6 +135,12 @@ Local-model activation in Phase 6.8 is bounded to the local lane only unless a s
 - cloud-related diagnostic fields are descriptive configuration facts only and do not imply readiness, approval, or authorization
 - review-surface wording remains descriptive or advisory only and must not imply approval, clearance, or save authorization
 - existing review commands may show governed-root and route-posture context, but those summaries do not change route or proof authority
+
+## Identity boundary
+- ARC naming identifies the VS Code extension only; it does not imply ARC Console coupling, Vault dependency, or control-plane authority
+- command ids remain `lintel.*` until a separately approved package authorizes migration
+- branding may strengthen product identity but must not imply cloud readiness, marketplace readiness, or broader runtime permission
+- welcome and onboarding work remain outside the identity-freeze package boundary
 
 ## Audit Visibility CLI boundary
 - Commands are limited to `query`, `trace-directive`, `trace-route`, `perf`, `verify`, and `export`.
