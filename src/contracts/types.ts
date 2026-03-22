@@ -35,7 +35,11 @@ export type FallbackCause =
 export type LeaseStatus = 'NEW' | 'REUSED' | 'EXPIRED' | 'BYPASSED';
 export type RiskFlag = 'AUTH_CHANGE' | 'SCHEMA_CHANGE' | 'CONFIG_CHANGE';
 export type SaveMode = 'EXPLICIT' | 'AUTO';
-export type AutoSaveMode = 'off' | 'afterDelay' | 'onFocusChange' | 'onWindowChange';
+export type AutoSaveMode =
+  | 'off'
+  | 'afterDelay'
+  | 'onFocusChange'
+  | 'onWindowChange';
 export type BlueprintMode = 'LOCAL_ONLY' | 'TEAM_SHARED';
 
 export interface RuleMatcher {
@@ -81,6 +85,14 @@ export interface DecisionPayload {
   route_fallback?: RouteFallback;
   route_policy_hash?: string;
   evaluation_lane?: Exclude<RouteLane, 'RULE_ONLY'>;
+  // Phase 7.7 — Trigger visibility fields
+  save_mode?: SaveMode;
+  auto_save_mode?: AutoSaveMode;
+  model_availability_status?:
+    | 'DISABLED_BY_CONFIG'
+    | 'UNAVAILABLE_AT_RUNTIME'
+    | 'AVAILABLE_AND_USED'
+    | 'NOT_ATTEMPTED';
 }
 
 export interface ContextPayload {
@@ -435,8 +447,12 @@ export interface AuditExportBundle {
     audit_slice: AuditExportSection<AuditQueryResult>;
     route_trace: AuditExportSection<Omit<RouteTraceResult, 'summaries'>>;
     route_summary: AuditExportSection<RouteTraceSummary[]>;
-    perf_slice: AuditExportSection<Omit<PerfSummaryResult, 'operation_summary'>>;
-    perf_operation_summary: AuditExportSection<PerfSummaryResult['operation_summary']>;
+    perf_slice: AuditExportSection<
+      Omit<PerfSummaryResult, 'operation_summary'>
+    >;
+    perf_operation_summary: AuditExportSection<
+      PerfSummaryResult['operation_summary']
+    >;
     audit_integrity: AuditExportSection<AuditVerificationResult>;
     directive_linkage?: AuditExportSection<{
       directive_id: string;

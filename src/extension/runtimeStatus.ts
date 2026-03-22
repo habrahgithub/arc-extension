@@ -1,11 +1,31 @@
 import path from 'node:path';
-import type { AutoSaveMode, RoutePolicyResolution } from '../contracts/types';
+import type {
+  AutoSaveMode,
+  RoutePolicyResolution,
+  Decision,
+  DecisionSource,
+  FallbackCause,
+  LeaseStatus,
+  RouteLane,
+} from '../contracts/types';
 import type { WorkspaceTargetResolution } from './workspaceTargeting';
 
 export interface RuntimeStatusSnapshot {
   target: WorkspaceTargetResolution;
   autoSaveMode: AutoSaveMode;
   routePolicy: RoutePolicyResolution;
+  // Phase 7.7 — Trigger visibility fields
+  lastDecision?: {
+    decision: Decision;
+    source: DecisionSource;
+    fallbackCause: FallbackCause;
+    evaluationLane?: RouteLane;
+    leaseStatus: LeaseStatus;
+    saveMode?: 'EXPLICIT' | 'AUTO';
+    autoSaveMode?: AutoSaveMode;
+    timestamp: string;
+    filePath: string;
+  };
 }
 
 export const RUNTIME_STATUS_OBSERVATIONAL_NOTICE =
@@ -37,22 +57,35 @@ function describeSaveContext(snapshot: RuntimeStatusSnapshot): string {
     return 'Current route policy state would fail closed to `RULE_ONLY` because the configured route policy is missing or invalid.';
   }
 
-  if (snapshot.autoSaveMode !== 'off' && snapshot.routePolicy.config.mode !== 'RULE_ONLY') {
+  if (
+    snapshot.autoSaveMode !== 'off' &&
+    snapshot.routePolicy.config.mode !== 'RULE_ONLY'
+  ) {
     return 'Auto-save remains reduced-guarantee and would still fail closed to `RULE_ONLY` even when a less strict routed mode is configured.';
   }
 
   return 'Current posture preserves the established fail-closed enforcement floor for the active workspace root.';
 }
 
-export function renderRuntimeStatusMarkdown(snapshot: RuntimeStatusSnapshot): string {
-  const auditPath = path.join(snapshot.target.effectiveRoot, '.arc', 'audit.jsonl');
-  const routerPath = path.join(snapshot.target.effectiveRoot, '.arc', 'router.json');
+export function renderRuntimeStatusMarkdown(
+  snapshot: RuntimeStatusSnapshot,
+): string {
+  const auditPath = path.join(
+    snapshot.target.effectiveRoot,
+    '.arc',
+    'audit.jsonl',
+  );
+  const routerPath = path.join(
+    snapshot.target.effectiveRoot,
+    '.arc',
+    'router.json',
+  );
   const markers =
     snapshot.target.markers.length > 0
       ? snapshot.target.markers.map((marker) => `\`${marker}\``).join(', ')
       : 'none detected';
 
-  return [
+  const sections = [
     '# LINTEL Active Workspace Status',
     '',
     `> ${RUNTIME_STATUS_OBSERVATIONAL_NOTICE}`,
@@ -81,5 +114,98 @@ export function renderRuntimeStatusMarkdown(snapshot: RuntimeStatusSnapshot): st
     `- ${RUNTIME_STATUS_FAIL_CLOSED_NOTE}`,
     `- ${RUNTIME_STATUS_BASELINE_NOTE}`,
     `- ${RUNTIME_STATUS_CLOUD_NOTICE}`,
-  ].join('\n');
+  ];
+
+  // Phase 7.7 — Last Save Decision section
+  if (snapshot.lastDecision) {
+    const last = snapshot.lastDecision;
+    const modelStatus = describeModelAvailability(
+      last.source,
+      last.fallbackCause,
+    );
+    const triggerDesc = describeTriggerSource(last.saveMode, last.autoSaveMode);
+    const evalLaneDesc = last.evaluationLane ?? 'RULE_ONLY';
+    const leaseDesc = describeLeaseStatus(last.leaseStatus);
+
+    sections.push(
+      '',
+      '## Last Save Decision',
+      '',
+      `> Descriptive only: this summary explains what happened. It does not authorize, override, or alter enforcement.`,
+      '',
+      `- Decision: \`${last.decision}\``,
+      `- File: \`${last.filePath}\``,
+      `- Timestamp: \`${last.timestamp}\``,
+      `- Trigger: ${triggerDesc}`,
+      `- Model availability: ${modelStatus}`,
+      `- Evaluation lane: \`${evalLaneDesc}\``,
+      `- Lease status: ${leaseDesc}`,
+      '',
+      `- ${RUNTIME_STATUS_OBSERVATIONAL_NOTICE}`,
+    );
+  }
+
+  return sections.join('\n');
+}
+
+function describeModelAvailability(
+  source: DecisionSource,
+  fallbackCause: FallbackCause,
+): string {
+  // WRD-0072: Explicitly distinguish degraded/fallback from full evaluation
+  if (source === 'MODEL_DISABLED' || fallbackCause === 'MODEL_DISABLED') {
+    return '❌ Disabled by configuration (model not attempted)';
+  }
+  if (source === 'FALLBACK' && fallbackCause === 'UNAVAILABLE') {
+    return '⚠️ Unavailable at runtime (fallback to rule-only)';
+  }
+  if (source === 'FALLBACK' && fallbackCause === 'TIMEOUT') {
+    return '⚠️ Timed out at runtime (fallback to rule-only)';
+  }
+  if (source === 'FALLBACK' && fallbackCause === 'PARSE_FAILURE') {
+    return '⚠️ Parse failure at runtime (fallback to rule-only)';
+  }
+  if (source === 'MODEL' || source === 'CLOUD_MODEL') {
+    return '✅ Available and used';
+  }
+  if (source === 'RULE' || source === 'FALLBACK') {
+    return 'ℹ️ Rule-only evaluation (model not required)';
+  }
+  return 'ℹ️ Not attempted';
+}
+
+function describeTriggerSource(
+  saveMode?: 'EXPLICIT' | 'AUTO',
+  autoSaveMode?: AutoSaveMode,
+): string {
+  if (!saveMode) {
+    return 'Unknown';
+  }
+  if (saveMode === 'EXPLICIT') {
+    return 'Explicit user save (Ctrl+S / Cmd+S)';
+  }
+  // Auto-save modes
+  switch (autoSaveMode) {
+    case 'afterDelay':
+      return 'Auto-save after delay';
+    case 'onFocusChange':
+      return 'Auto-save on focus change';
+    case 'onWindowChange':
+      return 'Auto-save on window change';
+    default:
+      return 'Auto-save (mode unknown)';
+  }
+}
+
+function describeLeaseStatus(leaseStatus: LeaseStatus): string {
+  switch (leaseStatus) {
+    case 'NEW':
+      return 'Fresh evaluation (decision cached for reuse)';
+    case 'REUSED':
+      return 'Reused from lease (same file state)';
+    case 'EXPIRED':
+      return 'Lease expired (fresh evaluation required)';
+    case 'BYPASSED':
+      return 'Bypassed (not eligible for lease)';
+  }
 }

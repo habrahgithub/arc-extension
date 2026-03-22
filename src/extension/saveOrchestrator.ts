@@ -26,8 +26,16 @@ import { buildContext } from '../core/contextBuilder';
 import { buildContextPacket } from '../core/contextPacket';
 import { enforceMinimumFloor } from '../core/decisionPolicy';
 import { DecisionLeaseStore } from '../core/decisionLease';
-import { LocalPerformanceRecorder, measureAsync, measureSync } from '../core/performance';
-import { buildRouteMetadata, RoutePolicyStore, RouterShell } from '../core/routerPolicy';
+import {
+  LocalPerformanceRecorder,
+  measureAsync,
+  measureSync,
+} from '../core/performance';
+import {
+  buildRouteMetadata,
+  RoutePolicyStore,
+  RouterShell,
+} from '../core/routerPolicy';
 import { DEFAULT_RULES } from '../core/rules';
 import { evaluateRules } from '../core/ruleEngine';
 import { WorkspaceMappingStore } from '../core/workspaceMapping';
@@ -72,17 +80,24 @@ export class SaveOrchestrator {
           (entry) => this.performanceRecorder.record(entry),
           'classify_file',
           () =>
-            classifyFile(
-              input,
-              [...DEFAULT_RULES, ...mapping.rules],
-              { additionalUiSegments: mapping.uiSegments },
-            ),
+            classifyFile(input, [...DEFAULT_RULES, ...mapping.rules], {
+              additionalUiSegments: mapping.uiSegments,
+            }),
           { file_path: input.filePath, save_mode: input.saveMode },
         );
         const routePolicy = this.routePolicy.load();
         const context = buildContext(classification, input);
-        const contextPacket = buildContextPacket(classification, input, undefined, routePolicy);
-        const routerShell = this.routerShell.resolve(routePolicy, contextPacket, input);
+        const contextPacket = buildContextPacket(
+          classification,
+          input,
+          undefined,
+          routePolicy,
+        );
+        const routerShell = this.routerShell.resolve(
+          routePolicy,
+          contextPacket,
+          input,
+        );
         const ruleDecision = this.withRouteMetadata(
           measureSync(
             (entry) => this.performanceRecorder.record(entry),
@@ -97,7 +112,11 @@ export class SaveOrchestrator {
           routerShell,
         );
 
-        const reusedLease = this.getReusableDecision(input, classification, ruleDecision);
+        const reusedLease = this.getReusableDecision(
+          input,
+          classification,
+          ruleDecision,
+        );
         if (reusedLease) {
           return {
             classification,
@@ -147,7 +166,11 @@ export class SaveOrchestrator {
       (entry) => this.performanceRecorder.record(entry),
       'commit_save',
       () => {
-        const finalizedDecision = this.finalizeDecision(assessment, acknowledged, proof);
+        const finalizedDecision = this.finalizeDecision(
+          assessment,
+          acknowledged,
+          proof,
+        );
         const auditEntry = this.auditLog.append(
           assessment.classification,
           finalizedDecision,
@@ -176,7 +199,9 @@ export class SaveOrchestrator {
     return this.blueprintArtifacts.ensureBlueprintTemplate(directiveId);
   }
 
-  validateBlueprintProof(proof?: DirectiveProofInput): BlueprintProofResolution {
+  validateBlueprintProof(
+    proof?: DirectiveProofInput,
+  ): BlueprintProofResolution {
     return this.blueprintArtifacts.resolveProof(proof);
   }
 
@@ -244,17 +269,26 @@ export class SaveOrchestrator {
     proof?: DirectiveProofInput,
   ): DecisionPayload {
     const decision = assessment.decision;
+    // Phase 7.7 — Add trigger context to all decisions
+    const triggerContext = {
+      save_mode: assessment.input.saveMode,
+      auto_save_mode: assessment.input.autoSaveMode,
+    };
 
     if (decision.decision === 'BLOCK') {
       return {
         ...decision,
+        ...triggerContext,
         lease_status: 'BYPASSED',
       };
     }
 
     if (decision.lease_status === 'REUSED') {
       if (decision.decision !== 'REQUIRE_PLAN') {
-        return decision;
+        return {
+          ...decision,
+          ...triggerContext,
+        };
       }
 
       const resolution = this.blueprintArtifacts.resolveProof({
@@ -265,13 +299,21 @@ export class SaveOrchestrator {
       });
 
       return resolution.ok
-        ? decision
-        : policyFailureDecision(decision, resolution.reason, resolution.nextAction);
+        ? {
+            ...decision,
+            ...triggerContext,
+          }
+        : policyFailureDecision(
+            decision,
+            resolution.reason,
+            resolution.nextAction,
+          );
     }
 
     if (!this.leaseStore.isLeaseEligible(decision.decision)) {
       return {
         ...decision,
+        ...triggerContext,
         lease_status: 'BYPASSED',
       };
     }
@@ -279,24 +321,39 @@ export class SaveOrchestrator {
     if (!acknowledged) {
       return {
         ...decision,
+        ...triggerContext,
         lease_status: 'BYPASSED',
       };
     }
 
     if (decision.decision === 'REQUIRE_PLAN') {
-      const resolution = this.blueprintArtifacts.resolveProof(localOnlyProof(proof));
+      const resolution = this.blueprintArtifacts.resolveProof(
+        localOnlyProof(proof),
+      );
       if (!resolution.ok || !resolution.link) {
-        return policyFailureDecision(decision, resolution.reason, resolution.nextAction);
+        return policyFailureDecision(
+          decision,
+          resolution.reason,
+          resolution.nextAction,
+        );
       }
 
-      return this.leaseStore.store(assessment.input, assessment.classification, {
-        ...decision,
-        directive_id: resolution.link.directiveId,
-        blueprint_id: resolution.link.blueprintId,
-      });
+      return this.leaseStore.store(
+        assessment.input,
+        assessment.classification,
+        {
+          ...decision,
+          ...triggerContext,
+          directive_id: resolution.link.directiveId,
+          blueprint_id: resolution.link.blueprintId,
+        },
+      );
     }
 
-    return this.leaseStore.store(assessment.input, assessment.classification, decision);
+    return this.leaseStore.store(assessment.input, assessment.classification, {
+      ...decision,
+      ...triggerContext,
+    });
   }
 
   private withRouteMetadata(
@@ -342,6 +399,7 @@ export class SaveOrchestrator {
         source: 'MODEL_DISABLED',
         fallback_cause: 'MODEL_DISABLED',
         evaluation_lane: lane,
+        model_availability_status: 'DISABLED_BY_CONFIG',
       };
     }
 
@@ -362,14 +420,20 @@ export class SaveOrchestrator {
           source: 'FALLBACK',
           fallback_cause: 'RULE_ONLY',
           evaluation_lane: lane,
+          model_availability_status: 'NOT_ATTEMPTED',
         };
       }
 
-      const enforced = enforceMinimumFloor(ruleDecision, classification, modelDecision);
+      const enforced = enforceMinimumFloor(
+        ruleDecision,
+        classification,
+        modelDecision,
+      );
       return {
         ...enforced,
         source: lane === 'CLOUD' ? 'CLOUD_MODEL' : enforced.source,
         evaluation_lane: lane,
+        model_availability_status: 'AVAILABLE_AND_USED',
       };
     } catch (error) {
       const fallbackCause = mapModelErrorToFallback(error);
@@ -378,6 +442,7 @@ export class SaveOrchestrator {
         source: 'FALLBACK',
         fallback_cause: fallbackCause,
         evaluation_lane: lane,
+        model_availability_status: 'UNAVAILABLE_AT_RUNTIME',
       };
     }
   }

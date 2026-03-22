@@ -79,6 +79,9 @@ export class LocalReviewSurfaceService {
             `- Risk: ${entry.risk_level}`,
             `- Route posture: \`${entry.route_mode ?? 'RULE_ONLY'}\` / \`${entry.route_lane ?? 'RULE_ONLY'}\``,
             `- Route fallback: \`${entry.route_fallback ?? 'NONE'}\``,
+            `- Evaluation lane: \`${entry.evaluation_lane ?? 'RULE_ONLY'}\``,
+            `- Lease status: ${entry.lease_status}`,
+            `- Trigger: ${entry.save_mode ?? 'unknown'} / ${entry.auto_save_mode ?? 'unknown'}`,
             `- Matched rules: ${entry.matched_rules.join(', ') || 'none'}`,
             `- Directive: ${entry.directive_id ?? 'none'}`,
             `- Blueprint: ${entry.blueprint_id ?? 'none'}`,
@@ -97,9 +100,16 @@ export class LocalReviewSurfaceService {
       'review_blueprints',
       () => {
         const mapping = this.workspaceMapping.load();
-        const blueprintsDir = path.join(this.workspaceRoot, '.arc', 'blueprints');
+        const blueprintsDir = path.join(
+          this.workspaceRoot,
+          '.arc',
+          'blueprints',
+        );
         const files = fs.existsSync(blueprintsDir)
-          ? fs.readdirSync(blueprintsDir).filter((file) => file.endsWith('.md')).sort()
+          ? fs
+              .readdirSync(blueprintsDir)
+              .filter((file) => file.endsWith('.md'))
+              .sort()
           : [];
         const operatorContext = this.renderOperatorContext([
           `Workspace mapping status: \`${mapping.status}\``,
@@ -132,7 +142,8 @@ export class LocalReviewSurfaceService {
           const directiveId = fileName.replace(/\.md$/, '');
           const resolution = this.blueprintArtifacts.resolveProof({
             directiveId,
-            blueprintId: this.blueprintArtifacts.canonicalBlueprintId(directiveId),
+            blueprintId:
+              this.blueprintArtifacts.canonicalBlueprintId(directiveId),
             blueprintMode: 'LOCAL_ONLY',
           });
 
@@ -241,7 +252,9 @@ function readAuditEntries(filePath: string): AuditReadResult {
     );
 }
 
-function summarizeDecisionCounts(entries: AuditEntry[]): Record<AuditEntry['decision'], number> {
+function summarizeDecisionCounts(
+  entries: AuditEntry[],
+): Record<AuditEntry['decision'], number> {
   return entries.reduce<Record<AuditEntry['decision'], number>>(
     (counts, entry) => {
       counts[entry.decision] += 1;

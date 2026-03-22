@@ -1,6 +1,11 @@
+import fs from 'node:fs';
 import path from 'node:path';
 import * as vscode from 'vscode';
-import type { AssessedSave, DirectiveProofInput } from './contracts/types';
+import type {
+  AssessedSave,
+  AuditEntry,
+  DirectiveProofInput,
+} from './contracts/types';
 import { isValidDirectiveId } from './core/blueprintArtifacts';
 import { RoutePolicyStore } from './core/routerPolicy';
 import { LocalReviewSurfaceService } from './extension/reviewSurfaces';
@@ -248,12 +253,41 @@ export function activate(context: vscode.ExtensionContext): void {
       const filePath = vscode.window.activeTextEditor?.document.uri.fsPath;
       const target = targetFor(filePath);
       const routePolicy = new RoutePolicyStore(target.effectiveRoot).load();
+
+      // Phase 7.7 — Read last audit entry for trigger visibility
+      const auditPath = path.join(target.effectiveRoot, '.arc', 'audit.jsonl');
+      let lastAudit: AuditEntry | undefined;
+      try {
+        if (fs.existsSync(auditPath)) {
+          const auditContent = fs.readFileSync(auditPath, 'utf8');
+          const lines = auditContent.trim().split('\n').filter(Boolean);
+          if (lines.length > 0) {
+            lastAudit = JSON.parse(lines[lines.length - 1]) as AuditEntry;
+          }
+        }
+      } catch {
+        // Silently ignore audit read errors; lastAudit remains undefined
+      }
+
       await openMarkdownPreview(
         'LINTEL Active Workspace Status',
         renderRuntimeStatusMarkdown({
           target,
           autoSaveMode: mode,
           routePolicy,
+          lastDecision: lastAudit
+            ? {
+                decision: lastAudit.decision,
+                source: lastAudit.source,
+                fallbackCause: lastAudit.fallback_cause,
+                evaluationLane: lastAudit.evaluation_lane,
+                leaseStatus: lastAudit.lease_status,
+                saveMode: lastAudit.save_mode,
+                autoSaveMode: lastAudit.auto_save_mode,
+                timestamp: lastAudit.ts,
+                filePath: lastAudit.file_path,
+              }
+            : undefined,
         }),
       );
     }),
