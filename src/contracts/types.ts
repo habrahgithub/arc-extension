@@ -255,7 +255,10 @@ export interface PerformanceEntry {
   ts: string;
   operation:
     | 'assess_save'
+    | 'classify_file'
     | 'commit_save'
+    | 'evaluate_model'
+    | 'evaluate_rules'
     | 'review_audit'
     | 'review_blueprints'
     | 'review_false_positives'

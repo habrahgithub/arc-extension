@@ -54,6 +54,33 @@ describe('governance guards', () => {
     expect(contents).not.toContain('api.openai.com');
   });
 
+  it('anchors Phase 7.4 local runtime hardening to fail-closed local-only configuration semantics', () => {
+    const modelAdapter = fs.readFileSync(
+      path.join(projectRoot, 'src', 'adapters', 'modelAdapter.ts'),
+      'utf8',
+    );
+    const readme = fs.readFileSync(path.join(projectRoot, 'README.md'), 'utf8');
+    const architecture = fs.readFileSync(
+      path.join(projectRoot, 'docs', 'ARCHITECTURE.md'),
+      'utf8',
+    );
+    const testing = fs.readFileSync(
+      path.join(projectRoot, 'docs', 'TESTING.md'),
+      'utf8',
+    );
+
+    expect(modelAdapter).toContain('OLLAMA_HOST');
+    expect(modelAdapter).toContain('SWD_SUBAGENT_MODEL');
+    expect(modelAdapter).toContain('OLLAMA_TIMEOUT_MS');
+    expect(modelAdapter).toContain('OLLAMA_RETRIES');
+    expect(modelAdapter).toContain('must remain local-only');
+    expect(readme).toContain('Runtime configuration remains local-only and fail-closed');
+    expect(readme).toContain('non-local `OLLAMA_HOST` values do not activate a cloud lane');
+    expect(architecture).toContain('non-local `OLLAMA_HOST` configuration must fail closed');
+    expect(testing).toContain('non-local `OLLAMA_HOST` values must not imply cloud-lane activation');
+    expect(testing).toContain('Malformed or contradictory model output must surface as explicit fallback behavior');
+  });
+
   it('documents that audit verification is file-level only', () => {
     const docs = fs.readFileSync(
       path.join(projectRoot, 'docs', 'ARCHITECTURE.md'),

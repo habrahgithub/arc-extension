@@ -1,6 +1,6 @@
 # ARC — Audit Ready Core
 
-Phase 7.3 identity freeze of the ARC local-first VS Code governance extension, formerly labeled LINTEL Code.
+Phase 7.4 runtime hardening of the ARC local-first VS Code governance extension, following the Phase 7.3 identity freeze from LINTEL Code.
 
 ## Phase 7.0 scope
 - VS Code save-time governance for `ALLOW / WARN / REQUIRE_PLAN / BLOCK`
@@ -64,6 +64,12 @@ Phase 7.3 identity freeze of the ARC local-first VS Code governance extension, f
 3. ARC naming must not imply cloud readiness, marketplace readiness, or broader authorization than the extension actually has.
 4. Welcome and onboarding work remain deferred until a separate package authorizes them.
 
+## Phase 7.4 runtime-hardening boundary
+1. Local model retries, timeout handling, and parse handling remain degradation paths only; they do not authorize saves.
+2. Runtime configuration remains local-only and fail-closed; non-local Ollama host values are not a cloud-lane activation signal.
+3. Performance instrumentation at `.arc/perf.jsonl` is observational only and does not affect save, route, proof, or fallback authority.
+4. Warmup/readiness behavior, if used, remains bounded support behavior and does not introduce autonomous decisioning.
+
 ## Phase 6.8 activation-contract boundary
 1. ARC may load route-policy config from `.arc/router.json`.
 2. Missing or invalid route-policy config fails closed to `RULE_ONLY`.
@@ -116,6 +122,27 @@ Phase 7.3 identity freeze of the ARC local-first VS Code governance extension, f
   - active route posture
 - Runtime status is descriptive only; its cloud-related fields do not imply readiness, approval, or authorization.
 - ARC naming identifies the VS Code extension only. It does not imply ARC Console coupling, Vault dependency, or new control-plane authority.
+
+## Local runtime configuration
+- local runtime configuration is environment-backed and optional in this phase
+- supported keys:
+  - `OLLAMA_HOST`
+  - `SWD_SUBAGENT_MODEL`
+  - `OLLAMA_TIMEOUT_MS`
+  - `OLLAMA_RETRIES`
+- missing or invalid configuration fails closed to the established local baseline
+- non-local `OLLAMA_HOST` values do not activate a cloud lane and do not widen runtime authority
+- retries, timeout handling, and parse failures remain fallback/degradation paths only
+
+## Local performance instrumentation
+- `.arc/perf.jsonl` remains a local observational log
+- performance entries may cover:
+  - workspace-map load
+  - classification
+  - rule evaluation
+  - model evaluation
+  - save assessment / commit timing
+- performance evidence supports validation and review only; it does not change enforcement outcomes
 
 ## Internal install / run path
 Validated local/internal path:

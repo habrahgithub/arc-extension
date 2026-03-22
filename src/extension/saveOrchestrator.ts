@@ -68,17 +68,32 @@ export class SaveOrchestrator {
           () => this.workspaceMapping.load(),
           { file_path: input.filePath },
         );
-        const classification = classifyFile(
-          input,
-          [...DEFAULT_RULES, ...mapping.rules],
-          { additionalUiSegments: mapping.uiSegments },
+        const classification = measureSync(
+          (entry) => this.performanceRecorder.record(entry),
+          'classify_file',
+          () =>
+            classifyFile(
+              input,
+              [...DEFAULT_RULES, ...mapping.rules],
+              { additionalUiSegments: mapping.uiSegments },
+            ),
+          { file_path: input.filePath, save_mode: input.saveMode },
         );
         const routePolicy = this.routePolicy.load();
         const context = buildContext(classification, input);
         const contextPacket = buildContextPacket(classification, input, undefined, routePolicy);
         const routerShell = this.routerShell.resolve(routePolicy, contextPacket, input);
         const ruleDecision = this.withRouteMetadata(
-          evaluateRules(classification, input),
+          measureSync(
+            (entry) => this.performanceRecorder.record(entry),
+            'evaluate_rules',
+            () => evaluateRules(classification, input),
+            {
+              file_path: input.filePath,
+              risk_level: classification.riskLevel,
+              matched_rule_count: classification.matchedRuleIds.length,
+            },
+          ),
           routerShell,
         );
 
@@ -331,7 +346,16 @@ export class SaveOrchestrator {
     }
 
     try {
-      const modelDecision = await modelAdapter.evaluate(context);
+      const modelDecision = await measureAsync(
+        (entry) => this.performanceRecorder.record(entry),
+        'evaluate_model',
+        () => modelAdapter.evaluate(context),
+        {
+          lane,
+          file_path: context.file_path,
+          adapter_enabled: modelAdapter.enabledByDefault,
+        },
+      );
       if (!modelDecision) {
         return {
           ...ruleDecision,

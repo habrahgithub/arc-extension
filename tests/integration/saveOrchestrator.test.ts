@@ -14,6 +14,9 @@ import {
 import { fixtureInputs } from '../fixtures/saveInputs';
 
 const workspaces: string[] = [];
+const originalEnv = {
+  OLLAMA_HOST: process.env.OLLAMA_HOST,
+};
 
 function makeWorkspace(): string {
   const workspace = fs.mkdtempSync(path.join(os.tmpdir(), 'lintel-'));
@@ -105,6 +108,11 @@ class CountingCloudAdapter {
 }
 
 afterEach(() => {
+  if (originalEnv.OLLAMA_HOST === undefined) {
+    delete process.env.OLLAMA_HOST;
+  } else {
+    process.env.OLLAMA_HOST = originalEnv.OLLAMA_HOST;
+  }
   while (workspaces.length > 0) {
     const workspace = workspaces.pop();
     if (workspace) {
@@ -128,6 +136,9 @@ describe('save orchestrator', () => {
     const perfPath = path.join(workspace, '.arc', 'perf.jsonl');
     const auditLines = fs.readFileSync(auditPath, 'utf8').trim().split('\n');
     const perfLines = fs.readFileSync(perfPath, 'utf8').trim().split('\n');
+    const perfEntries = perfLines.map((line) =>
+      JSON.parse(line) as { operation: string },
+    );
     const parsed = JSON.parse(auditLines[0]) as {
       prev_hash: string;
       hash: string;
@@ -150,6 +161,8 @@ describe('save orchestrator', () => {
     expect(parsed.route_lane).toBe('RULE_ONLY');
     expect(parsed.route_fallback).toBe('CONFIG_MISSING');
     expect(perfLines.length).toBeGreaterThanOrEqual(2);
+    expect(perfEntries.some((entry) => entry.operation === 'classify_file')).toBe(true);
+    expect(perfEntries.some((entry) => entry.operation === 'evaluate_rules')).toBe(true);
   });
 
   it('fails closed to RULE_ONLY and keeps decisions unchanged when cloud-assisted config violates local-first prerequisites', async () => {
@@ -554,6 +567,38 @@ describe('save orchestrator', () => {
     expect(assessed.decision.route_lane).toBe('RULE_ONLY');
   });
 
+  it('records model-evaluation timing when the local lane executes and times out', async () => {
+    const workspace = makeWorkspace();
+    fs.mkdirSync(path.join(workspace, '.arc'), { recursive: true });
+    fs.writeFileSync(
+      path.join(workspace, '.arc', 'router.json'),
+      JSON.stringify({
+        mode: 'LOCAL_PREFERRED',
+        local_lane_enabled: true,
+        cloud_lane_enabled: false,
+      }),
+      'utf8',
+    );
+    const orchestrator = new SaveOrchestrator(workspace, new TimeoutAdapter());
+
+    await orchestrator.assessSave(fixtureInputs.auth);
+
+    const perfPath = path.join(workspace, '.arc', 'perf.jsonl');
+    const perfEntries = fs
+      .readFileSync(perfPath, 'utf8')
+      .trim()
+      .split('\n')
+      .map((line) => JSON.parse(line) as { operation: string; metadata?: Record<string, string> });
+
+    expect(
+      perfEntries.find((entry) => entry.operation === 'evaluate_model'),
+    ).toMatchObject({
+      metadata: {
+        lane: 'LOCAL',
+      },
+    });
+  });
+
   it('falls back to the rule decision when the local model is unavailable', async () => {
     const workspace = makeWorkspace();
     fs.mkdirSync(path.join(workspace, '.arc'), { recursive: true });
@@ -645,6 +690,31 @@ describe('save orchestrator', () => {
     expect(assessed.decision.decision).toBe('REQUIRE_PLAN');
     expect(assessed.decision.fallback_cause).toBe('MODEL_DISABLED');
     expect(assessed.decision.source).toBe('MODEL_DISABLED');
+    expect(assessed.decision.route_mode).toBe('LOCAL_PREFERRED');
+    expect(assessed.decision.route_lane).toBe('RULE_ONLY');
+  });
+
+  it('fails closed when the default adapter host config is non-local', async () => {
+    process.env.OLLAMA_HOST = 'https://example.com/api/generate';
+
+    const workspace = makeWorkspace();
+    fs.mkdirSync(path.join(workspace, '.arc'), { recursive: true });
+    fs.writeFileSync(
+      path.join(workspace, '.arc', 'router.json'),
+      JSON.stringify({
+        mode: 'LOCAL_PREFERRED',
+        local_lane_enabled: true,
+        cloud_lane_enabled: false,
+      }),
+      'utf8',
+    );
+
+    const orchestrator = new SaveOrchestrator(workspace);
+    const assessed = await orchestrator.assessSave(fixtureInputs.auth);
+
+    expect(assessed.decision.decision).toBe('REQUIRE_PLAN');
+    expect(assessed.decision.fallback_cause).toBe('UNAVAILABLE');
+    expect(assessed.decision.source).toBe('FALLBACK');
     expect(assessed.decision.route_mode).toBe('LOCAL_PREFERRED');
     expect(assessed.decision.route_lane).toBe('RULE_ONLY');
   });

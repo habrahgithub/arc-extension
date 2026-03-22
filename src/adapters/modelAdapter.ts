@@ -4,11 +4,21 @@ import type {
   RiskLevel,
 } from '../contracts/types';
 
+export const DEFAULT_OLLAMA_ENDPOINT = 'http://127.0.0.1:11434/api/generate';
+export const DEFAULT_OLLAMA_HOST = '127.0.0.1:11434';
+export const DEFAULT_OLLAMA_MODEL = 'llama3.2:3b';
+export const DEFAULT_OLLAMA_TIMEOUT_MS = 2_000;
+export const DEFAULT_OLLAMA_RETRIES = 1;
+export const ALLOWED_LOCAL_HOSTNAMES = ['127.0.0.1', 'localhost', '::1'] as const;
+
+type ModelAdapterCauseCode =
+  | 'UNAVAILABLE'
+  | 'TIMEOUT'
+  | 'PARSE_FAILURE'
+  | 'DISABLED';
+
 export class ModelAdapterError extends Error {
-  constructor(
-    message: string,
-    readonly causeCode: 'UNAVAILABLE' | 'TIMEOUT' | 'PARSE_FAILURE',
-  ) {
+  constructor(message: string, readonly causeCode: ModelAdapterCauseCode) {
     super(message);
   }
 }
@@ -31,6 +41,7 @@ interface OllamaOptions {
   readonly endpoint?: string;
   readonly model?: string;
   readonly timeoutMs?: number;
+  readonly retries?: number;
   readonly enabledByDefault?: boolean;
 }
 
@@ -42,20 +53,61 @@ interface CloudOptions {
   readonly apiKey?: string;
 }
 
+interface ResolvedOllamaOptions {
+  endpoint: string;
+  model: string;
+  timeoutMs: number;
+  retries: number;
+  configurationError?: string;
+}
+
 export class OllamaModelAdapter implements ModelAdapter {
   readonly enabledByDefault: boolean;
   private readonly endpoint: string;
   private readonly model: string;
   private readonly timeoutMs: number;
+  private readonly retries: number;
+  private readonly configurationError?: string;
 
   constructor(options: OllamaOptions = {}) {
-    this.endpoint = options.endpoint ?? 'http://127.0.0.1:11434/api/generate';
-    this.model = options.model ?? 'llama3.2:3b';
-    this.timeoutMs = options.timeoutMs ?? 2_000;
+    const resolved = resolveOllamaOptions(options);
+    this.endpoint = resolved.endpoint;
+    this.model = resolved.model;
+    this.timeoutMs = resolved.timeoutMs;
+    this.retries = resolved.retries;
+    this.configurationError = resolved.configurationError;
     this.enabledByDefault = options.enabledByDefault ?? false;
   }
 
   async evaluate(context: ContextPayload): Promise<ModelEvaluationResult | undefined> {
+    if (this.configurationError) {
+      throw new ModelAdapterError(this.configurationError, 'UNAVAILABLE');
+    }
+
+    let lastError: unknown;
+
+    for (let attempt = 0; attempt <= this.retries; attempt += 1) {
+      try {
+        const payload = await this.postPrompt(context);
+        if (!payload.response) {
+          throw new ModelAdapterError('Missing Ollama response body.', 'PARSE_FAILURE');
+        }
+
+        return parseModelResponse(payload.response);
+      } catch (error) {
+        lastError = error;
+        if (!isRetryableModelError(error) || attempt === this.retries) {
+          throw mapToModelAdapterError(error);
+        }
+      }
+    }
+
+    throw mapToModelAdapterError(lastError);
+  }
+
+  private async postPrompt(
+    context: ContextPayload,
+  ): Promise<{ response?: string }> {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
 
@@ -81,22 +133,13 @@ export class OllamaModelAdapter implements ModelAdapter {
         );
       }
 
-      const payload = (await response.json()) as { response?: string };
-      if (!payload.response) {
-        throw new ModelAdapterError('Missing Ollama response body.', 'PARSE_FAILURE');
-      }
-
-      return parseModelResponse(payload.response);
+      return (await response.json()) as { response?: string };
     } catch (error) {
-      if (error instanceof ModelAdapterError) {
-        throw error;
-      }
-
       if (error instanceof Error && error.name === 'AbortError') {
         throw new ModelAdapterError('Ollama timed out.', 'TIMEOUT');
       }
 
-      throw new ModelAdapterError('Ollama unavailable.', 'UNAVAILABLE');
+      throw mapToModelAdapterError(error);
     } finally {
       clearTimeout(timeout);
     }
@@ -113,7 +156,7 @@ export class CloudModelAdapter implements ModelAdapter {
   constructor(options: CloudOptions = {}) {
     this.endpoint = options.endpoint;
     this.model = options.model;
-    this.timeoutMs = options.timeoutMs ?? 2_000;
+    this.timeoutMs = options.timeoutMs ?? DEFAULT_OLLAMA_TIMEOUT_MS;
     this.enabledByDefault = options.enabledByDefault ?? false;
     this.apiKey = options.apiKey;
   }
@@ -182,7 +225,7 @@ export class CloudModelAdapter implements ModelAdapter {
 }
 
 export function parseModelResponse(responseText: string): ModelEvaluationResult {
-  const normalized = stripMarkdownFence(responseText).trim();
+  const normalized = normalizeModelResponse(responseText);
   let parsed: unknown;
 
   try {
@@ -195,7 +238,27 @@ export function parseModelResponse(responseText: string): ModelEvaluationResult 
     throw new ModelAdapterError('Model response failed schema validation.', 'PARSE_FAILURE');
   }
 
+  if (
+    parsed.decision === 'ALLOW' &&
+    (parsed.risk_level === 'HIGH' || parsed.risk_level === 'CRITICAL')
+  ) {
+    throw new ModelAdapterError(
+      'Model response contradicted the declared risk level.',
+      'PARSE_FAILURE',
+    );
+  }
+
   return parsed;
+}
+
+function normalizeModelResponse(value: string): string {
+  const fenced = stripMarkdownFence(value).trim();
+  const start = fenced.indexOf('{');
+  const end = fenced.lastIndexOf('}');
+  if (start === -1 || end === -1 || end <= start) {
+    return fenced;
+  }
+  return fenced.slice(start, end + 1).trim();
 }
 
 function stripMarkdownFence(value: string): string {
@@ -211,12 +274,12 @@ function isModelEvaluationResult(value: unknown): value is ModelEvaluationResult
   return (
     isDecision(candidate.decision) &&
     typeof candidate.reason === 'string' &&
-    candidate.reason.length > 0 &&
+    candidate.reason.trim().length > 0 &&
     isRiskLevel(candidate.risk_level) &&
     Array.isArray(candidate.violated_rules) &&
     candidate.violated_rules.every((rule) => typeof rule === 'string') &&
     typeof candidate.next_action === 'string' &&
-    candidate.next_action.length > 0
+    candidate.next_action.trim().length > 0
   );
 }
 
@@ -228,6 +291,123 @@ function isRiskLevel(value: unknown): value is RiskLevel {
   return value === 'LOW' || value === 'MEDIUM' || value === 'HIGH' || value === 'CRITICAL';
 }
 
+function resolveOllamaOptions(options: OllamaOptions): ResolvedOllamaOptions {
+  const configuredEndpoint = options.endpoint ?? process.env.OLLAMA_HOST;
+  const endpoint = configuredEndpoint
+    ? normalizeOllamaEndpoint(configuredEndpoint)
+    : { endpoint: DEFAULT_OLLAMA_ENDPOINT };
+  const timeoutMs = normalizePositiveInteger(
+    options.timeoutMs ?? envInteger('OLLAMA_TIMEOUT_MS'),
+    DEFAULT_OLLAMA_TIMEOUT_MS,
+  );
+  const retries = normalizeRetryCount(
+    options.retries ?? envInteger('OLLAMA_RETRIES'),
+    DEFAULT_OLLAMA_RETRIES,
+  );
+  const model = options.model ?? process.env.SWD_SUBAGENT_MODEL ?? DEFAULT_OLLAMA_MODEL;
+
+  return {
+    endpoint: endpoint.endpoint,
+    configurationError: endpoint.error,
+    timeoutMs,
+    retries,
+    model,
+  };
+}
+
+function normalizeOllamaEndpoint(value: string): {
+  endpoint: string;
+  error?: string;
+} {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return { endpoint: DEFAULT_OLLAMA_ENDPOINT };
+  }
+
+  const url = buildCandidateUrl(trimmed);
+  if (!url) {
+    return {
+      endpoint: DEFAULT_OLLAMA_ENDPOINT,
+      error: 'Ollama host configuration is invalid.',
+    };
+  }
+
+  if (!isLocalHostname(url.hostname)) {
+    return {
+      endpoint: DEFAULT_OLLAMA_ENDPOINT,
+      error:
+        'Ollama host configuration must remain local-only (127.0.0.1, localhost, or ::1).',
+    };
+  }
+
+  url.protocol = 'http:';
+  url.pathname = '/api/generate';
+  url.search = '';
+  url.hash = '';
+
+  return {
+    endpoint: url.toString(),
+  };
+}
+
+function buildCandidateUrl(value: string): URL | undefined {
+  try {
+    return value.startsWith('http://') || value.startsWith('https://')
+      ? new URL(value)
+      : new URL(`http://${value}`);
+  } catch {
+    return undefined;
+  }
+}
+
+function isLocalHostname(hostname: string): boolean {
+  return ALLOWED_LOCAL_HOSTNAMES.includes(
+    hostname as (typeof ALLOWED_LOCAL_HOSTNAMES)[number],
+  );
+}
+
+function envInteger(name: string): number | undefined {
+  const value = process.env[name];
+  if (!value || value.trim().length === 0) {
+    return undefined;
+  }
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+function normalizePositiveInteger(value: number | undefined, fallback: number): number {
+  if (value === undefined || !Number.isFinite(value) || value <= 0) {
+    return fallback;
+  }
+  return Math.floor(value);
+}
+
+function normalizeRetryCount(value: number | undefined, fallback: number): number {
+  if (value === undefined || !Number.isFinite(value) || value < 0) {
+    return fallback;
+  }
+  return Math.floor(value);
+}
+
+function isRetryableModelError(error: unknown): boolean {
+  return (
+    error instanceof ModelAdapterError &&
+    (error.causeCode === 'TIMEOUT' || error.causeCode === 'UNAVAILABLE')
+  );
+}
+
+function mapToModelAdapterError(error: unknown): ModelAdapterError {
+  if (error instanceof ModelAdapterError) {
+    return error;
+  }
+
+  if (error instanceof Error) {
+    return new ModelAdapterError(error.message, 'UNAVAILABLE');
+  }
+
+  return new ModelAdapterError('Model adapter unavailable.', 'UNAVAILABLE');
+}
+
 function buildPrompt(context: ContextPayload): string {
   return [
     'Return JSON only.',
@@ -235,6 +415,7 @@ function buildPrompt(context: ContextPayload): string {
     '- AUTH_CHANGE must not be downgraded below REQUIRE_PLAN.',
     '- SCHEMA_CHANGE must not be downgraded below WARN.',
     '- If multiple critical flags appear, BLOCK is allowed.',
+    '- Do not return ALLOW when the declared risk_level is HIGH or CRITICAL.',
     `Context: ${JSON.stringify(context)}`,
     'Required JSON shape:',
     '{"decision":"ALLOW|WARN|REQUIRE_PLAN|BLOCK","reason":"string","risk_level":"LOW|MEDIUM|HIGH|CRITICAL","violated_rules":["string"],"next_action":"string"}',

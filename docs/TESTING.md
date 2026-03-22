@@ -60,3 +60,10 @@ All command gates in the active phase package must exist and pass before closure
 - user-facing command titles may change, but command ids must remain `lintel.*` unless a separate package authorizes migration
 - ARC naming must not imply ARC Console coupling, Vault dependency, cloud readiness, or broader runtime authority
 - identity work must not introduce welcome screens, onboarding flows, or new UI surfaces
+
+## Phase 7.4 emphasis
+- retries, timeout handling, and parser hardening must remain fail-closed and rule-floor preserving
+- local runtime configuration must remain bounded, default-safe, and local-only in posture
+- non-local `OLLAMA_HOST` values must not imply cloud-lane activation or broader remote authority
+- performance instrumentation must remain observational only and must not affect save decisions
+- Malformed or contradictory model output must surface as explicit fallback behavior rather than silent repair

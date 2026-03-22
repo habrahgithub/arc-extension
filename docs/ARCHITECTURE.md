@@ -60,6 +60,12 @@
 - user-facing command titles aligned to `ARC:` while internal command ids remain `lintel.*`
 - explicit compatibility wording distinguishing the extension identity from ARC Console, Vault, or broader control-plane authority
 
+## Phase 7.4 additions
+- bounded retry and timeout handling for the local model adapter
+- parser hardening that treats malformed or contradictory model output as explicit `PARSE_FAILURE`
+- local-only environment-backed runtime configuration for host, model, timeout, and retry count
+- expanded local performance instrumentation covering classification, rule evaluation, model evaluation, and total save assessment timing
+
 ## Blueprint policy boundary
 - Shared/team blueprint handling is not authorized in Phase 6.6.
 - Template scaffolds are intentionally marked as incomplete until every required section is filled with directive-specific content.
@@ -73,6 +79,8 @@ Local-model activation in Phase 6.8 is bounded to the local lane only unless a s
 - endpoint constraints for the local lane must remain local-only or be explicitly re-approved
 - prompt-injection exposure from bounded excerpts must be documented with schema-validation plus enforcement-floor mitigations
 - stronger audit-integrity claims require a separately approved trust-boundary design
+- runtime retries, timeout handling, and parser hardening remain degradation paths only and must not become authorization paths
+- non-local `OLLAMA_HOST` configuration must fail closed or remain explicitly operator-responsibility only; it must not imply cloud-lane activation
 
 ## Cloud fallback boundary
 - cloud fallback is optional, lab-only, and disabled by default
@@ -125,6 +133,13 @@ Local-model activation in Phase 6.8 is bounded to the local lane only unless a s
 - CLI failure must not weaken or block save enforcement.
 - Vault-ready export bundles are local handoff only.
 - Phase 6.8 may prepare local evidence bundles only; it may not require ARC, Vault, or any remote service to authorize a save.
+
+## Runtime configuration and instrumentation boundary
+- local runtime configuration is bounded to host, model identifier, timeout, and retry count
+- missing or invalid runtime configuration fails closed to the established local baseline
+- non-local host configuration does not imply cloud readiness, cloud execution, or broader remote authority
+- performance instrumentation remains observational only and may record classification, rule evaluation, model evaluation, and total save-path timing
+- warmup/readiness behavior must remain bounded support behavior and must not introduce autonomous decisioning or background save authorization
 
 ## Workspace-targeting boundary
 - effective governed root must be truthful for the active file under evaluation
