@@ -1,5 +1,11 @@
 # ARC — Audit Ready Core Architecture
 
+## Companion references
+
+- `docs/CODE_MAP.md` — source-file map, dependency graph, save-path flow, and test coverage reference
+- `README.md` — product boundary and phase-specific operator/governance constraints
+- `docs/TESTING.md` — validation, governance anchoring, and phase-specific test emphasis
+
 ## Core flow
 
 1. VS Code save events enter the extension lifecycle controller.

@@ -2,6 +2,11 @@
 
 Phase 7.4 runtime hardening of the ARC local-first VS Code governance extension, following the Phase 7.3 identity freeze from LINTEL Code.
 
+## Core reference documents
+- `docs/ARCHITECTURE.md` — canonical architecture and enforcement-boundary reference
+- `docs/CODE_MAP.md` — current codebase map covering source layout, save-path flow, dependencies, and test coverage
+- `docs/TESTING.md` — validation and governance-test posture
+
 ## Phase 7.0 scope
 - VS Code save-time governance for `ALLOW / WARN / REQUIRE_PLAN / BLOCK`
 - optional local workspace mapping to refine local precision without weakening rule floors
