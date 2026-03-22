@@ -15,6 +15,7 @@
   ],
   "activationEvents": [
     "onStartupFinished",
+    "onCommand:lintel.showWelcome",
     "onCommand:lintel.reviewAudit",
     "onCommand:lintel.showRuntimeStatus",
     "onCommand:lintel.reviewBlueprints",
@@ -22,6 +23,10 @@
   ],
   "contributes": {
     "commands": [
+      {
+        "command": "lintel.showWelcome",
+        "title": "ARC: Show Welcome Guide"
+      },
       {
         "command": "lintel.reviewAudit",
         "title": "ARC: Review Audit Log"

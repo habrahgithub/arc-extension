@@ -7,9 +7,14 @@ import { LocalReviewSurfaceService } from './extension/reviewSurfaces';
 import { renderRuntimeStatusMarkdown } from './extension/runtimeStatus';
 import { SaveLifecycleController } from './extension/saveLifecycleController';
 import { SaveOrchestrator } from './extension/saveOrchestrator';
+import { WelcomeSurfaceService } from './extension/welcomeSurface';
 import { resolveWorkspaceTarget } from './extension/workspaceTargeting';
 
-function autoSaveMode(): 'off' | 'afterDelay' | 'onFocusChange' | 'onWindowChange' {
+function autoSaveMode():
+  | 'off'
+  | 'afterDelay'
+  | 'onFocusChange'
+  | 'onWindowChange' {
   const configured = vscode.workspace
     .getConfiguration('files')
     .get<string>('autoSave', 'off');
@@ -27,7 +32,10 @@ function autoSaveMode(): 'off' | 'afterDelay' | 'onFocusChange' | 'onWindowChang
 
 function selectionText(document: vscode.TextDocument): string | undefined {
   const activeEditor = vscode.window.activeTextEditor;
-  if (!activeEditor || activeEditor.document.uri.toString() !== document.uri.toString()) {
+  if (
+    !activeEditor ||
+    activeEditor.document.uri.toString() !== document.uri.toString()
+  ) {
     return undefined;
   }
 
@@ -45,11 +53,16 @@ function fullDocumentRange(document: vscode.TextDocument): vscode.Range {
   return new vscode.Range(start, end);
 }
 
-function saveModeFromReason(reason: vscode.TextDocumentSaveReason): 'EXPLICIT' | 'AUTO' {
+function saveModeFromReason(
+  reason: vscode.TextDocumentSaveReason,
+): 'EXPLICIT' | 'AUTO' {
   return reason === vscode.TextDocumentSaveReason.Manual ? 'EXPLICIT' : 'AUTO';
 }
 
-async function openMarkdownPreview(title: string, content: string): Promise<void> {
+async function openMarkdownPreview(
+  title: string,
+  content: string,
+): Promise<void> {
   const document = await vscode.workspace.openTextDocument({
     content,
     language: 'markdown',
@@ -102,11 +115,16 @@ async function collectRequirePlanProof(
     );
 
     if (choice !== 'Create Blueprint') {
-      return { acknowledged: false, proof: { directiveId, blueprintMode: 'LOCAL_ONLY' } };
+      return {
+        acknowledged: false,
+        proof: { directiveId, blueprintMode: 'LOCAL_ONLY' },
+      };
     }
 
     const created = orchestrator.ensureBlueprintTemplate(directiveId);
-    const blueprintDocument = await vscode.workspace.openTextDocument(created.blueprintPath);
+    const blueprintDocument = await vscode.workspace.openTextDocument(
+      created.blueprintPath,
+    );
     await vscode.window.showTextDocument(blueprintDocument, { preview: false });
     resolution = orchestrator.validateBlueprintProof({
       directiveId,
@@ -116,10 +134,9 @@ async function collectRequirePlanProof(
   }
 
   if (!resolution.ok || !resolution.link) {
-    void vscode.window.showWarningMessage(
-      `[LINTEL] ${resolution.reason}`,
-      { modal: true },
-    );
+    void vscode.window.showWarningMessage(`[LINTEL] ${resolution.reason}`, {
+      modal: true,
+    });
     return {
       acknowledged: false,
       proof: {
@@ -154,6 +171,7 @@ export function activate(context: vscode.ExtensionContext): void {
   const orchestrators = new Map<string, SaveOrchestrator>();
   const controllers = new Map<string, SaveLifecycleController>();
   const reviewSurfaces = new Map<string, LocalReviewSurfaceService>();
+  const welcomeSurface = new WelcomeSurfaceService(context);
 
   function targetFor(filePath?: string) {
     return resolveWorkspaceTarget(filePath, workspaceFolderRoots, fallbackRoot);
@@ -195,6 +213,12 @@ export function activate(context: vscode.ExtensionContext): void {
     return created;
   }
 
+  // Show welcome surface on first activation (bounded onboarding)
+  if (welcomeSurface.shouldShowWelcome()) {
+    void welcomeSurface.showWelcome();
+    void welcomeSurface.markWelcomeShown();
+  }
+
   for (const document of vscode.workspace.textDocuments) {
     controllerFor(document.uri.fsPath).primeCommittedSnapshot(
       document.uri.fsPath,
@@ -210,6 +234,9 @@ export function activate(context: vscode.ExtensionContext): void {
   }
 
   context.subscriptions.push(
+    vscode.commands.registerCommand('lintel.showWelcome', async () => {
+      await welcomeSurface.showWelcome();
+    }),
     vscode.commands.registerCommand('lintel.reviewAudit', async () => {
       const filePath = vscode.window.activeTextEditor?.document.uri.fsPath;
       await openMarkdownPreview(
@@ -256,7 +283,12 @@ export function activate(context: vscode.ExtensionContext): void {
           const controller = controllerFor(event.document.uri.fsPath);
           const orchestrator = orchestratorFor(event.document.uri.fsPath);
           const currentText = event.document.getText();
-          if (controller.consumeRestoreBypass(event.document.uri.fsPath, currentText)) {
+          if (
+            controller.consumeRestoreBypass(
+              event.document.uri.fsPath,
+              currentText,
+            )
+          ) {
             return [];
           }
 
@@ -290,9 +322,19 @@ export function activate(context: vscode.ExtensionContext): void {
             return [];
           }
 
-          if (assessment.shouldPrompt && assessment.decision.decision === 'REQUIRE_PLAN') {
-            const planFlow = await collectRequirePlanProof(orchestrator, assessment);
-            controller.finalizeSave(assessment, planFlow.acknowledged, planFlow.proof);
+          if (
+            assessment.shouldPrompt &&
+            assessment.decision.decision === 'REQUIRE_PLAN'
+          ) {
+            const planFlow = await collectRequirePlanProof(
+              orchestrator,
+              assessment,
+            );
+            controller.finalizeSave(
+              assessment,
+              planFlow.acknowledged,
+              planFlow.proof,
+            );
             return [];
           }
 
@@ -323,7 +365,11 @@ export function activate(context: vscode.ExtensionContext): void {
       }
 
       const edit = new vscode.WorkspaceEdit();
-      edit.replace(document.uri, fullDocumentRange(document), restore.restoreText);
+      edit.replace(
+        document.uri,
+        fullDocumentRange(document),
+        restore.restoreText,
+      );
       await vscode.workspace.applyEdit(edit);
       void vscode.window.showWarningMessage(
         `[LINTEL] Save reverted: ${restore.reason}`,
