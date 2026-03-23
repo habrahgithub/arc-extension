@@ -23,6 +23,10 @@ export const REVIEW_SURFACE_PROOF_REQUIRED_NOTICE =
 export const REVIEW_SURFACE_FALSE_POSITIVE_NOTICE =
   'False-positive candidates are advisory only. They do not rewrite audit history, demote recorded decisions, or weaken the enforcement floor.';
 
+// Phase 7.8 — Audit-read degradation notice (WRD-0077)
+export const REVIEW_SURFACE_AUDIT_READ_ERROR_NOTICE =
+  'Audit-read degradation: audit data could not be read cleanly. This display is partial and does not imply audit absence equals approval or clean state.';
+
 export class LocalReviewSurfaceService {
   private readonly blueprintArtifacts: BlueprintArtifactStore;
   private readonly workspaceMapping: WorkspaceMappingStore;
@@ -46,7 +50,34 @@ export class LocalReviewSurfaceService {
           return '# LINTEL Audit Review\n\nNo local audit log is present yet.';
         }
 
-        const audit = readAuditEntries(auditPath);
+        // Phase 7.8 — WRD-0077: Handle audit-read degradation
+        let audit: AuditReadResult;
+        let auditReadError = false;
+
+        try {
+          audit = readAuditEntries(auditPath);
+        } catch {
+          // Degrade to "audit unavailable" - do not expose raw error
+          auditReadError = true;
+          audit = { entries: [], malformedCount: 0 };
+        }
+
+        if (auditReadError) {
+          return [
+            '# LINTEL Audit Review',
+            '',
+            '## Audit-read degradation',
+            '',
+            `> ${REVIEW_SURFACE_AUDIT_READ_ERROR_NOTICE}`,
+            '',
+            '- Audit data could not be read cleanly',
+            '- This display is partial and does not imply audit absence equals approval',
+            '- Enforcement floor remains authoritative despite audit-read failure',
+            '',
+            `> ${REVIEW_SURFACE_ENFORCEMENT_NOTE}`,
+          ].join('\n');
+        }
+
         const recent = audit.entries.slice(-10).reverse();
         const counts = summarizeDecisionCounts(audit.entries);
         const operatorContext = this.renderOperatorContext([

@@ -206,6 +206,85 @@ Local-model activation in Phase 6.8 is bounded to the local lane only unless a s
 - review-surface wording remains descriptive or advisory only and must not imply approval, clearance, or save authorization
 - existing review commands may show governed-root and route-posture context, but those summaries do not change route or proof authority
 
+## Phase 7.8 additions
+
+- staleness detection for last-decision display (file-mismatch and time-threshold models)
+- audit-read degradation handling that degrades to "audit unavailable" not "audit clean"
+- descriptive-only staleness wording that does not reassure or overclaim certainty
+- trigger-context schema documentation with accurate field optionality
+- governance tests verifying semantic meaning of degraded/stale wording, not just string presence
+
+## Trigger and Audit Schema (Phase 7.8)
+
+This section documents the trigger-context and audit-entry fields for maintainers and audit consumers. Fields marked **optional** may be absent in older audit entries or when the evaluation path did not produce them.
+
+### DecisionPayload fields (embedded in AuditEntry)
+
+| Field                       | Type             | Required     | Description                                                                                                                                   |
+| --------------------------- | ---------------- | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `decision`                  | `Decision`       | **required** | The governance decision: `ALLOW`, `WARN`, `REQUIRE_PLAN`, `BLOCK`.                                                                            |
+| `reason`                    | `string`         | **required** | Human-readable explanation of the decision.                                                                                                   |
+| `risk_level`                | `RiskLevel`      | **required** | Assessed risk: `LOW`, `MEDIUM`, `HIGH`, `CRITICAL`.                                                                                           |
+| `violated_rules`            | `string[]`       | **required** | List of rule IDs that matched (may be empty).                                                                                                 |
+| `next_action`               | `string`         | **required** | Operator-facing next action guidance.                                                                                                         |
+| `source`                    | `DecisionSource` | **required** | Decision origin: `RULE`, `MODEL`, `CLOUD_MODEL`, `MODEL_DISABLED`, `FALLBACK`.                                                                |
+| `fallback_cause`            | `FallbackCause`  | **required** | Why fallback occurred (if applicable): `NONE`, `MODEL_DISABLED`, `RULE_ONLY`, `UNAVAILABLE`, `TIMEOUT`, `PARSE_FAILURE`, `ENFORCEMENT_FLOOR`. |
+| `lease_status`              | `LeaseStatus`    | **required** | Lease state: `NEW`, `REUSED`, `EXPIRED`, `BYPASSED`.                                                                                          |
+| `directive_id`              | `string`         | optional     | Linked directive ID (only for `REQUIRE_PLAN` saves with valid blueprint).                                                                     |
+| `blueprint_id`              | `string`         | optional     | Linked blueprint ID (only for `REQUIRE_PLAN` saves with valid blueprint).                                                                     |
+| `route_mode`                | `RouteMode`      | optional     | Configured route mode: `RULE_ONLY`, `LOCAL_PREFERRED`, `CLOUD_ASSISTED`.                                                                      |
+| `route_lane`                | `RouteLane`      | optional     | Actual execution lane: `RULE_ONLY`, `LOCAL`, `CLOUD`.                                                                                         |
+| `route_reason`              | `string`         | optional     | Why this route was selected.                                                                                                                  |
+| `route_clarity`             | `RouteClarity`   | optional     | Route state clarity: `CLEAR`, `AMBIGUOUS`.                                                                                                    |
+| `route_fallback`            | `RouteFallback`  | optional     | Fallback reason if any: `NONE`, `CONFIG_MISSING`, `CONFIG_INVALID`, `AUTO_SAVE_BLOCKED`, `PACKET_INVALID`, `DATA_CLASS_DENIED`.               |
+| `route_policy_hash`         | `string`         | optional     | Hash of the route policy used (for lease invalidation).                                                                                       |
+| `evaluation_lane`           | `RouteLane`      | optional     | Non-`RULE_ONLY` lane if used (derived from `route_lane`).                                                                                     |
+| `save_mode`                 | `SaveMode`       | optional     | Phase 7.7+: `EXPLICIT` or `AUTO`. May be absent in older entries.                                                                             |
+| `auto_save_mode`            | `AutoSaveMode`   | optional     | Phase 7.7+: VS Code auto-save mode. May be absent in older entries.                                                                           |
+| `model_availability_status` | `string`         | optional     | Phase 7.7+: Model state. May be absent in older entries.                                                                                      |
+
+### AuditEntry envelope fields
+
+| Field           | Type         | Required     | Description                                                            |
+| --------------- | ------------ | ------------ | ---------------------------------------------------------------------- |
+| `ts`            | `string`     | **required** | ISO 8601 timestamp of the decision.                                    |
+| `file_path`     | `string`     | **required** | Absolute file path of the evaluated file.                              |
+| `risk_flags`    | `RiskFlag[]` | **required** | Risk flags triggered: `AUTH_CHANGE`, `SCHEMA_CHANGE`, `CONFIG_CHANGE`. |
+| `matched_rules` | `string[]`   | **required** | Rule IDs that matched (same as `violated_rules` for compatibility).    |
+| `prev_hash`     | `string`     | **required** | Previous entry hash (chain integrity).                                 |
+| `hash`          | `string`     | **required** | This entry's hash (file-level integrity only).                         |
+
+### Staleness model (Phase 7.8 display-only)
+
+Staleness is a **display-only** indicator for operator context. It does not invalidate prior decisions.
+
+| Condition                               | Staleness Reason | Meaning                                                |
+| --------------------------------------- | ---------------- | ------------------------------------------------------ |
+| `lastAudit.file_path !== activeFile`    | `FILE_MISMATCH`  | Decision was for a different file.                     |
+| `Date.now() - lastAudit.ts > 5 minutes` | `TIME_THRESHOLD` | Decision is from an earlier session.                   |
+| Both conditions                         | `BOTH`           | Decision is from a different file and earlier session. |
+| Neither condition                       | (none)           | Decision context is current.                           |
+
+**Important:** Staleness is descriptive only. A stale decision may still be valid for its original file. The indicator only warns the operator that the displayed context may not reflect the current editor state.
+
+### Audit-read degradation (Phase 7.8)
+
+When audit data cannot be read cleanly:
+
+- Display degrades to "audit unavailable" — not "audit clean" or "no issues"
+- Raw error details are not exposed to the operator surface
+- The enforcement floor remains authoritative despite audit-read failure
+- Absence of audit evidence does not imply approval or success
+
+### Integrity boundary
+
+The `hash` and `prev_hash` fields provide **file-level integrity only**:
+
+- They verify the hash chain across files that are present
+- They do **not** prove archive-existence completeness
+- They do **not** detect wholesale deletion of `.arc/` history
+- They do **not** guarantee all saves were recorded
+
 ## Identity boundary
 
 - ARC naming identifies the VS Code extension only; it does not imply ARC Console coupling, Vault dependency, or control-plane authority

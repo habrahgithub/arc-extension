@@ -15,6 +15,7 @@ export interface RuntimeStatusSnapshot {
   autoSaveMode: AutoSaveMode;
   routePolicy: RoutePolicyResolution;
   // Phase 7.7 — Trigger visibility fields
+  // Phase 7.8 — Staleness hardening fields
   lastDecision?: {
     decision: Decision;
     source: DecisionSource;
@@ -25,6 +26,9 @@ export interface RuntimeStatusSnapshot {
     autoSaveMode?: AutoSaveMode;
     timestamp: string;
     filePath: string;
+    // Phase 7.8 — Staleness indicators (descriptive only)
+    isStale?: boolean;
+    stalenessReason?: 'FILE_MISMATCH' | 'TIME_THRESHOLD' | 'BOTH';
   };
 }
 
@@ -39,6 +43,12 @@ export const RUNTIME_STATUS_FAIL_CLOSED_NOTE =
 
 export const RUNTIME_STATUS_BASELINE_NOTE =
   'Baseline note: route posture shown here is descriptive only; proof enforcement, rule floors, and fallback gates remain authoritative.';
+
+// Phase 7.8 — Staleness threshold (5 minutes)
+export const STALENESS_THRESHOLD_MS = 5 * 60 * 1000;
+
+export const RUNTIME_STATUS_STALENESS_NOTICE =
+  'Staleness note: displayed decision context may be from a different file or time window. This is descriptive only and does not invalidate prior decisions.';
 
 function describeReason(reason: WorkspaceTargetResolution['reason']): string {
   switch (reason) {
@@ -117,6 +127,7 @@ export function renderRuntimeStatusMarkdown(
   ];
 
   // Phase 7.7 — Last Save Decision section
+  // Phase 7.8 — Staleness hardening
   if (snapshot.lastDecision) {
     const last = snapshot.lastDecision;
     const modelStatus = describeModelAvailability(
@@ -126,6 +137,7 @@ export function renderRuntimeStatusMarkdown(
     const triggerDesc = describeTriggerSource(last.saveMode, last.autoSaveMode);
     const evalLaneDesc = last.evaluationLane ?? 'RULE_ONLY';
     const leaseDesc = describeLeaseStatus(last.leaseStatus);
+    const stalenessDesc = describeStaleness(last.isStale, last.stalenessReason);
 
     sections.push(
       '',
@@ -140,8 +152,10 @@ export function renderRuntimeStatusMarkdown(
       `- Model availability: ${modelStatus}`,
       `- Evaluation lane: \`${evalLaneDesc}\``,
       `- Lease status: ${leaseDesc}`,
+      ...stalenessDesc,
       '',
       `- ${RUNTIME_STATUS_OBSERVATIONAL_NOTICE}`,
+      `- ${RUNTIME_STATUS_STALENESS_NOTICE}`,
     );
   }
 
@@ -208,4 +222,29 @@ function describeLeaseStatus(leaseStatus: LeaseStatus): string {
     case 'BYPASSED':
       return 'Bypassed (not eligible for lease)';
   }
+}
+
+// Phase 7.8 — Staleness description (descriptive only, non-authorizing)
+function describeStaleness(
+  isStale?: boolean,
+  stalenessReason?: 'FILE_MISMATCH' | 'TIME_THRESHOLD' | 'BOTH',
+): string[] {
+  if (!isStale) {
+    return [
+      '- Context freshness: ✅ Current file and recent (within 5 minutes)',
+    ];
+  }
+
+  // Descriptive-only wording: provides context about staleness,
+  // does not assert the decision is affected.
+  const reasonText =
+    stalenessReason === 'FILE_MISMATCH'
+      ? '⚠️ From a different file (decision context may not apply)'
+      : stalenessReason === 'TIME_THRESHOLD'
+        ? '⚠️ From an earlier session (older than 5 minutes)'
+        : stalenessReason === 'BOTH'
+          ? '⚠️ From a different file and earlier session'
+          : '⚠️ Context may not reflect current state';
+
+  return [`- Context freshness: ${reasonText}`];
 }

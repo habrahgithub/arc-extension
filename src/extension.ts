@@ -255,8 +255,11 @@ export function activate(context: vscode.ExtensionContext): void {
       const routePolicy = new RoutePolicyStore(target.effectiveRoot).load();
 
       // Phase 7.7 — Read last audit entry for trigger visibility
+      // Phase 7.8 — Staleness hardening and audit-read degradation
       const auditPath = path.join(target.effectiveRoot, '.arc', 'audit.jsonl');
       let lastAudit: AuditEntry | undefined;
+      let auditReadError: string | undefined;
+
       try {
         if (fs.existsSync(auditPath)) {
           const auditContent = fs.readFileSync(auditPath, 'utf8');
@@ -266,7 +269,50 @@ export function activate(context: vscode.ExtensionContext): void {
           }
         }
       } catch {
-        // Silently ignore audit read errors; lastAudit remains undefined
+        // Phase 7.8 — WRD-0077: Do not silently ignore audit read errors.
+        // Degrade to "audit unavailable" rather than "audit clean".
+        // Do not expose raw error details to operator surface.
+        auditReadError = 'AUDIT_READ_FAILED';
+      }
+
+      // Phase 7.8 — Staleness detection
+      let lastDecisionContext:
+        | (typeof lastAudit & {
+            isStale?: boolean;
+            stalenessReason?: 'FILE_MISMATCH' | 'TIME_THRESHOLD' | 'BOTH';
+          })
+        | undefined;
+
+      if (lastAudit && !auditReadError) {
+        const activeFilePath =
+          vscode.window.activeTextEditor?.document.uri.fsPath;
+        const lastDecisionTs = new Date(lastAudit.ts).getTime();
+        const nowTs = Date.now();
+        const timeDiff = nowTs - lastDecisionTs;
+
+        // Staleness model (OBS-S-7019):
+        // - FILE_MISMATCH: last decision file_path differs from active file
+        // - TIME_THRESHOLD: last decision is older than 5 minutes
+        // - BOTH: both conditions are true
+        const isFileMismatch =
+          activeFilePath != null && lastAudit.file_path !== activeFilePath;
+        const isTimeStale = timeDiff > 5 * 60 * 1000; // 5 minutes
+
+        const isStale = isFileMismatch || isTimeStale;
+        const stalenessReason =
+          isFileMismatch && isTimeStale
+            ? 'BOTH'
+            : isFileMismatch
+              ? 'FILE_MISMATCH'
+              : isTimeStale
+                ? 'TIME_THRESHOLD'
+                : undefined;
+
+        lastDecisionContext = {
+          ...lastAudit,
+          isStale,
+          stalenessReason,
+        };
       }
 
       await openMarkdownPreview(
@@ -275,17 +321,19 @@ export function activate(context: vscode.ExtensionContext): void {
           target,
           autoSaveMode: mode,
           routePolicy,
-          lastDecision: lastAudit
+          lastDecision: lastDecisionContext
             ? {
-                decision: lastAudit.decision,
-                source: lastAudit.source,
-                fallbackCause: lastAudit.fallback_cause,
-                evaluationLane: lastAudit.evaluation_lane,
-                leaseStatus: lastAudit.lease_status,
-                saveMode: lastAudit.save_mode,
-                autoSaveMode: lastAudit.auto_save_mode,
-                timestamp: lastAudit.ts,
-                filePath: lastAudit.file_path,
+                decision: lastDecisionContext.decision,
+                source: lastDecisionContext.source,
+                fallbackCause: lastDecisionContext.fallback_cause,
+                evaluationLane: lastDecisionContext.evaluation_lane,
+                leaseStatus: lastDecisionContext.lease_status,
+                saveMode: lastDecisionContext.save_mode,
+                autoSaveMode: lastDecisionContext.auto_save_mode,
+                timestamp: lastDecisionContext.ts,
+                filePath: lastDecisionContext.file_path,
+                isStale: lastDecisionContext.isStale,
+                stalenessReason: lastDecisionContext.stalenessReason,
               }
             : undefined,
         }),
