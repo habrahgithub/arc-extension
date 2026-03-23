@@ -278,6 +278,58 @@ Phase 7.10 certifies **INTERNAL PILOT READINESS** only through evidence-backed v
 
 **Important:** Phase 7.10 readiness is **evidence-backed, not self-certified**. Evidence artifacts reference retained documentation and test results, not narrative assertions.
 
+## LINTEL-REL-001 — Release Readiness
+
+LINTEL-REL-001 establishes **controlled internal release readiness** through packaging validation, disclosure truthfulness, and distribution-posture discipline.
+
+### Release Posture
+
+| Aspect       | Status                               |
+| ------------ | ------------------------------------ |
+| Release Type | Controlled Internal Release          |
+| Distribution | Direct VSIX transfer (internal only) |
+| Marketplace  | Not certified                        |
+| Production   | Not certified                        |
+| Cloud Lane   | Disabled by default                  |
+
+### Packaging Evidence
+
+- **VSIX Package:** `dist/release/lintel-0.1.0.vsix` (retained)
+- **Build Command:** `npm run build` (TypeScript compilation)
+- **Pack Command:** `npm run pack` or `npm run pack:release`
+
+### Disclosure Truthfulness (OBS-S-7031, WRD-0088)
+
+**package.json fields reviewed:**
+
+- `private: true` — not for public npm
+- `license: UNLICENSED` — no open-source claims
+- `publisher: swd` — internal publisher only
+- `description` — bounded capability statement
+
+### Distribution Posture (WRD-0090)
+
+**Trusted/Internal Distribution:**
+
+1. Distribution Channel: Direct VSIX transfer
+2. Integrity Verification: Git commit hash verification
+3. Source Verification: Build from source for transparency
+4. No automatic update checks (internal posture)
+
+### Governance-Gap Acknowledgment (OBS-S-7030)
+
+**Condition:** Phase 7.9/7.10 execution-review coverage was not separately gated.
+
+**Resolution:** This release-readiness record explicitly acknowledges the gap and provides retrospective evidence linkage to Phase 7.9 and 7.10 closure records.
+
+### Evidence Artifacts
+
+- `docs/RELEASE-READINESS.md` — Release readiness record with install/upgrade/rollback guidance
+- `dist/release/lintel-0.1.0.vsix` — VSIX package (retained as evidence)
+- `tests/governance/rel001-releaseReadiness.test.ts` — Governance tests (18 tests)
+
+**Important:** Evidence is referenced by path, not copied (OBS-S-7033 compliance).
+
 ## Phase 7.9 — False-Positive Quality Scoring
 
 Phase 7.9 introduces **advisory-only** false-positive quality scoring to help operators identify which non-ALLOW decisions are most likely to be true false positives vs legitimate enforcement.
