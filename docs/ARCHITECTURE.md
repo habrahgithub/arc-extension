@@ -220,7 +220,63 @@ Local-model activation in Phase 6.8 is bounded to the local lane only unless a s
 - demotion reason field added to Classification type (explicit, testable)
 - classification precision improvements based on evidence-backed patterns
 - governance tests verifying enforcement-floor preservation and demotion explicitness
+- governance tests verifying enforcement-floor preservation and demotion explicitness
 - documentation of false-positive handling patterns and limitations
+
+## Phase 7.10 additions
+
+- internal UAT scenario pack (25 scenarios across 5 categories)
+- rollback and recovery drill documentation (5 scenarios with evidence tracking)
+- operator runbook hardening with internal-pilot wording
+- governance tests verifying UAT truthfulness and runbook alignment
+- evidence bundle referencing artifacts (not self-certifying)
+
+## Phase 7.10 — Internal Pilot Readiness
+
+Phase 7.10 certifies **INTERNAL PILOT READINESS** only through evidence-backed validation artifacts.
+
+### UAT Scenario Categories
+
+| Category                    | Scenarios | Coverage                                                    |
+| --------------------------- | --------- | ----------------------------------------------------------- |
+| Save-Time Governance Flows  | S01–S05   | ALLOW/WARN/REQUIRE_PLAN/BLOCK decisions, auto-save behavior |
+| Proof Flows                 | P01–P05   | Blueprint linkage, validation, error handling               |
+| Review Flows                | R01–R08   | Audit, runtime status, blueprint, false-positive review     |
+| Degraded Runtime Flows      | D01–D05   | Audit-read failure, missing config, staleness               |
+| False-Positive Review Flows | F01–F05   | Quality scoring, advisory disclaimer, BLOCK exclusion       |
+
+### Rollback Drill Scenarios
+
+| Scenario                 | Objective                     | Verification              |
+| ------------------------ | ----------------------------- | ------------------------- |
+| R1: Extension Rollback   | Restore to Phase 7.9 baseline | Git checkout, build, test |
+| R2: Workspace Gitlink    | Restore workspace gitlink     | Gitlink verification      |
+| R3: Audit Continuity     | Preserve audit history        | Entry count, hash chain   |
+| R4: Command Stability    | Verify command functionality  | Execute all 5 commands    |
+| R5: Enforcement Behavior | Verify unchanged governance   | ALLOW/WARN/REQUIRE_PLAN   |
+
+### Pilot Readiness Boundaries
+
+**Certified:**
+
+- Internal lab use
+- Controlled workspace environments
+- Evidence-backed validation
+
+**Not Certified:**
+
+- Public release readiness
+- Marketplace readiness
+- Production deployment readiness
+- Cloud-lane readiness (disabled by default)
+
+### Evidence Artifacts
+
+- `docs/PHASE-7.10-UAT-SCENARIOS.md` — UAT scenario matrix with verification commands
+- `docs/PHASE-7.10-ROLLBACK-DRILL.md` — Rollback drill with pre/post state tracking
+- `tests/governance/phase7.10-pilotReadiness.test.ts` — Governance tests (18 tests)
+
+**Important:** Phase 7.10 readiness is **evidence-backed, not self-certified**. Evidence artifacts reference retained documentation and test results, not narrative assertions.
 
 ## Phase 7.9 — False-Positive Quality Scoring
 

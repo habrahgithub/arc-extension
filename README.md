@@ -1,13 +1,36 @@
 # ARC — Audit Ready Core
 
-Phase 7.4 runtime hardening of the ARC local-first VS Code governance extension, following the Phase 7.3 identity freeze from LINTEL Code.
+Phase 7.10 internal pilot readiness of the ARC local-first VS Code governance extension, following the Phase 7.9 precision and false-positive reduction.
+
+## Internal Pilot Status
+
+**Status:** INTERNAL PILOT READY  
+**Phase:** 7.10 — Pilot Readiness / UAT Pack  
+**Evidence:** `docs/PHASE-7.10-UAT-SCENARIOS.md`, `docs/PHASE-7.10-ROLLBACK-DRILL.md`
+
+**Pilot Scope:**
+
+- Internal lab use only
+- Controlled workspace environments
+- No external user exposure
+
+**Not Certified:**
+
+- Public release readiness
+- Marketplace readiness
+- Production deployment readiness
+- Cloud-lane readiness (disabled by default)
 
 ## Core reference documents
+
 - `docs/ARCHITECTURE.md` — canonical architecture and enforcement-boundary reference
 - `docs/CODE_MAP.md` — current codebase map covering source layout, save-path flow, dependencies, and test coverage
 - `docs/TESTING.md` — validation and governance-test posture
+- `docs/PHASE-7.10-UAT-SCENARIOS.md` — internal UAT scenario matrix (25 scenarios)
+- `docs/PHASE-7.10-ROLLBACK-DRILL.md` — rollback and recovery drill evidence
 
 ## Phase 7.0 scope
+
 - VS Code save-time governance for `ALLOW / WARN / REQUIRE_PLAN / BLOCK`
 - optional local workspace mapping to refine local precision without weakening rule floors
 - local-only, read-only review surfaces for audit, proof, and false-positive analysis
@@ -33,6 +56,7 @@ Phase 7.4 runtime hardening of the ARC local-first VS Code governance extension,
 - deterministic local smoke harness for repeatable non-cloud operator validation
 
 ## Important limitations
+
 - classification remains heuristic-first, with optional local mapping only
 - audit verification is **file-level integrity only** and does not prove archive-existence completeness
 - shared/team blueprint handling remains unauthorized in Phase 6.8
@@ -43,6 +67,7 @@ Phase 7.4 runtime hardening of the ARC local-first VS Code governance extension,
 - diagnostics are observational only and must not be treated as authorization
 
 ## Phase 7.0 operator hardening boundary
+
 1. Effective governed workspace root must be truthful and visible to the operator.
 2. Nested project boundaries may become the governed root inside a larger VS Code workspace.
 3. Runtime status surfaces remain observational only and must not widen route behavior.
@@ -50,6 +75,7 @@ Phase 7.4 runtime hardening of the ARC local-first VS Code governance extension,
 5. Internal smoke/UAT harnesses must remain deterministic and must not auto-repair malformed evidence.
 
 ## Phase 7.1 governance hardening boundary
+
 1. `ARC: Show Active Workspace Status` remains an observational-only diagnostic surface.
 2. Cloud-related fields in runtime status are factual configuration/reporting values only.
 3. Runtime status must not imply cloud readiness, approval, or authorization.
@@ -57,6 +83,7 @@ Phase 7.4 runtime hardening of the ARC local-first VS Code governance extension,
 5. Governance tests must anchor the runtime-status command and its disclaimer contract against silent removal.
 
 ## Phase 7.2 operator-surface boundary
+
 1. Existing review commands may become clearer and more coherent, but they remain local-only, read-only, and non-authorizing.
 2. Review wording may clarify fail-closed, fallback, and proof-required states only if governance tests anchor the meaning, not just the presence of text.
 3. False-positive review remains advisory only and does not demote recorded decisions or rewrite audit history.
@@ -64,18 +91,30 @@ Phase 7.4 runtime hardening of the ARC local-first VS Code governance extension,
 5. No new dashboards, panels, or broader product UI are authorized in this phase.
 
 ## Phase 7.3 identity boundary
+
 1. ARC is the extension identity only; it does not imply ARC Console coupling, Vault dependency, or control-plane authority.
 2. Internal command ids remain `lintel.*` for compatibility until a separately approved package authorizes migration.
 3. ARC naming must not imply cloud readiness, marketplace readiness, or broader authorization than the extension actually has.
 4. Welcome and onboarding work remain deferred until a separate package authorizes them.
 
 ## Phase 7.4 runtime-hardening boundary
+
 1. Local model retries, timeout handling, and parse handling remain degradation paths only; they do not authorize saves.
 2. Runtime configuration remains local-only and fail-closed; non-local Ollama host values are not a cloud-lane activation signal.
 3. Performance instrumentation at `.arc/perf.jsonl` is observational only and does not affect save, route, proof, or fallback authority.
 4. Warmup/readiness behavior, if used, remains bounded support behavior and does not introduce autonomous decisioning.
 
+## Phase 7.10 pilot readiness boundary
+
+1. Internal pilot status is **evidence-backed** via retained UAT scenarios and rollback drill.
+2. UAT scenarios are **verifiable** against the current codebase (25 scenarios across 5 categories).
+3. Rollback drill is **demonstrable** with pre/post state evidence and audit continuity verification.
+4. Operator runbook wording states **internal readiness only** — not public/marketplace readiness.
+5. Evidence bundle **references artifacts** (UAT scenarios, rollback drill) — does not self-certify.
+6. All Phase 7.0–7.9 boundaries remain in effect; Phase 7.10 adds readiness validation only.
+
 ## Phase 6.8 activation-contract boundary
+
 1. ARC may load route-policy config from `.arc/router.json`.
 2. Missing or invalid route-policy config fails closed to `RULE_ONLY`.
 3. Context Bus v1 packets remain minimal, local, and bounded to excerpt-level context.
@@ -93,18 +132,21 @@ Phase 7.4 runtime hardening of the ARC local-first VS Code governance extension,
 15. Integrated validation and rollback drill are advisory and evidence-backed only; they do not self-authorize sustained activation.
 
 ## Proof workflow
+
 1. `REQUIRE_PLAN` requests a directive ID.
 2. ARC validates the canonical artifact path `.arc/blueprints/<directive_id>.md` under enforced `LOCAL_ONLY` mode.
 3. Save may proceed only when the blueprint is complete, local-only, and linked in the audit entry via `directive_id` and `blueprint_id`.
 4. Local review surfaces remain available even if malformed audit lines are present; malformed lines are skipped and reported as partial review warnings.
 
 ## Local review commands
+
 - `ARC: Review Audit Log`
 - `ARC: Show Active Workspace Status`
 - `ARC: Review Blueprint Proofs`
 - `ARC: Review False-Positive Candidates`
 
 ## Review-surface contract
+
 - review surfaces summarize existing local evidence only
 - review surfaces remain local-only, read-only, and non-authorizing
 - governed-root and route-posture summaries are descriptive only
@@ -112,6 +154,7 @@ Phase 7.4 runtime hardening of the ARC local-first VS Code governance extension,
 - false-positive candidates are advisory only and do not lower the enforcement floor
 
 ## Workspace targeting
+
 - ARC now chooses the effective governed root truthfully per active file.
 - It prefers the nearest nested project boundary inside the active VS Code workspace when a child root contains one of:
   - `.git`
@@ -129,6 +172,7 @@ Phase 7.4 runtime hardening of the ARC local-first VS Code governance extension,
 - ARC naming identifies the VS Code extension only. It does not imply ARC Console coupling, Vault dependency, or new control-plane authority.
 
 ## Local runtime configuration
+
 - local runtime configuration is environment-backed and optional in this phase
 - supported keys:
   - `OLLAMA_HOST`
@@ -140,6 +184,7 @@ Phase 7.4 runtime hardening of the ARC local-first VS Code governance extension,
 - retries, timeout handling, and parse failures remain fallback/degradation paths only
 
 ## Local performance instrumentation
+
 - `.arc/perf.jsonl` remains a local observational log
 - performance entries may cover:
   - workspace-map load
@@ -150,7 +195,9 @@ Phase 7.4 runtime hardening of the ARC local-first VS Code governance extension,
 - performance evidence supports validation and review only; it does not change enforcement outcomes
 
 ## Internal install / run path
+
 Validated local/internal path:
+
 1. `npm install`
 2. `npm run build`
 3. package the extension:
@@ -160,12 +207,14 @@ Validated local/internal path:
 5. reload the VS Code window
 
 Notes:
+
 - some `code` CLI environments do not support `--extensionDevelopmentPath`
 - the VSIX path is the validated internal install path for this repo
 - use `ARC: Show Active Workspace Status` after install to verify audit targeting
 - package name and internal command ids remain `lintel` / `lintel.*` for compatibility in this phase
 
 ## Audit Visibility CLI
+
 - Run with `npm run audit:cli -- <command> [options]`
 - Supported commands: `query`, `trace-directive`, `trace-route`, `perf`, `verify`, `export`
 - Read-only / export-only boundary:
@@ -181,6 +230,7 @@ Notes:
 - Vault-ready means local schema alignment for downstream handoff, not ingestion
 
 ## Context Bus v1 contract hardening
+
 - `authority_tag` is locally asserted by trusted code and remains `LINTEL_LOCAL_ENFORCEMENT`
 - `data_class` remains fail-closed to `LOCAL_ONLY` unless explicit cloud policy marks packets as `CLOUD_ELIGIBLE`
 - `sensitivity_marker` remains fail-closed to `UNASSESSED`
@@ -189,6 +239,7 @@ Notes:
 - retrieval, embeddings, vector stores, and uncontrolled workspace search remain out of scope
 
 ## Router shell
+
 - route resolution remains on a single authoritative path based on the existing route-policy surface
 - router shell metadata distinguishes configured intent from actual lane use
 - `LOCAL_PREFERRED` is local-only and explicit saves only
@@ -200,6 +251,7 @@ Notes:
 - router shell does not weaken the existing rule-first enforcement floor
 
 ## Vault-ready evidence export
+
 - export schema version is `phase-6.7-v1`
 - bundle type is `LINTEL_VAULT_READY_EXPORT`
 - export is local-only and may write only to stdout or an explicit local file path
@@ -208,6 +260,7 @@ Notes:
 - save authorization remains independent from export success, Vault availability, or ARC availability
 
 ## Controlled activation review and rollback drill
+
 - integrated validation must not produce any outcome looser than the hardened baseline
 - rollback target is hardened-equivalent posture:
   - `RULE_ONLY`
@@ -219,6 +272,7 @@ Notes:
 - the lane-by-lane activation recommendation memo is advisory only and requires post-review Axis/Prime decisioning for any sustained activation
 
 ## Commands
+
 - `npm run audit:cli -- help`
 - `npm run smoke:harness`
 - `npm run lint`
