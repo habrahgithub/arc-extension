@@ -214,6 +214,79 @@ Local-model activation in Phase 6.8 is bounded to the local lane only unless a s
 - trigger-context schema documentation with accurate field optionality
 - governance tests verifying semantic meaning of degraded/stale wording, not just string presence
 
+## Phase 7.9 additions
+
+- false-positive candidate quality scoring and ranking (advisory only)
+- demotion reason field added to Classification type (explicit, testable)
+- classification precision improvements based on evidence-backed patterns
+- governance tests verifying enforcement-floor preservation and demotion explicitness
+- documentation of false-positive handling patterns and limitations
+
+## Phase 7.9 — False-Positive Quality Scoring
+
+Phase 7.9 introduces **advisory-only** false-positive quality scoring to help operators identify which non-ALLOW decisions are most likely to be true false positives vs legitimate enforcement.
+
+### Quality Score Factors
+
+| Factor                         | Score | Rationale                                                        |
+| ------------------------------ | ----- | ---------------------------------------------------------------- |
+| Decision is `WARN`             | +30   | WARN decisions are more likely false positives than REQUIRE_PLAN |
+| Decision is `REQUIRE_PLAN`     | +10   | Plan-backed decisions are less likely false positives            |
+| Source is `RULE` or `FALLBACK` | +20   | Rule-only evaluations lack model context                         |
+| No matched rules               | +25   | Flagged without rule match suggests over-cautious classification |
+| Fallback: `CONFIG_MISSING`     | +15   | Config issues may cause spurious flags                           |
+| Fallback: `CONFIG_INVALID`     | +15   | Invalid config may cause spurious flags                          |
+
+### Quality Labels
+
+| Score Range | Label     | Meaning                                                                 |
+| ----------- | --------- | ----------------------------------------------------------------------- |
+| ≥50         | ⚡ High   | Rule-only evaluation with no matched rules — most likely false positive |
+| 30–49       | 🔶 Medium | WARN decision or rule-only evaluation                                   |
+| <30         | 🔷 Low    | REQUIRE_PLAN or model-evaluated — less likely false positive            |
+
+**Important:** Quality scoring is **advisory only** (WRD-0081). It does not:
+
+- Override recorded decisions
+- Weaken the enforcement floor
+- Rewrite audit history
+- Authorize future saves
+
+## Phase 7.9 — Demotion Clarity
+
+Phase 7.9 makes demotion logic **explicit and testable** (WRD-0082) by adding a `demotionReason` field to the `Classification` type.
+
+### Demotion Reasons
+
+| Reason                | Condition                     | Meaning                                                            |
+| --------------------- | ----------------------------- | ------------------------------------------------------------------ |
+| `UI_PATH_SINGLE_FLAG` | UI path + exactly 1 risk flag | Single-flag UI paths are demoted to reduce false-positive friction |
+
+### Demotion Logic (classifier.ts)
+
+```typescript
+if (
+  riskFlags.length > 0 &&
+  isUiPath(input.filePath, options.additionalUiSegments) &&
+  riskFlags.length < 2
+) {
+  const demotedRisk = demoteRisk(riskLevel);
+  if (demotedRisk !== riskLevel) {
+    riskLevel = demotedRisk;
+    demoted = true;
+    demotionReason = 'UI_PATH_SINGLE_FLAG';
+  }
+}
+```
+
+**Constraints:**
+
+- Demotion only applies to UI paths (components/ui/views segments)
+- Demotion only applies with exactly 1 risk flag
+- Non-UI paths preserve original risk level
+- Multi-flag paths preserve original risk level
+- Demotion reason is always explicit in the Classification result
+
 ## Trigger and Audit Schema (Phase 7.8)
 
 This section documents the trigger-context and audit-entry fields for maintainers and audit consumers. Fields marked **optional** may be absent in older audit entries or when the evaluation path did not produce them.

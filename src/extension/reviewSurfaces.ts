@@ -27,6 +27,10 @@ export const REVIEW_SURFACE_FALSE_POSITIVE_NOTICE =
 export const REVIEW_SURFACE_AUDIT_READ_ERROR_NOTICE =
   'Audit-read degradation: audit data could not be read cleanly. This display is partial and does not imply audit absence equals approval or clean state.';
 
+// Phase 7.9 — False-positive quality notice (WRD-0081)
+export const REVIEW_SURFACE_FALSE_POSITIVE_QUALITY_NOTICE =
+  'False-positive candidates are ranked by likelihood. This ranking is advisory only and does not override recorded decisions or weaken enforcement.';
+
 export class LocalReviewSurfaceService {
   private readonly blueprintArtifacts: BlueprintArtifactStore;
   private readonly workspaceMapping: WorkspaceMappingStore;
@@ -205,13 +209,31 @@ export class LocalReviewSurfaceService {
         const audit = fs.existsSync(auditPath)
           ? readAuditEntries(auditPath)
           : { entries: [], malformedCount: 0 };
+
+        // Phase 7.9 — False-positive candidate quality refinement
+        // Filter to show only non-BLOCK decisions (BLOCK is rarely a false positive)
+        // and sort by likelihood of being a true false positive
         const candidates = audit.entries
-          .filter((entry) => entry.decision !== 'ALLOW')
-          .slice(-10)
-          .reverse();
+          .filter(
+            (entry) =>
+              entry.decision === 'WARN' || entry.decision === 'REQUIRE_PLAN',
+          )
+          .map((entry) => ({
+            entry,
+            // Quality score: higher = more likely to be a true false positive candidate
+            // - WARN decisions are more likely false positives than REQUIRE_PLAN
+            // - Rule-only evaluations (no model) are more likely false positives
+            // - Files with no matched rules but still flagged are likely false positives
+            qualityScore: calculateFalsePositiveQualityScore(entry),
+          }))
+          .sort((a, b) => b.qualityScore - a.qualityScore) // Highest quality first
+          .slice(0, 10) // Top 10 candidates
+          .map((c) => c.entry);
+
         const operatorContext = this.renderOperatorContext([
           `Workspace mapping status: \`${mapping.status}\``,
           REVIEW_SURFACE_FALSE_POSITIVE_NOTICE,
+          REVIEW_SURFACE_FALSE_POSITIVE_QUALITY_NOTICE,
         ]);
 
         return [
@@ -222,6 +244,7 @@ export class LocalReviewSurfaceService {
           `- Workspace mapping status: ${mapping.status}`,
           `- Local review only: yes`,
           `- Malformed lines skipped: ${audit.malformedCount}`,
+          `- Candidates shown: ${candidates.length} (ranked by false-positive likelihood)`,
           '',
           ...(audit.malformedCount > 0
             ? [
@@ -233,17 +256,21 @@ export class LocalReviewSurfaceService {
           '## Candidate entries',
           ...(candidates.length === 0
             ? ['No candidate governance entries have been recorded yet.']
-            : candidates.flatMap((entry) => [
-                `### ${entry.file_path}`,
-                `- Decision: ${entry.decision}`,
-                `- Route posture: \`${entry.route_mode ?? 'RULE_ONLY'}\` / \`${entry.route_lane ?? 'RULE_ONLY'}\``,
-                `- Route fallback: \`${entry.route_fallback ?? 'NONE'}\``,
-                `- Reason: ${entry.reason}`,
-                `- Matched rules: ${entry.matched_rules.join(', ') || 'none'}`,
-                `- Directive linkage: ${entry.directive_id ?? 'none'}`,
-                `- Next action: ${entry.next_action}`,
-                '',
-              ])),
+            : candidates.flatMap((entry) => {
+                const qualityLabel = getFalsePositiveQualityLabel(entry);
+                return [
+                  `### ${entry.file_path}`,
+                  `- Decision: ${entry.decision}`,
+                  `- False-positive likelihood: ${qualityLabel}`,
+                  `- Route posture: \`${entry.route_mode ?? 'RULE_ONLY'}\` / \`${entry.route_lane ?? 'RULE_ONLY'}\``,
+                  `- Route fallback: \`${entry.route_fallback ?? 'NONE'}\``,
+                  `- Reason: ${entry.reason}`,
+                  `- Matched rules: ${entry.matched_rules.join(', ') || 'none'}`,
+                  `- Directive linkage: ${entry.directive_id ?? 'none'}`,
+                  `- Next action: ${entry.next_action}`,
+                  '',
+                ];
+              })),
         ].join('\n');
       },
       { workspace_root: this.workspaceRoot },
@@ -293,4 +320,51 @@ function summarizeDecisionCounts(
     },
     { ALLOW: 0, WARN: 0, REQUIRE_PLAN: 0, BLOCK: 0 },
   );
+}
+
+// Phase 7.9 — False-positive quality scoring (advisory only, WRD-0081)
+// Higher score = more likely to be a true false positive candidate
+function calculateFalsePositiveQualityScore(entry: AuditEntry): number {
+  let score = 0;
+
+  // WARN decisions are more likely false positives than REQUIRE_PLAN
+  if (entry.decision === 'WARN') {
+    score += 30;
+  } else if (entry.decision === 'REQUIRE_PLAN') {
+    score += 10;
+  }
+
+  // Rule-only evaluations (no model) are more likely false positives
+  if (entry.source === 'RULE' || entry.source === 'FALLBACK') {
+    score += 20;
+  }
+
+  // Files with no matched rules but still flagged are likely false positives
+  if (entry.matched_rules.length === 0) {
+    score += 25;
+  }
+
+  // Demoted decisions are more likely false positives (UI path demotion)
+  // Note: demotion info is not in audit entry, would need to be added
+
+  // Fallback with config/packet issues are more likely false positives
+  if (
+    entry.route_fallback === 'CONFIG_MISSING' ||
+    entry.route_fallback === 'CONFIG_INVALID'
+  ) {
+    score += 15;
+  }
+
+  return score;
+}
+
+function getFalsePositiveQualityLabel(entry: AuditEntry): string {
+  const score = calculateFalsePositiveQualityScore(entry);
+  if (score >= 50) {
+    return '⚡ High (rule-only, no matched rules)';
+  }
+  if (score >= 30) {
+    return '🔶 Medium (WARN decision, rule-only)';
+  }
+  return '🔷 Low (REQUIRE_PLAN or model-evaluated)';
 }

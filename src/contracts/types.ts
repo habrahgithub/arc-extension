@@ -65,6 +65,11 @@ export interface Classification {
   riskLevel: RiskLevel;
   heuristicOnly: true;
   demoted: boolean;
+  // Phase 7.9 — Demotion clarity (WRD-0082)
+  demotionReason?:
+    | 'UI_PATH_SINGLE_FLAG'
+    | 'UI_PATH_MULTI_FLAG_REDUCED'
+    | 'EXPLICIT_RULE';
 }
 
 export interface DecisionPayload {

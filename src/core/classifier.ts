@@ -19,7 +19,11 @@ function pathSegments(filePath: string): string[] {
     .map((segment) => segment.toLowerCase());
 }
 
-function matchesRule(rule: RiskRule, filePath: string, fileName: string): boolean {
+function matchesRule(
+  rule: RiskRule,
+  filePath: string,
+  fileName: string,
+): boolean {
   const segments = pathSegments(filePath);
   const lowerFileName = fileName.toLowerCase();
 
@@ -38,7 +42,10 @@ function matchesRule(rule: RiskRule, filePath: string, fileName: string): boolea
   });
 }
 
-function isUiPath(filePath: string, additionalUiSegments: string[] = []): boolean {
+function isUiPath(
+  filePath: string,
+  additionalUiSegments: string[] = [],
+): boolean {
   const uiSegments = new Set([
     ...UI_SEGMENTS,
     ...additionalUiSegments.map((segment) => segment.toLowerCase()),
@@ -53,12 +60,17 @@ export function classifyFile(
   options: ClassifierOptions = {},
 ): Classification {
   const fileName = input.fileName ?? path.basename(input.filePath);
-  const matchedRules = rules.filter((rule) => matchesRule(rule, input.filePath, fileName));
+  const matchedRules = rules.filter((rule) =>
+    matchesRule(rule, input.filePath, fileName),
+  );
   const riskFlags = [...new Set(matchedRules.map((rule) => rule.riskFlag))];
   const matchedRuleIds = matchedRules.map((rule) => rule.id);
   let riskLevel = maxRisk(matchedRules.map((rule) => rule.severity));
   let demoted = false;
+  let demotionReason: Classification['demotionReason'] = undefined;
 
+  // Phase 7.9 — Demotion clarity (WRD-0082)
+  // Make demotion logic explicit and testable
   if (
     riskFlags.length > 0 &&
     isUiPath(input.filePath, options.additionalUiSegments) &&
@@ -68,6 +80,7 @@ export function classifyFile(
     if (demotedRisk !== riskLevel) {
       riskLevel = demotedRisk;
       demoted = true;
+      demotionReason = 'UI_PATH_SINGLE_FLAG';
     }
   }
 
@@ -79,5 +92,6 @@ export function classifyFile(
     riskLevel,
     heuristicOnly: true,
     demoted,
+    demotionReason,
   };
 }
