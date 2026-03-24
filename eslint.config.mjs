@@ -10,6 +10,8 @@ export default [
       'coverage/**',
       'scripts/**/*.js',
       'tests/fixtures/**/*.js',
+      // ARC-UI-001: UI layer excluded pending TypeScript project configuration
+      'src/ui/**',
     ],
   },
   js.configs.recommended,
