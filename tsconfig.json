@@ -14,5 +14,5 @@
     "types": ["node", "vscode"]
   },
   "include": ["src/**/*.ts", "rules/**/*.json"],
-  "exclude": ["dist", "node_modules", "tests"]
+  "exclude": ["dist", "node_modules", "tests", "src/ui"]
 }
