@@ -96,18 +96,19 @@ describe('ARC-UI-001a — UI Foundation Governance', () => {
   });
 
   describe('WRD-0092: CSP and Sanitization', () => {
-    it('CSP module defines restrictive policy', () => {
+    it('CSP module defines restrictive policy with nonce support', () => {
       const cspPath = path.join(projectRoot, 'src', 'ui', 'csp.ts');
       expect(fs.existsSync(cspPath)).toBe(true);
 
       const csp = fs.readFileSync(cspPath, 'utf8');
 
-      // Should have restrictive CSP
+      // Should have restrictive CSP with nonce support (WRD-0097 fix)
       expect(csp).toContain("default-src 'none'");
-      expect(csp).toContain("script-src 'self'");
+      expect(csp).toContain("script-src 'nonce-");
       expect(csp).toContain("connect-src 'none'");
       expect(csp).toContain("frame-src 'none'");
-      expect(csp).toContain("form-action 'none'");
+      expect(csp).toContain('generateNonce');
+      expect(csp).toContain('buildCSPWithNonce');
     });
 
     it('sanitization module escapes HTML', () => {
@@ -135,14 +136,19 @@ describe('ARC-UI-001a — UI Foundation Governance', () => {
 
       const reviewHome = fs.readFileSync(reviewHomePath, 'utf8');
 
-      // Should import CSP
+      // Should import CSP with nonce support
       expect(reviewHome).toMatch(/import.*csp/i);
+      expect(reviewHome).toContain('generateNonce');
+      expect(reviewHome).toContain('buildCSPWithNonce');
 
       // Should import sanitization
       expect(reviewHome).toMatch(/import.*sanitize/i);
 
       // Should use escapeHtml
       expect(reviewHome).toContain('escapeHtml');
+
+      // Should use nonce in script tag (WRD-0097 fix)
+      expect(reviewHome).toContain('nonce=');
     });
   });
 

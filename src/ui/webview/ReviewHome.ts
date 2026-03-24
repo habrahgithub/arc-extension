@@ -6,16 +6,22 @@
  *
  * WRD-0096: Identity wording must not overclaim capability
  * WRD-0092: CSP and sanitization applied
+ * WRD-0097: Nonce-based CSP for inline scripts
  */
 
 import * as vscode from 'vscode';
-import { RESTRICTIVE_CSP } from './csp';
+import { buildCSPWithNonce, generateNonce } from './csp';
 import { escapeHtml } from './sanitize';
 
 /**
  * Create and show the Review Home WebviewPanel
+ *
+ * WRD-0097 Fix: Generate nonce per webview instance for CSP compliance
  */
 export function createReviewHomePanel(): vscode.WebviewPanel {
+  const nonce = generateNonce();
+
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
   const panel = vscode.window.createWebviewPanel(
     'arcReviewHome',
     'ARC — Review Home',
@@ -31,15 +37,20 @@ export function createReviewHomePanel(): vscode.WebviewPanel {
     localResourceRoots: [],
   };
 
-  panel.webview.html = getReviewHomeHtml();
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+  panel.webview.html = getReviewHomeHtml(nonce);
 
   return panel;
 }
 
 /**
- * Generate Review Home HTML
+ * Generate Review Home HTML with nonce-based CSP
+ *
+ * WRD-0096 Compliance: Identity wording bounded to actual capability
+ * WRD-0097 Compliance: Nonce in both CSP and script tag
  */
-function getReviewHomeHtml(): string {
+function getReviewHomeHtml(nonce: string): string {
+  const csp = buildCSPWithNonce(nonce);
   const productName = 'ARC — Audit Ready Core';
   const postureNotes = [
     'Local-only governance',
@@ -75,6 +86,7 @@ function getReviewHomeHtml(): string {
   ];
 
   // Build HTML safely using template with escaped values
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-call
   const cardsHtml = reviewCards
     .map(
       (card) =>
@@ -83,16 +95,22 @@ function getReviewHomeHtml(): string {
         `<h2 class="card-title">${escapeHtml(card.title)}</h2>` +
         `<p class="card-description">${escapeHtml(card.description)}</p></div>`,
     )
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     .join('');
 
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-call
   const badgesHtml = postureNotes
     .map((note) => `<span class="posture-badge">${escapeHtml(note)}</span>`)
     .join('');
 
+  // Inline script with nonce attribute (WRD-0097 fix)
+  const inlineScript = `(function(){const vscode=acquireVsCodeApi();document.querySelectorAll('.card').forEach(c=>{c.addEventListener('click',()=>{const cmd=c.getAttribute('data-command');if(cmd){vscode.postMessage({type:'exec',cmd});}});});})();`;
+
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-call
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta http-equiv="Content-Security-Policy" content="${RESTRICTIVE_CSP}">
+  <meta http-equiv="Content-Security-Policy" content="${escapeHtml(csp)}">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${escapeHtml(productName)} — Review Home</title>
@@ -118,13 +136,15 @@ function getReviewHomeHtml(): string {
   </div>
   <div class="cards-grid">${cardsHtml}</div>
   <div class="footer"><p>Review surfaces are local-only, read-only, and non-authorizing.</p></div>
-  <script>(function(){const vscode=acquireVsCodeApi();document.querySelectorAll('.card').forEach(c=>{c.addEventListener('click',()=>{const cmd=c.getAttribute('data-command');if(cmd){vscode.postMessage({type:'exec',cmd});}});});})();</script>
+  <script nonce="${escapeHtml(nonce)}">${inlineScript}</script>
 </body>
 </html>`;
 }
 
 /**
  * Handle messages from Review Home panel
+ *
+ * WRD-0092 Compliance: Whitelist-based command validation
  */
 export function handleReviewHomeMessage(message: unknown): void {
   const msg = message as { type?: string; cmd?: string };

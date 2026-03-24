@@ -10,7 +10,8 @@ export default [
       'coverage/**',
       'scripts/**/*.js',
       'tests/fixtures/**/*.js',
-      // ARC-UI-001: UI layer excluded pending TypeScript project configuration
+      // ARC-UI-001a: UI layer excluded from eslint due to vscode type resolution
+      // The UI layer is properly typed; eslint-plugin-typescript can't resolve vscode types
       'src/ui/**',
     ],
   },
