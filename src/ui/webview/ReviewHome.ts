@@ -145,15 +145,24 @@ function getReviewHomeHtml(nonce: string): string {
  * Handle messages from Review Home panel
  *
  * WRD-0092 Compliance: Whitelist-based command validation
+ * OBS-S-7051: Command IDs declared and whitelisted
  */
 export function handleReviewHomeMessage(message: unknown): void {
   const msg = message as { type?: string; cmd?: string };
   if (msg.type === 'exec' && msg.cmd) {
+    // Whitelist of allowed commands (WRD-0092: no arbitrary command execution)
     const allowed = [
       'lintel.showRuntimeStatus',
       'lintel.reviewAudit',
       'lintel.reviewBlueprints',
       'lintel.reviewFalsePositives',
+      // ARC-UI-001b commands
+      'arc.ui.runtimeStatus',
+      'arc.ui.auditReview',
+      // ARC-UI-001c commands
+      'arc.ui.blueprintProof',
+      'arc.ui.falsePositiveReview',
+      'arc.ui.guidedWorkflow',
     ];
     if (allowed.includes(msg.cmd)) {
       void vscode.commands.executeCommand(msg.cmd);

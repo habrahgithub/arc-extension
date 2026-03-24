@@ -2,8 +2,8 @@
  * ARC UI Module — Internal Review Surface Upgrade
  *
  * ARC-UI-001a: Screen 1 (Review Home) — COMPLETE
- * ARC-UI-001b: Screen 2 (Runtime Status) + Screen 3 (Audit Review) — IN PROGRESS
- * ARC-UI-001c: Screens 4-6 — PENDING
+ * ARC-UI-001b: Screen 2 (Runtime Status) + Screen 3 (Audit Review) — COMPLETE
+ * ARC-UI-001c: Screen 4 (Blueprint Proof) + Screen 5 (False-Positive) + Screen 6 (Guided Workflow) — IN PROGRESS
  *
  * Excludes Screen 7 (Command Centre) — Parked future concept (WRD-0095)
  */
@@ -15,11 +15,15 @@ import {
 } from './webview/ReviewHome';
 import { createRuntimeStatusPanel } from './webview/RuntimeStatus';
 import { createAuditReviewPanel } from './webview/AuditReview';
+import { createBlueprintProofReviewPanel } from './webview/BlueprintProofReview';
+import { createFalsePositiveReviewPanel } from './webview/FalsePositiveReview';
+import { createGuidedProofWorkflowPanel } from './webview/GuidedProofWorkflow';
 
 /**
  * Register all ARC-UI commands
  *
  * OBS-S-7039: UI registration in extension.ts
+ * OBS-S-7051: Command IDs declared
  */
 export function registerUiCommands(context: vscode.ExtensionContext): void {
   // Screen 1: Review Home (ARC-UI-001a)
@@ -49,10 +53,26 @@ export function registerUiCommands(context: vscode.ExtensionContext): void {
     }),
   );
 
-  // Note: Screens 4-6 deferred to ARC-UI-001c
-  // - lintel.reviewBlueprints (Screen 4)
-  // - lintel.reviewFalsePositives (Screen 5)
-  // - Guided Proof Workflow (Screen 6)
+  // Screen 4: Blueprint Proof Review (ARC-UI-001c)
+  context.subscriptions.push(
+    vscode.commands.registerCommand('arc.ui.blueprintProof', () => {
+      createBlueprintProofReviewPanel();
+    }),
+  );
+
+  // Screen 5: False-Positive Review (ARC-UI-001c)
+  context.subscriptions.push(
+    vscode.commands.registerCommand('arc.ui.falsePositiveReview', () => {
+      createFalsePositiveReviewPanel();
+    }),
+  );
+
+  // Screen 6: Guided Proof Workflow (ARC-UI-001c)
+  context.subscriptions.push(
+    vscode.commands.registerCommand('arc.ui.guidedWorkflow', () => {
+      createGuidedProofWorkflowPanel();
+    }),
+  );
 }
 
 /**
