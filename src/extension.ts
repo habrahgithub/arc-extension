@@ -14,9 +14,8 @@ import { SaveLifecycleController } from './extension/saveLifecycleController';
 import { SaveOrchestrator } from './extension/saveOrchestrator';
 import { WelcomeSurfaceService } from './extension/welcomeSurface';
 import { resolveWorkspaceTarget } from './extension/workspaceTargeting';
-// ARC-UI-001a — UI layer registration pending TypeScript module resolution fix
-// Known issue: TypeScript can't resolve './ui' module imports
-// import { registerUiCommands } from './ui';
+// ARC-UI-001a — Internal Review Surface Upgrade (UI layer)
+import { registerUiCommands } from './ui';
 
 function autoSaveMode():
   | 'off'
@@ -463,8 +462,8 @@ export function activate(context: vscode.ExtensionContext): void {
     }),
   );
 
-  // ARC-UI-001a — UI registration pending TypeScript module resolution fix (OBS-S-7039)
-  // registerUiCommands(context);
+  // ARC-UI-001a — Register UI commands (OBS-S-7039 resolved)
+  registerUiCommands(context);
 }
 
 export function deactivate(): void {

@@ -10,8 +10,8 @@
  */
 
 import * as vscode from 'vscode';
-import { buildCSPWithNonce, generateNonce } from './csp';
-import { escapeHtml } from './sanitize';
+import { buildCSPWithNonce, generateNonce } from '../csp';
+import { escapeHtml } from '../sanitize';
 
 /**
  * Create and show the Review Home WebviewPanel
