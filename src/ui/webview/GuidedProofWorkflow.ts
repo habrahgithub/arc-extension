@@ -1,8 +1,8 @@
 /**
  * Guided Proof Workflow — Screen 6 (ARC-UI-001c)
- * 
+ *
  * Purpose: Instructional guidance for REQUIRE_PLAN proof completion
- * 
+ *
  * WRD-0102: **INSTRUCTIONAL WORDING SUBMITTED FOR WARDEN REVIEW**
  * WRD-0098: Evidence-framed wording
  * WRD-0100: Instructional only, no approval surface
@@ -15,12 +15,12 @@ import { escapeHtml } from '../sanitize';
 
 /**
  * Create and show the Guided Proof Workflow WebviewPanel
- * 
+ *
  * WRD-0102: Instructional wording only — no approval surface
  */
 export function createGuidedProofWorkflowPanel(): vscode.WebviewPanel {
   const nonce = generateNonce();
-  
+
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
   const panel = vscode.window.createWebviewPanel(
     'arcGuidedWorkflow',
@@ -44,9 +44,9 @@ export function createGuidedProofWorkflowPanel(): vscode.WebviewPanel {
 
 /**
  * Generate Guided Proof Workflow HTML
- * 
+ *
  * **WRD-0102: INSTRUCTIONAL WORDING FOR WARDEN REVIEW**
- * 
+ *
  * Key constraints:
  * - Must be instructional ("you need to..."), not authorizing ("click to approve...")
  * - Must not imply automatic authorization after completing steps
@@ -62,36 +62,44 @@ function getGuidedWorkflowHtml(nonce: string): string {
     {
       step: 1,
       title: 'Provide Directive ID',
-      content: 'When prompted for a REQUIRE_PLAN save, enter the directive ID that authorizes your change (e.g., LINTEL-PH5-001). The directive ID must be in uppercase, hyphenated format.',
+      content:
+        'When prompted for a REQUIRE_PLAN save, enter the directive ID that links your change to a governance plan (e.g., LINTEL-PH5-001). The directive ID must be in uppercase, hyphenated format.',
     },
     {
       step: 2,
       title: 'Open Blueprint Artifact',
-      content: 'ARC will open or create the blueprint file at `.arc/blueprints/<directive-id>.md`. This is your local proof artifact — you must complete all required sections with directive-specific content.',
+      content:
+        'ARC will open or create the blueprint file at `.arc/blueprints/<directive-id>.md`. This is your local proof artifact — you must complete all required sections with directive-specific content.',
     },
     {
       step: 3,
       title: 'Complete Required Sections',
-      content: 'Fill in all sections marked as required. Replace any placeholder text (e.g., [REQUIRED]) with actual content that describes your change. Template creation does not equal authorization — the blueprint must be complete.',
+      content:
+        'Fill in all sections marked as required. Replace any placeholder text (e.g., [REQUIRED]) with actual content that describes your change. Template creation does not equal authorization — the blueprint must be complete.',
     },
     {
       step: 4,
       title: 'Save Blueprint File',
-      content: 'Save the blueprint file after completing all sections. ARC will validate the blueprint structure and content.',
+      content:
+        'Save the blueprint file after completing all sections. ARC will validate the blueprint structure and content.',
     },
     {
       step: 5,
       title: 'Re-save the Governed File',
-      content: 'Return to your original file and attempt the save again. If the blueprint is valid and complete, ARC will allow the save to proceed. If the blueprint is incomplete or invalid, you will be prompted to fix it.',
+      content:
+        'Return to your original file and attempt the save again. ARC will re-evaluate the save — a valid, complete blueprint satisfies the proof requirement, but other rules may still apply.',
     },
     {
       step: 6,
       title: 'Review Proof Status',
-      content: 'After a successful save, you can review the proof status using the Blueprint Proof Review surface. Records will show the directive linkage in the audit entry.',
+      content:
+        'After a successful save, you can review the proof status using the Blueprint Proof Review surface. Records will show the directive linkage in the audit entry.',
     },
   ];
 
-  const stepsHtml = steps.map(s => `
+  const stepsHtml = steps
+    .map(
+      (s) => `
     <div class="step">
       <div class="step-number">${s.step}</div>
       <div class="step-content">
@@ -99,7 +107,9 @@ function getGuidedWorkflowHtml(nonce: string): string {
         <p>${escapeHtml(s.content)}</p>
       </div>
     </div>
-  `).join('');
+  `,
+    )
+    .join('');
 
   const warnings = `
     <div class="warning-box">
