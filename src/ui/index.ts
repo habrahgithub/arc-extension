@@ -1,13 +1,9 @@
 /**
- * ARC UI Module — Internal Review Surface Upgrade (ARC-UI-001)
+ * ARC UI Module — Internal Review Surface Upgrade
  *
- * Registers all 6 active UI screens:
- * 1. Review Home — Navigation hub
- * 2. Runtime Status — Decision context display
- * 3. Audit Review — Entry inspection
- * 4. Blueprint Proof Review — Proof lifecycle
- * 5. False-Positive Review — Advisory candidates
- * 6. Guided Proof Workflow — Instructional guidance
+ * ARC-UI-001a: Screen 1 (Review Home) — COMPLETE
+ * ARC-UI-001b: Screen 2 (Runtime Status) + Screen 3 (Audit Review) — IN PROGRESS
+ * ARC-UI-001c: Screens 4-6 — PENDING
  *
  * Excludes Screen 7 (Command Centre) — Parked future concept (WRD-0095)
  */
@@ -17,14 +13,16 @@ import {
   createReviewHomePanel,
   handleReviewHomeMessage,
 } from './webview/ReviewHome';
+import { createRuntimeStatusPanel } from './webview/RuntimeStatus';
+import { createAuditReviewPanel } from './webview/AuditReview';
 
 /**
- * Register all ARC-UI-001 commands
+ * Register all ARC-UI commands
  *
- * These commands create WebviewPanels for existing review functions
+ * OBS-S-7039: UI registration in extension.ts
  */
 export function registerUiCommands(context: vscode.ExtensionContext): void {
-  // Screen 1: Review Home
+  // Screen 1: Review Home (ARC-UI-001a)
   context.subscriptions.push(
     vscode.commands.registerCommand('arc.ui.reviewHome', () => {
       const panel = createReviewHomePanel();
@@ -37,12 +35,24 @@ export function registerUiCommands(context: vscode.ExtensionContext): void {
     }),
   );
 
-  // Note: Screens 2-6 will use existing commands with WebviewPanel enhancement
-  // - lintel.showRuntimeStatus
-  // - lintel.reviewAudit
-  // - lintel.reviewBlueprints
-  // - lintel.reviewFalsePositives
-  // Guided Proof Workflow is instructional guidance within existing flows
+  // Screen 2: Runtime Status (ARC-UI-001b)
+  context.subscriptions.push(
+    vscode.commands.registerCommand('arc.ui.runtimeStatus', () => {
+      createRuntimeStatusPanel();
+    }),
+  );
+
+  // Screen 3: Audit Review (ARC-UI-001b)
+  context.subscriptions.push(
+    vscode.commands.registerCommand('arc.ui.auditReview', () => {
+      createAuditReviewPanel();
+    }),
+  );
+
+  // Note: Screens 4-6 deferred to ARC-UI-001c
+  // - lintel.reviewBlueprints (Screen 4)
+  // - lintel.reviewFalsePositives (Screen 5)
+  // - Guided Proof Workflow (Screen 6)
 }
 
 /**
