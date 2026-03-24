@@ -268,10 +268,10 @@ describe('governance guards', () => {
       packageJson.contributes?.commands?.map((entry) => entry.command) ?? [];
     const activationEvents = packageJson.activationEvents ?? [];
 
-    expect(commands).toContain('lintel.reviewAudit');
-    expect(commands).toContain('lintel.showRuntimeStatus');
-    expect(commands).toContain('lintel.reviewBlueprints');
-    expect(commands).toContain('lintel.reviewFalsePositives');
+    expect(commands).toContain('arc.reviewAudit');
+    expect(commands).toContain('arc.showRuntimeStatus');
+    expect(commands).toContain('arc.reviewBlueprints');
+    expect(commands).toContain('arc.reviewFalsePositives');
     expect(activationEvents).toContain('onCommand:lintel.showRuntimeStatus');
   });
 
@@ -359,10 +359,10 @@ describe('governance guards', () => {
     expect(packageJson.description).toContain('Governed code enforcement');
     expect(commands).toEqual(
       expect.arrayContaining([
-        { command: 'lintel.reviewAudit', title: 'ARC: Review Audit Log' },
-        { command: 'lintel.showRuntimeStatus', title: 'ARC: Show Active Workspace Status' },
-        { command: 'lintel.reviewBlueprints', title: 'ARC: Review Blueprint Proofs' },
-        { command: 'lintel.reviewFalsePositives', title: 'ARC: Review False-Positive Candidates' },
+        { command: 'arc.reviewAudit', title: 'ARC: Review Audit Log' },
+        { command: 'arc.showRuntimeStatus', title: 'ARC: Show Active Workspace Status' },
+        { command: 'arc.reviewBlueprints', title: 'ARC: Review Blueprint Proofs' },
+        { command: 'arc.reviewFalsePositives', title: 'ARC: Review False-Positive Candidates' },
       ]),
     );
     expect(readme).toContain('Internal command ids remain `lintel.*` for compatibility');

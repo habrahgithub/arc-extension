@@ -83,8 +83,9 @@ async function openMarkdownPreview(
 
 async function promptForDirectiveId(): Promise<string | undefined> {
   return vscode.window.showInputBox({
-    title: 'LINTEL REQUIRE_PLAN proof',
-    prompt: 'Enter the directive ID that authorizes this save.',
+    title: 'ARC REQUIRE_PLAN proof',
+    prompt:
+      'Enter the directive ID that links your change to a governance plan.',
     placeHolder: 'LINTEL-PH5-001',
     ignoreFocusOut: true,
     validateInput: (value) => {
@@ -115,7 +116,7 @@ async function collectRequirePlanProof(
 
   if (resolution.status === 'MISSING_ARTIFACT') {
     const choice = await vscode.window.showWarningMessage(
-      `[LINTEL] ${resolution.reason}`,
+      `[ARC] ${resolution.reason}`,
       { modal: true },
       'Create Blueprint',
       'Cancel',
@@ -141,7 +142,7 @@ async function collectRequirePlanProof(
   }
 
   if (!resolution.ok || !resolution.link) {
-    void vscode.window.showWarningMessage(`[LINTEL] ${resolution.reason}`, {
+    void vscode.window.showWarningMessage(`[ARC] ${resolution.reason}`, {
       modal: true,
     });
     return {
@@ -155,7 +156,7 @@ async function collectRequirePlanProof(
   }
 
   const continueChoice = await vscode.window.showWarningMessage(
-    `[LINTEL] REQUIRE_PLAN: ${assessment.decision.reason}\nDirective ${directiveId} linked to ${resolution.link.blueprintId}.`,
+    `[ARC] REQUIRE_PLAN: ${assessment.decision.reason}\nDirective ${directiveId} linked to ${resolution.link.blueprintId}.`,
     { modal: true },
     'Continue',
     'Cancel',
@@ -236,11 +237,129 @@ export function activate(context: vscode.ExtensionContext): void {
   const mode = autoSaveMode();
   if (mode === 'afterDelay' || mode === 'onFocusChange') {
     void vscode.window.showInformationMessage(
-      `[LINTEL] Reduced-guarantee auto-save mode detected (${mode}). Explicit save remains the preferred path.`,
+      `[ARC] Reduced-guarantee auto-save mode detected (${mode}). Explicit save remains the preferred path.`,
     );
   }
 
   context.subscriptions.push(
+    // ARC-CMD-001: Primary arc.* namespace (canonical)
+    vscode.commands.registerCommand('arc.showWelcome', async () => {
+      await welcomeSurface.showWelcome();
+    }),
+    vscode.commands.registerCommand('arc.reviewAudit', async () => {
+      const filePath = vscode.window.activeTextEditor?.document.uri.fsPath;
+      await openMarkdownPreview(
+        'ARC Audit Review',
+        reviewSurfaceFor(filePath).renderAuditReview(),
+      );
+    }),
+    vscode.commands.registerCommand('arc.showRuntimeStatus', async () => {
+      const filePath = vscode.window.activeTextEditor?.document.uri.fsPath;
+      const target = targetFor(filePath);
+      const routePolicy = new RoutePolicyStore(target.effectiveRoot).load();
+
+      // Phase 7.7 — Read last audit entry for trigger visibility
+      // Phase 7.8 — Staleness hardening and audit-read degradation
+      const auditPath = path.join(target.effectiveRoot, '.arc', 'audit.jsonl');
+      let lastAudit: AuditEntry | undefined;
+      let auditReadError: string | undefined;
+
+      try {
+        if (fs.existsSync(auditPath)) {
+          const auditContent = fs.readFileSync(auditPath, 'utf8');
+          const lines = auditContent.trim().split('\n').filter(Boolean);
+          if (lines.length > 0) {
+            lastAudit = JSON.parse(lines[lines.length - 1]) as AuditEntry;
+          }
+        }
+      } catch {
+        // Phase 7.8 — WRD-0077: Do not silently ignore audit read errors.
+        // Degrade to "audit unavailable" rather than "audit clean".
+        // Do not expose raw error details to operator surface.
+        auditReadError = 'AUDIT_READ_FAILED';
+      }
+
+      // Phase 7.8 — Staleness detection
+      let lastDecisionContext:
+        | (typeof lastAudit & {
+            isStale?: boolean;
+            stalenessReason?: 'FILE_MISMATCH' | 'TIME_THRESHOLD' | 'BOTH';
+          })
+        | undefined;
+
+      if (lastAudit && !auditReadError) {
+        const activeFilePath =
+          vscode.window.activeTextEditor?.document.uri.fsPath;
+        const lastDecisionTs = new Date(lastAudit.ts).getTime();
+        const nowTs = Date.now();
+        const timeDiff = nowTs - lastDecisionTs;
+
+        // Staleness model (OBS-S-7019):
+        // - FILE_MISMATCH: last decision file_path differs from active file
+        // - TIME_THRESHOLD: last decision is older than 5 minutes
+        // - BOTH: both conditions are true
+        const isFileMismatch =
+          activeFilePath != null && lastAudit.file_path !== activeFilePath;
+        const isTimeStale = timeDiff > 5 * 60 * 1000; // 5 minutes
+
+        const isStale = isFileMismatch || isTimeStale;
+        const stalenessReason =
+          isFileMismatch && isTimeStale
+            ? 'BOTH'
+            : isFileMismatch
+              ? 'FILE_MISMATCH'
+              : isTimeStale
+                ? 'TIME_THRESHOLD'
+                : undefined;
+
+        lastDecisionContext = {
+          ...lastAudit,
+          isStale,
+          stalenessReason,
+        };
+      }
+
+      await openMarkdownPreview(
+        'ARC Active Workspace Status',
+        renderRuntimeStatusMarkdown({
+          target,
+          autoSaveMode: mode,
+          routePolicy,
+          lastDecision: lastDecisionContext
+            ? {
+                decision: lastDecisionContext.decision,
+                source: lastDecisionContext.source,
+                fallbackCause: lastDecisionContext.fallback_cause,
+                evaluationLane: lastDecisionContext.evaluation_lane,
+                leaseStatus: lastDecisionContext.lease_status,
+                saveMode: lastDecisionContext.save_mode,
+                autoSaveMode: lastDecisionContext.auto_save_mode,
+                timestamp: lastDecisionContext.ts,
+                filePath: lastDecisionContext.file_path,
+                isStale: lastDecisionContext.isStale,
+                stalenessReason: lastDecisionContext.stalenessReason,
+              }
+            : undefined,
+        }),
+      );
+    }),
+    vscode.commands.registerCommand('arc.reviewBlueprints', async () => {
+      const filePath = vscode.window.activeTextEditor?.document.uri.fsPath;
+      await openMarkdownPreview(
+        'ARC Blueprint Proof Review',
+        reviewSurfaceFor(filePath).renderBlueprintReview(),
+      );
+    }),
+    vscode.commands.registerCommand('arc.reviewFalsePositives', async () => {
+      const filePath = vscode.window.activeTextEditor?.document.uri.fsPath;
+      await openMarkdownPreview(
+        'ARC False-Positive Review',
+        reviewSurfaceFor(filePath).renderFalsePositiveReview(),
+      );
+    }),
+
+    // ARC-CMD-001: Compatibility bridge lintel.* namespace (legacy, deprecated)
+    // These delegate to the same handlers, ensuring existing keybindings work
     vscode.commands.registerCommand('lintel.showWelcome', async () => {
       await welcomeSurface.showWelcome();
     }),
@@ -355,6 +474,7 @@ export function activate(context: vscode.ExtensionContext): void {
         reviewSurfaceFor(filePath).renderFalsePositiveReview(),
       );
     }),
+
     vscode.workspace.onDidOpenTextDocument((document) => {
       controllerFor(document.uri.fsPath).primeCommittedSnapshot(
         document.uri.fsPath,
@@ -400,7 +520,7 @@ export function activate(context: vscode.ExtensionContext): void {
           if (assessment.decision.decision === 'BLOCK') {
             controller.finalizeSave(assessment, false);
             void vscode.window.showErrorMessage(
-              `[LINTEL] BLOCK: ${assessment.decision.reason}`,
+              `[ARC] BLOCK: ${assessment.decision.reason}`,
               { modal: true },
             );
             return [];
@@ -424,7 +544,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
           if (assessment.shouldPrompt) {
             const choice = await vscode.window.showWarningMessage(
-              `[LINTEL] ${assessment.decision.decision}: ${assessment.decision.reason}`,
+              `[ARC] ${assessment.decision.decision}: ${assessment.decision.reason}`,
               { modal: true },
               'Continue',
               'Cancel',
@@ -456,16 +576,16 @@ export function activate(context: vscode.ExtensionContext): void {
       );
       await vscode.workspace.applyEdit(edit);
       void vscode.window.showWarningMessage(
-        `[LINTEL] Save reverted: ${restore.reason}`,
+        `[ARC] Save reverted: ${restore.reason}`,
         { modal: true },
       );
     }),
   );
 
-  // ARC-UI-001a — Register UI commands (OBS-S-7039 resolved)
+  // ARC-UI-001a/b/c — Register UI commands (all arc.ui.* namespace)
   registerUiCommands(context);
 }
 
 export function deactivate(): void {
-  // no-op for Phase 5
+  // no-op
 }

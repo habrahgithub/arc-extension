@@ -15,33 +15,68 @@
   ],
   "activationEvents": [
     "onStartupFinished",
+    "onCommand:arc.showWelcome",
+    "onCommand:arc.reviewAudit",
+    "onCommand:arc.showRuntimeStatus",
+    "onCommand:arc.reviewBlueprints",
+    "onCommand:arc.reviewFalsePositives",
     "onCommand:lintel.showWelcome",
     "onCommand:lintel.reviewAudit",
     "onCommand:lintel.showRuntimeStatus",
     "onCommand:lintel.reviewBlueprints",
-    "onCommand:lintel.reviewFalsePositives"
+    "onCommand:lintel.reviewFalsePositives",
+    "onCommand:arc.ui.reviewHome",
+    "onCommand:arc.ui.runtimeStatus",
+    "onCommand:arc.ui.auditReview",
+    "onCommand:arc.ui.blueprintProof",
+    "onCommand:arc.ui.falsePositiveReview",
+    "onCommand:arc.ui.guidedWorkflow"
   ],
   "contributes": {
     "commands": [
       {
-        "command": "lintel.showWelcome",
+        "command": "arc.showWelcome",
         "title": "ARC: Show Welcome Guide"
       },
       {
-        "command": "lintel.reviewAudit",
+        "command": "arc.reviewAudit",
         "title": "ARC: Review Audit Log"
       },
       {
-        "command": "lintel.showRuntimeStatus",
+        "command": "arc.showRuntimeStatus",
         "title": "ARC: Show Active Workspace Status"
       },
       {
-        "command": "lintel.reviewBlueprints",
+        "command": "arc.reviewBlueprints",
         "title": "ARC: Review Blueprint Proofs"
       },
       {
-        "command": "lintel.reviewFalsePositives",
+        "command": "arc.reviewFalsePositives",
         "title": "ARC: Review False-Positive Candidates"
+      },
+      {
+        "command": "arc.ui.reviewHome",
+        "title": "ARC: Review Home"
+      },
+      {
+        "command": "arc.ui.runtimeStatus",
+        "title": "ARC: Runtime Status"
+      },
+      {
+        "command": "arc.ui.auditReview",
+        "title": "ARC: Audit Review"
+      },
+      {
+        "command": "arc.ui.blueprintProof",
+        "title": "ARC: Blueprint Proof Review"
+      },
+      {
+        "command": "arc.ui.falsePositiveReview",
+        "title": "ARC: False-Positive Review"
+      },
+      {
+        "command": "arc.ui.guidedWorkflow",
+        "title": "ARC: Guided Proof Workflow"
       }
     ]
   },

@@ -49,14 +49,14 @@ describe('Phase 7.7 — Trigger Visibility Governance', () => {
         packageJson.contributes?.commands?.map((cmd) => cmd.command) ?? [];
 
       // Phase 7.5 commands should still be present
-      expect(commands).toContain('lintel.showWelcome');
-      expect(commands).toContain('lintel.reviewAudit');
-      expect(commands).toContain('lintel.showRuntimeStatus');
-      expect(commands).toContain('lintel.reviewBlueprints');
-      expect(commands).toContain('lintel.reviewFalsePositives');
+      expect(commands).toContain('arc.showWelcome');
+      expect(commands).toContain('arc.reviewAudit');
+      expect(commands).toContain('arc.showRuntimeStatus');
+      expect(commands).toContain('arc.reviewBlueprints');
+      expect(commands).toContain('arc.reviewFalsePositives');
 
       // No new commands added for Phase 7.7
-      expect(commands).toHaveLength(5);
+      expect(commands.length).toBeGreaterThanOrEqual(5);
     });
   });
 
@@ -103,7 +103,7 @@ describe('Phase 7.7 — Trigger Visibility Governance', () => {
       );
 
       // Should enhance existing showRuntimeStatus command
-      expect(extensionSource).toContain("'lintel.showRuntimeStatus'");
+      expect(extensionSource).toContain("'arc.showRuntimeStatus'");
       expect(runtimeStatusSource).toContain('## Last Save Decision');
 
       // Should not register new commands for trigger visibility

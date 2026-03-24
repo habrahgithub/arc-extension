@@ -246,8 +246,8 @@ describe('ARC-UI-001a — UI Foundation Governance', () => {
 
       // Should have whitelist
       expect(reviewHome).toContain('allowed');
-      expect(reviewHome).toContain('lintel.showRuntimeStatus');
-      expect(reviewHome).toContain('lintel.reviewAudit');
+      expect(reviewHome).toContain('arc.showRuntimeStatus');
+      expect(reviewHome).toContain('arc.reviewAudit');
 
       // Should check command against whitelist before executing
       expect(reviewHome).toContain('includes');

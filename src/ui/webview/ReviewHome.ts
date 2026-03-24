@@ -152,10 +152,10 @@ export function handleReviewHomeMessage(message: unknown): void {
   if (msg.type === 'exec' && msg.cmd) {
     // Whitelist of allowed commands (WRD-0092: no arbitrary command execution)
     const allowed = [
-      'lintel.showRuntimeStatus',
-      'lintel.reviewAudit',
-      'lintel.reviewBlueprints',
-      'lintel.reviewFalsePositives',
+      'arc.showRuntimeStatus',
+      'arc.reviewAudit',
+      'arc.reviewBlueprints',
+      'arc.reviewFalsePositives',
       // ARC-UI-001b commands
       'arc.ui.runtimeStatus',
       'arc.ui.auditReview',

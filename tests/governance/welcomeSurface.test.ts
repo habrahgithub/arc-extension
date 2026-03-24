@@ -34,7 +34,7 @@ function getWelcomeContent(): string {
  *
  * These tests verify:
  * - OBS-S-7009: Onboarding mechanism remains bounded (local-only)
- * - OBS-S-7010: Command identity preserved (lintel.* prefix, ARC-aligned)
+ * - OBS-S-7010: Command identity preserved (arc.* prefix, ARC-aligned)
  * - WRD-0068: Wording truthfulness (no implication of readiness beyond actual state)
  */
 
@@ -68,7 +68,7 @@ describe('Phase 7.5 — Welcome Surface Governance', () => {
   });
 
   describe('OBS-S-7010: Command Identity Preservation', () => {
-    it('uses lintel.* prefix for the welcome command', () => {
+    it('uses arc.* prefix for the welcome command', () => {
       const packageJson = JSON.parse(
         fs.readFileSync(path.join(projectRoot, 'package.json'), 'utf8'),
       ) as {
@@ -81,7 +81,7 @@ describe('Phase 7.5 — Welcome Surface Governance', () => {
       );
 
       expect(welcomeCommand).toBeDefined();
-      expect(welcomeCommand?.command).toBe('lintel.showWelcome');
+      expect(welcomeCommand?.command).toBe('arc.showWelcome');
     });
 
     it('uses ARC-aligned title for the welcome command', () => {
@@ -93,7 +93,7 @@ describe('Phase 7.5 — Welcome Surface Governance', () => {
 
       const commands = packageJson.contributes?.commands ?? [];
       const welcomeCommand = commands.find(
-        (cmd) => cmd.command === 'lintel.showWelcome',
+        (cmd) => cmd.command === 'arc.showWelcome',
       );
 
       expect(welcomeCommand).toBeDefined();
@@ -111,17 +111,21 @@ describe('Phase 7.5 — Welcome Surface Governance', () => {
       const commands =
         packageJson.contributes?.commands?.map((cmd) => cmd.command) ?? [];
 
-      // All commands must use lintel.* prefix
-      commands.forEach((cmd) => {
-        expect(cmd).toMatch(/^lintel\./);
+      // All primary commands must use arc.* prefix
+      // Note: lintel.* commands are retained for compatibility bridge (not in contributes)
+      const primaryCommands = commands.filter(
+        (cmd) => !cmd.startsWith('arc.ui.'),
+      );
+      primaryCommands.forEach((cmd) => {
+        expect(cmd).toMatch(/^arc\./);
       });
 
-      // Expected commands from Phase 7.3 identity freeze
-      expect(commands).toContain('lintel.showWelcome');
-      expect(commands).toContain('lintel.reviewAudit');
-      expect(commands).toContain('lintel.showRuntimeStatus');
-      expect(commands).toContain('lintel.reviewBlueprints');
-      expect(commands).toContain('lintel.reviewFalsePositives');
+      // Expected commands from ARC-CMD-001 namespace migration
+      expect(commands).toContain('arc.showWelcome');
+      expect(commands).toContain('arc.reviewAudit');
+      expect(commands).toContain('arc.showRuntimeStatus');
+      expect(commands).toContain('arc.reviewBlueprints');
+      expect(commands).toContain('arc.reviewFalsePositives');
     });
   });
 
