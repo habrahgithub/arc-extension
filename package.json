@@ -5,7 +5,7 @@
   "version": "0.1.0",
   "private": true,
   "publisher": "swd",
-  "license": "UNLICENSED",
+  "license": "Apache-2.0",
   "engines": {
     "vscode": "^1.90.0",
     "node": ">=20"
@@ -55,7 +55,10 @@
     "onCommand:arc.ui.auditReview",
     "onCommand:arc.ui.blueprintProof",
     "onCommand:arc.ui.falsePositiveReview",
-    "onCommand:arc.ui.guidedWorkflow"
+    "onCommand:arc.ui.guidedWorkflow",
+    "onCommand:arc.ui.decisionFeed",
+    "onCommand:arc.ui.auditTimeline",
+    "onCommand:arc.ui.whyPanel"
   ],
   "contributes": {
     "commands": [
@@ -102,6 +105,18 @@
       {
         "command": "arc.ui.guidedWorkflow",
         "title": "ARC: Guided Proof Workflow"
+      },
+      {
+        "command": "arc.ui.decisionFeed",
+        "title": "ARC: Decision Feed"
+      },
+      {
+        "command": "arc.ui.auditTimeline",
+        "title": "ARC: Audit Timeline"
+      },
+      {
+        "command": "arc.ui.whyPanel",
+        "title": "ARC: Why Panel"
       }
     ]
   },
