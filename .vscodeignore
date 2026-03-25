@@ -1,0 +1,97 @@
+# LINTEL VSIX Packaging Boundary
+# WRD-0091: Marketplace Remediation
+# LINTEL-MKT-REM-001
+
+# ===========================================
+# EXCLUDE: Evidence bundles and artifacts (OBS-S-7092)
+# ===========================================
+artifacts/**
+.arc/**
+.continue/**
+
+# ===========================================
+# EXCLUDE: Test files
+# ===========================================
+tests/**
+test/**
+vitest.config.ts
+vitest.config.js
+coverage/**
+.nyc_output/**
+
+# ===========================================
+# EXCLUDE: Version control and IDE residue
+# ===========================================
+.git/**
+.gitignore
+.svn/**
+.vscode/**
+*.code-workspace
+
+# ===========================================
+# EXCLUDE: Source TypeScript (ship dist/ only)
+# ===========================================
+src/**
+*.ts
+*.tsbuildinfo
+*.map
+
+# ===========================================
+# EXCLUDE: Local config residue
+# ===========================================
+.env
+.env.*
+!.env.example
+*.local
+*.local.*
+.eslintrc.*
+eslint.config.*
+.prettierrc
+.prettierignore
+tsconfig.*
+jsconfig.*
+
+# ===========================================
+# EXCLUDE: Scripts not needed at runtime
+# ===========================================
+scripts/**
+
+# ===========================================
+# EXCLUDE: Logs and temp files
+# ===========================================
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store
+Thumbs.db
+*.bak
+*.swp
+*~
+
+# ===========================================
+# EXCLUDE: Internal governance docs (keep README)
+# ===========================================
+AGENTS.md
+LINTEL-*.md
+PHASE*.md
+BUILD-*.md
+docs/ARCHITECTURE.md
+docs/CODE_MAP.md
+docs/RELEASE_CHECKLIST.md
+docs/RISK_REGISTER.md
+docs/TESTING.md
+docs/PHASE-*.md
+docs/ARC-*.md
+docs/RELEASE-READINESS.md
+
+# ===========================================
+# KEEP: Required runtime files (whitelist)
+# ===========================================
+!package.json
+!README.md
+!dist/**
+!rules/**
+!Public/**
+!LICENSE
+
