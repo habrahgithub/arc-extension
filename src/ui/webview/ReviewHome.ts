@@ -93,25 +93,25 @@ function getReviewHomeHtml(
     {
       title: 'Runtime Status',
       description: 'Active workspace and decision context',
-      command: 'lintel.showRuntimeStatus',
+      command: 'arc.showRuntimeStatus',
       icon: '📊',
     },
     {
       title: 'Audit Review',
       description: 'Inspect recent audit entries',
-      command: 'lintel.reviewAudit',
+      command: 'arc.reviewAudit',
       icon: '📋',
     },
     {
       title: 'Blueprint Proof Review',
       description: 'Proof lifecycle and validation state',
-      command: 'lintel.reviewBlueprints',
+      command: 'arc.reviewBlueprints',
       icon: '📄',
     },
     {
       title: 'False-Positive Review',
       description: 'Advisory candidate inspection',
-      command: 'lintel.reviewFalsePositives',
+      command: 'arc.reviewFalsePositives',
       icon: '⚠️',
     },
   ];

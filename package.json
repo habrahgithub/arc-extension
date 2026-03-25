@@ -5,7 +5,7 @@
   "version": "0.1.0",
   "private": true,
   "publisher": "swd",
-  "license": "Apache-2.0",
+  "license": "UNLICENSED",
   "engines": {
     "vscode": "^1.90.0",
     "node": ">=20"
@@ -33,7 +33,7 @@
     "url": "https://github.com/habrahgithub/lintel/issues"
   },
   "homepage": "https://github.com/habrahgithub/lintel#readme",
-  "icon": "Public/Logo/ARC LOGO.png",
+  "icon": "Public/Logo/ARC-LOGO.png",
   "galleryBanner": {
     "color": "#1e1e1e",
     "theme": "dark"
