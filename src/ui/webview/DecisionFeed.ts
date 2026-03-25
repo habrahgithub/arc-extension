@@ -42,22 +42,18 @@ export function createDecisionFeedPanel(
     vscode.ViewColumn.One,
     {
       enableScripts: true,
+      // WRD-0114: Scoped to Public/Logo/ ONLY (not full extensionUri)
       localResourceRoots: context
-        ? [
-            context.extensionUri,
-            vscode.Uri.joinPath(context.extensionUri, 'Public', 'Logo'),
-          ]
+        ? [vscode.Uri.joinPath(context.extensionUri, 'Public', 'Logo')]
         : [],
     },
   );
 
   panel.webview.options = {
     enableScripts: true,
+    // WRD-0114: Scoped to Public/Logo/ ONLY
     localResourceRoots: context
-      ? [
-          context.extensionUri,
-          vscode.Uri.joinPath(context.extensionUri, 'Public', 'Logo'),
-        ]
+      ? [vscode.Uri.joinPath(context.extensionUri, 'Public', 'Logo')]
       : [],
   };
 
@@ -147,11 +143,14 @@ function getDecisionFeedHtml(
   <style>
     body { font-family: var(--vscode-font-family); color: var(--vscode-foreground); background: var(--vscode-editor-background); padding: 20px; }
     h1 { margin: 0 0 16px 0; }
+    .logo-container { margin-bottom: 16px; }
+    .logo { max-height: 60px; width: auto; }
     .absent { color: #969696; font-style: italic; }
     .notice { font-size: 12px; color: #969696; margin: 16px 0; padding: 8px; background: #1e1e1e; border-radius: 2px; }
   </style>
 </head>
 <body>
+  ${logoHtml}
   <h1>${escapeHtml(productName)}</h1>
   <p class="absent">No recent decisions recorded.</p>
   <p class="notice">Records show no audit entries in .arc/audit.jsonl. Decisions will appear here after saves are evaluated.</p>
@@ -196,6 +195,8 @@ function getDecisionFeedHtml(
   <style>
     body { font-family: var(--vscode-font-family); color: var(--vscode-foreground); background: var(--vscode-editor-background); padding: 20px; }
     h1 { margin: 0 0 16px 0; }
+    .logo-container { margin-bottom: 16px; }
+    .logo { max-height: 60px; width: auto; }
     .decision-entry { background: #252526; border: 1px solid #3c3c3c; border-radius: 4px; padding: 12px; margin-bottom: 12px; }
     .entry-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
     .decision-badge { padding: 2px 8px; border-radius: 2px; font-size: 12px; font-weight: 600; }
@@ -207,6 +208,7 @@ function getDecisionFeedHtml(
   </style>
 </head>
 <body>
+  ${logoHtml}
   <h1>${escapeHtml(productName)}</h1>
   ${decisionsHtml}
   ${notices}

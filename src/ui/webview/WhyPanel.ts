@@ -48,22 +48,18 @@ export function createWhyPanelPanel(
     vscode.ViewColumn.One,
     {
       enableScripts: true,
+      // WRD-0114: Scoped to Public/Logo/ ONLY (not full extensionUri)
       localResourceRoots: context
-        ? [
-            context.extensionUri,
-            vscode.Uri.joinPath(context.extensionUri, 'Public', 'Logo'),
-          ]
+        ? [vscode.Uri.joinPath(context.extensionUri, 'Public', 'Logo')]
         : [],
     },
   );
 
   panel.webview.options = {
     enableScripts: true,
+    // WRD-0114: Scoped to Public/Logo/ ONLY
     localResourceRoots: context
-      ? [
-          context.extensionUri,
-          vscode.Uri.joinPath(context.extensionUri, 'Public', 'Logo'),
-        ]
+      ? [vscode.Uri.joinPath(context.extensionUri, 'Public', 'Logo')]
       : [],
   };
 
@@ -161,11 +157,14 @@ function getWhyPanelHtml(
   <style>
     body { font-family: var(--vscode-font-family); color: var(--vscode-foreground); background: var(--vscode-editor-background); padding: 20px; }
     h1 { margin: 0 0 16px 0; }
+    .logo-container { margin-bottom: 16px; }
+    .logo { max-height: 60px; width: auto; }
     .absent { color: #969696; font-style: italic; }
     .notice { font-size: 12px; color: #969696; margin: 16px 0; padding: 8px; background: #1e1e1e; border-radius: 2px; }
   </style>
 </head>
 <body>
+  ${logoHtml}
   <h1>${escapeHtml(productName)}</h1>
   <p class="absent">No decision explanation available for the active file.</p>
   <p class="notice">Records show no audit entry for this file yet. An explanation will appear here after a save is evaluated.</p>
@@ -205,6 +204,8 @@ function getWhyPanelHtml(
   <style>
     body { font-family: var(--vscode-font-family); color: var(--vscode-foreground); background: var(--vscode-editor-background); padding: 20px; }
     h1 { margin: 0 0 16px 0; }
+    .logo-container { margin-bottom: 16px; }
+    .logo { max-height: 60px; width: auto; }
     .decision-banner { padding: 16px; border-radius: 4px; margin-bottom: 24px; }
     .decision-badge { padding: 4px 12px; border-radius: 2px; font-size: 14px; font-weight: 600; display: inline-block; margin-bottom: 8px; }
     .section { margin-bottom: 20px; }
@@ -216,6 +217,7 @@ function getWhyPanelHtml(
   </style>
 </head>
 <body>
+  ${logoHtml}
   <h1>${escapeHtml(productName)}</h1>
   
   <div class="decision-banner" style="background: ${escapeHtml(decisionColors[explanation.decision] || '#252526')}">

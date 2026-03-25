@@ -32,22 +32,18 @@ export function createReviewHomePanel(
     vscode.ViewColumn.One,
     {
       enableScripts: true,
+      // WRD-0114: Scoped to Public/Logo/ ONLY (not full extensionUri)
       localResourceRoots: context
-        ? [
-            context.extensionUri,
-            vscode.Uri.joinPath(context.extensionUri, 'Public', 'Logo'),
-          ]
+        ? [vscode.Uri.joinPath(context.extensionUri, 'Public', 'Logo')]
         : [],
     },
   );
 
   panel.webview.options = {
     enableScripts: true,
+    // WRD-0114: Scoped to Public/Logo/ ONLY
     localResourceRoots: context
-      ? [
-          context.extensionUri,
-          vscode.Uri.joinPath(context.extensionUri, 'Public', 'Logo'),
-        ]
+      ? [vscode.Uri.joinPath(context.extensionUri, 'Public', 'Logo')]
       : [],
   };
 

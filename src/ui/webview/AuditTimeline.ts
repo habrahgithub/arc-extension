@@ -43,22 +43,18 @@ export function createAuditTimelinePanel(
     vscode.ViewColumn.One,
     {
       enableScripts: true,
+      // WRD-0114: Scoped to Public/Logo/ ONLY (not full extensionUri)
       localResourceRoots: context
-        ? [
-            context.extensionUri,
-            vscode.Uri.joinPath(context.extensionUri, 'Public', 'Logo'),
-          ]
+        ? [vscode.Uri.joinPath(context.extensionUri, 'Public', 'Logo')]
         : [],
     },
   );
 
   panel.webview.options = {
     enableScripts: true,
+    // WRD-0114: Scoped to Public/Logo/ ONLY
     localResourceRoots: context
-      ? [
-          context.extensionUri,
-          vscode.Uri.joinPath(context.extensionUri, 'Public', 'Logo'),
-        ]
+      ? [vscode.Uri.joinPath(context.extensionUri, 'Public', 'Logo')]
       : [],
   };
 
@@ -148,11 +144,14 @@ function getAuditTimelineHtml(
   <style>
     body { font-family: var(--vscode-font-family); color: var(--vscode-foreground); background: var(--vscode-editor-background); padding: 20px; }
     h1 { margin: 0 0 16px 0; }
+    .logo-container { margin-bottom: 16px; }
+    .logo { max-height: 60px; width: auto; }
     .absent { color: #969696; font-style: italic; }
     .notice { font-size: 12px; color: #969696; margin: 16px 0; padding: 8px; background: #1e1e1e; border-radius: 2px; }
   </style>
 </head>
 <body>
+  ${logoHtml}
   <h1>${escapeHtml(productName)}</h1>
   <p class="absent">No audit timeline available.</p>
   <p class="notice">Records show no audit entries in .arc/audit.jsonl. Timeline will populate as saves are evaluated.</p>
@@ -206,6 +205,8 @@ function getAuditTimelineHtml(
   <style>
     body { font-family: var(--vscode-font-family); color: var(--vscode-foreground); background: var(--vscode-editor-background); padding: 20px; }
     h1 { margin: 0 0 16px 0; }
+    .logo-container { margin-bottom: 16px; }
+    .logo { max-height: 60px; width: auto; }
     .timeline-day { margin-bottom: 24px; }
     .day-header { font-size: 14px; font-weight: 600; color: #969696; margin-bottom: 8px; padding-bottom: 4px; border-bottom: 1px solid #3c3c3c; }
     .timeline-entry { display: flex; gap: 12px; margin-bottom: 8px; padding: 8px; background: #252526; border-radius: 4px; }
@@ -222,6 +223,7 @@ function getAuditTimelineHtml(
   </style>
 </head>
 <body>
+  ${logoHtml}
   <h1>${escapeHtml(productName)}</h1>
   ${timelineHtml}
   ${notices}
