@@ -1,25 +1,25 @@
 # LINTEL-MKT-001 — Marketplace Readiness Evidence
 
-**Directive ID:** LINTEL-MKT-001  
-**Title:** Marketplace-Readiness Preparation  
-**Date:** 2026-03-24  
-**Status:** IMPLEMENTATION COMPLETE (Pending WRD-0124 Licensing Decision)
+**Directive ID:** LINTEL-MKT-001
+**Title:** Marketplace-Readiness Preparation
+**Date:** 2026-03-24
+**Status:** **EXECUTION-CLOSED**
 
 ---
 
 ## Executive Summary
 
-This package prepares ARC for truthful external marketplace presentation. All non-licensing deliverables are complete. **WRD-0124 (licensing posture) remains pending Prime decision** — this blocks marketplace publication but not readiness preparation.
+This package prepares ARC for truthful external marketplace presentation. **WRD-0124 (licensing posture) resolved: Apache-2.0 selected.**
 
 **Completion Status:**
 
-| Deliverable | Status | Notes |
-|-------------|--------|-------|
-| README external rewrite | ✅ Complete | OBS-S-7100, WRD-0128 |
-| package.json metadata | ✅ Complete | OBS-S-7101, WRD-0125 |
-| Logo asset verification | ✅ Complete | WRD-0126 |
-| Governance tests | ✅ Complete | 14 tests |
-| Licensing decision | ⏳ Pending | WRD-0124 — Prime decision required |
+| Deliverable             | Status            | Notes                   |
+| ----------------------- | ----------------- | ----------------------- |
+| README external rewrite | ✅ Complete       | OBS-S-7100, WRD-0128    |
+| package.json metadata   | ✅ Complete       | OBS-S-7101, WRD-0125    |
+| Logo asset verification | ✅ Complete       | WRD-0126                |
+| Governance tests        | ✅ Complete       | 15 tests                |
+| Licensing decision      | ✅ **Apache-2.0** | WRD-0124 — **RESOLVED** |
 
 ---
 
@@ -48,15 +48,16 @@ README.md
 
 **Changes Made:**
 
-| Section | Before | After |
-|---------|--------|-------|
-| Title | "Phase 7.10 internal pilot readiness..." | "Governed code enforcement for AI-assisted development..." |
-| Opening | Internal status block | Plain-language description |
-| Install | Not present | Step-by-step VSIX install guide |
-| Commands | Scattered | Consolidated table |
-| Limitations | Internal jargon | External-friendly disclosures |
+| Section     | Before                                   | After                                                      |
+| ----------- | ---------------------------------------- | ---------------------------------------------------------- |
+| Title       | "Phase 7.10 internal pilot readiness..." | "Governed code enforcement for AI-assisted development..." |
+| Opening     | Internal status block                    | Plain-language description                                 |
+| Install     | Not present                              | Step-by-step VSIX install guide                            |
+| Commands    | Scattered                                | Consolidated table                                         |
+| Limitations | Internal jargon                          | External-friendly disclosures                              |
 
 **Verification:**
+
 - ✅ `## Quick Start` section present
 - ✅ `### Install` section present
 - ✅ `## Requirements` section present
@@ -71,17 +72,18 @@ README.md
 
 **Fields Added/Updated:**
 
-| Field | Value | Rationale |
-|-------|-------|-----------|
-| `categories` | `["Programming Languages", "Other"]` | Discoverability |
-| `keywords` | 9 keywords (governance, audit, compliance, etc.) | Search optimization |
-| `repository.url` | GitHub repo URL | Source transparency |
-| `bugs.url` | GitHub issues URL | Support routing |
-| `homepage` | GitHub readme URL | Landing page |
-| `icon` | `Public/Logo/ARC LOGO.png` | Branding |
-| `galleryBanner` | Dark theme (`#1e1e1e`) | Marketplace presentation |
+| Field            | Value                                            | Rationale                |
+| ---------------- | ------------------------------------------------ | ------------------------ |
+| `categories`     | `["Programming Languages", "Other"]`             | Discoverability          |
+| `keywords`       | 9 keywords (governance, audit, compliance, etc.) | Search optimization      |
+| `repository.url` | GitHub repo URL                                  | Source transparency      |
+| `bugs.url`       | GitHub issues URL                                | Support routing          |
+| `homepage`       | GitHub readme URL                                | Landing page             |
+| `icon`           | `Public/Logo/ARC LOGO.png`                       | Branding                 |
+| `galleryBanner`  | Dark theme (`#1e1e1e`)                           | Marketplace presentation |
 
 **Verification:**
+
 - ✅ All required marketplace fields present
 - ✅ Description does not overclaim capability
 - ✅ No "marketplace ready" or "production certified" claims
@@ -92,15 +94,16 @@ README.md
 
 **Verified:** Public text follows established truth table.
 
-| Claim | Actual | Documented |
-|-------|--------|------------|
-| Cloud capability | Disabled by default | ✅ "Cloud disabled by default" |
-| Local-first | Yes | ✅ "Local-first" stated |
-| Rule-first enforcement | Yes | ✅ "Fail-closed" stated |
-| Dashboard/website | Not shipped | ✅ No dashboard claims |
-| External services | Not required | ✅ "No external services required" |
+| Claim                  | Actual              | Documented                         |
+| ---------------------- | ------------------- | ---------------------------------- |
+| Cloud capability       | Disabled by default | ✅ "Cloud disabled by default"     |
+| Local-first            | Yes                 | ✅ "Local-first" stated            |
+| Rule-first enforcement | Yes                 | ✅ "Fail-closed" stated            |
+| Dashboard/website      | Not shipped         | ✅ No dashboard claims             |
+| External services      | Not required        | ✅ "No external services required" |
 
 **Verification Tests:**
+
 - ✅ Does not claim cloud enabled by default
 - ✅ States local-first posture
 - ✅ States rule-based/fail-closed enforcement
@@ -114,12 +117,13 @@ README.md
 
 **Asset Inventory:**
 
-| Asset | Path | Status |
-|-------|------|--------|
-| Logo | `Public/Logo/ARC LOGO.png` | ✅ Valid PNG (1.3 MB) |
-| Screenshots | Not yet created | ⏳ Future work |
+| Asset       | Path                       | Status                |
+| ----------- | -------------------------- | --------------------- |
+| Logo        | `Public/Logo/ARC LOGO.png` | ✅ Valid PNG (1.3 MB) |
+| Screenshots | Not yet created            | ⏳ Future work        |
 
 **Logo Verification:**
+
 - ✅ File exists at declared path
 - ✅ Valid PNG format (magic number verified)
 - ✅ Referenced in package.json `icon` field
@@ -132,41 +136,46 @@ README.md
 
 **Top Section (first 100 lines) Analysis:**
 
-| Pattern | Found | Status |
-|---------|-------|--------|
-| `Phase X.X` | ❌ No | ✅ Pass |
-| `LINTEL-XXX-XXX` | ❌ No | ✅ Pass |
+| Pattern                 | Found | Status  |
+| ----------------------- | ----- | ------- |
+| `Phase X.X`             | ❌ No | ✅ Pass |
+| `LINTEL-XXX-XXX`        | ❌ No | ✅ Pass |
 | `WRD-XXX` / `OBS-S-XXX` | ❌ No | ✅ Pass |
-| "enforcement floor" | ❌ No | ✅ Pass |
-| "governance gate" | ❌ No | ✅ Pass |
-| "closure record" | ❌ No | ✅ Pass |
+| "enforcement floor"     | ❌ No | ✅ Pass |
+| "governance gate"       | ❌ No | ✅ Pass |
+| "closure record"        | ❌ No | ✅ Pass |
 
 **External-Friendly Language:**
+
 - ✅ "Quick Start" terminology
 - ✅ "Install" terminology
 - ✅ "Feature" / "capability" terminology
 
 ---
 
-## WRD-0124: Licensing Posture (PENDING)
+## WRD-0124: Licensing Posture — RESOLVED
 
-**Status:** ⏳ **Pending Prime Decision**
+**Status:** ✅ **Apache-2.0 Selected**
 
-**Options for Prime:**
+**Prime Decision:** Apache-2.0 open-source license selected for marketplace/public distribution posture.
 
-| Option | License | Implication |
-|--------|---------|-------------|
-| 1 | Open-source (MIT/Apache 2.0) | Public distribution allowed |
-| 2 | Proprietary with use grant | Controlled distribution |
-| 3 | Retain UNLICENSED | Defer marketplace publication |
+**Implementation:**
 
-**Current State:**
-- `package.json`: `"license": "UNLICENSED"`
-- `LICENSE` file: Present (proprietary notice)
+| File           | Change                             |
+| -------------- | ---------------------------------- |
+| `LICENSE`      | Replaced with Apache-2.0 full text |
+| `package.json` | `"license": "Apache-2.0"`          |
+
+**Implication:**
+
+- ✅ Public distribution allowed
+- ✅ Marketplace publication permitted
+- ✅ Open-source compliance required for derivatives
 
 **Blocking Status:**
-- ⚠️ **Package cannot close as marketplace-ready until Prime resolves WRD-0124**
-- ✅ All other deliverables complete
+
+- ✅ **WRD-0124 RESOLVED — Package cleared for closure**
+- ✅ All deliverables complete
 
 ---
 
@@ -176,14 +185,14 @@ README.md
 
 **Test Coverage (14 tests):**
 
-| Test Group | Tests | Coverage |
-|------------|-------|----------|
-| OBS-S-7100: README External Clarity | 2 | Top section structure, deep sections preserved |
-| OBS-S-7101: Marketplace Metadata | 2 | package.json fields, no overclaim |
-| WRD-0125: Capability Truth Table | 4 | Cloud, local-first, rules, dashboard claims |
-| WRD-0128: No Internal Jargon | 2 | Phase refs, governance codes |
-| WRD-0126: Screenshot Truthfulness | 3 | Public/ dir, logo exists, valid PNG |
-| Marketplace Evidence Pack | 2 | Evidence artifact, licensing docs |
+| Test Group                          | Tests | Coverage                                       |
+| ----------------------------------- | ----- | ---------------------------------------------- |
+| OBS-S-7100: README External Clarity | 2     | Top section structure, deep sections preserved |
+| OBS-S-7101: Marketplace Metadata    | 2     | package.json fields, no overclaim              |
+| WRD-0125: Capability Truth Table    | 4     | Cloud, local-first, rules, dashboard claims    |
+| WRD-0128: No Internal Jargon        | 2     | Phase refs, governance codes                   |
+| WRD-0126: Screenshot Truthfulness   | 3     | Public/ dir, logo exists, valid PNG            |
+| Marketplace Evidence Pack           | 2     | Evidence artifact, licensing docs              |
 
 ---
 
@@ -193,7 +202,7 @@ README.md
 lint     ✓
 typecheck ✓
 build    ✓
-test     ✓ (322 + 14 = 336 tests)
+test     ✓ (322 + 15 = 337 tests)
 pack     ✓ (44 files, 1.36 MB)
 ```
 
@@ -201,15 +210,22 @@ pack     ✓ (44 files, 1.36 MB)
 
 ## Closure Status
 
-**Ready for Closure:** All non-licensing deliverables complete.
+**EXECUTION-CLOSED:** All deliverables complete including WRD-0124 licensing resolution.
 
-**Blocking Condition:**
-- WRD-0124 (licensing) — Pending Prime decision
+**License:** Apache-2.0 (open-source)
 
-**Recommendation:**
-- Close package as "Marketplace-Readiness Preparation Complete"
-- Note WRD-0124 as pending Prime decision
-- Actual marketplace publication requires separate approval after licensing resolved
+**Status:**
+
+- ✅ README external rewrite complete
+- ✅ package.json metadata complete
+- ✅ Logo asset verified
+- ✅ Governance tests complete (15 tests)
+- ✅ WRD-0124 licensing resolved (Apache-2.0)
+
+**Next:**
+
+- Package cleared for marketplace publication (separate approval required for actual publish)
+- Apache-2.0 compliance required for all derivatives
 
 ---
 
