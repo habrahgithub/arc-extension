@@ -7,6 +7,7 @@
  * WRD-0096: Identity wording must not overclaim capability
  * WRD-0092: CSP and sanitization applied
  * WRD-0097: Nonce-based CSP for inline scripts
+ * ARC-BRAND-001: Logo integration in header
  */
 
 import * as vscode from 'vscode';
@@ -17,8 +18,11 @@ import { escapeHtml } from '../sanitize';
  * Create and show the Review Home WebviewPanel
  *
  * WRD-0097 Fix: Generate nonce per webview instance for CSP compliance
+ * ARC-BRAND-001: Scoped localResourceRoots for logo (WRD-0114)
  */
-export function createReviewHomePanel(): vscode.WebviewPanel {
+export function createReviewHomePanel(
+  context?: vscode.ExtensionContext,
+): vscode.WebviewPanel {
   const nonce = generateNonce();
 
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
@@ -28,17 +32,27 @@ export function createReviewHomePanel(): vscode.WebviewPanel {
     vscode.ViewColumn.One,
     {
       enableScripts: true,
-      localResourceRoots: [],
+      localResourceRoots: context
+        ? [
+            context.extensionUri,
+            vscode.Uri.joinPath(context.extensionUri, 'Public', 'Logo'),
+          ]
+        : [],
     },
   );
 
   panel.webview.options = {
     enableScripts: true,
-    localResourceRoots: [],
+    localResourceRoots: context
+      ? [
+          context.extensionUri,
+          vscode.Uri.joinPath(context.extensionUri, 'Public', 'Logo'),
+        ]
+      : [],
   };
 
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-  panel.webview.html = getReviewHomeHtml(nonce);
+  panel.webview.html = getReviewHomeHtml(nonce, panel, context);
 
   return panel;
 }
@@ -48,8 +62,13 @@ export function createReviewHomePanel(): vscode.WebviewPanel {
  *
  * WRD-0096 Compliance: Identity wording bounded to actual capability
  * WRD-0097 Compliance: Nonce in both CSP and script tag
+ * ARC-BRAND-001: Logo in header (WRD-0115: branding-truthful)
  */
-function getReviewHomeHtml(nonce: string): string {
+function getReviewHomeHtml(
+  nonce: string,
+  panel: vscode.WebviewPanel,
+  context?: vscode.ExtensionContext,
+): string {
   const csp = buildCSPWithNonce(nonce);
   const productName = 'ARC — Audit Ready Core';
   const postureNotes = [
@@ -57,6 +76,22 @@ function getReviewHomeHtml(nonce: string): string {
     'Descriptive-only review',
     'Non-authorizing surface',
   ];
+
+  // ARC-BRAND-001: Logo URI (WRD-0116: local only, no remote)
+  let logoUri = '';
+  if (context && panel) {
+    const logoPath = vscode.Uri.joinPath(
+      context.extensionUri,
+      'Public',
+      'Logo',
+      'ARC LOGO.png',
+    );
+    logoUri = panel.webview.asWebviewUri(logoPath).toString();
+  }
+
+  const logoHtml = logoUri
+    ? `<div class="logo-container"><img src="${escapeHtml(logoUri)}" alt="ARC Logo" class="logo" /></div>`
+    : '';
 
   const reviewCards = [
     {
@@ -118,6 +153,8 @@ function getReviewHomeHtml(nonce: string): string {
     body { font-family: var(--vscode-font-family); color: var(--vscode-foreground); background: var(--vscode-editor-background); padding: 20px; }
     .header { border-bottom: 1px solid #3c3c3c; padding-bottom: 16px; margin-bottom: 24px; }
     .header h1 { margin: 0 0 8px 0; font-size: 24px; }
+    .logo-container { margin-bottom: 16px; }
+    .logo { max-height: 60px; width: auto; }
     .posture-notes { display: flex; gap: 12px; flex-wrap: wrap; }
     .posture-badge { background: #0e639c; color: #fff; padding: 4px 8px; border-radius: 2px; font-size: 12px; }
     .cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
@@ -131,6 +168,7 @@ function getReviewHomeHtml(nonce: string): string {
 </head>
 <body>
   <div class="header">
+    ${logoHtml}
     <h1>${escapeHtml(productName)}</h1>
     <div class="posture-notes">${badgesHtml}</div>
   </div>

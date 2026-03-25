@@ -36,7 +36,9 @@ interface WhyExplanation {
 /**
  * Create and show the Why Panel WebviewPanel
  */
-export function createWhyPanelPanel(): vscode.WebviewPanel {
+export function createWhyPanelPanel(
+  context?: vscode.ExtensionContext,
+): vscode.WebviewPanel {
   const nonce = generateNonce();
 
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
@@ -46,17 +48,27 @@ export function createWhyPanelPanel(): vscode.WebviewPanel {
     vscode.ViewColumn.One,
     {
       enableScripts: true,
-      localResourceRoots: [],
+      localResourceRoots: context
+        ? [
+            context.extensionUri,
+            vscode.Uri.joinPath(context.extensionUri, 'Public', 'Logo'),
+          ]
+        : [],
     },
   );
 
   panel.webview.options = {
     enableScripts: true,
-    localResourceRoots: [],
+    localResourceRoots: context
+      ? [
+          context.extensionUri,
+          vscode.Uri.joinPath(context.extensionUri, 'Public', 'Logo'),
+        ]
+      : [],
   };
 
   const explanation = getCurrentWhyExplanation();
-  panel.webview.html = getWhyPanelHtml(nonce, explanation);
+  panel.webview.html = getWhyPanelHtml(nonce, panel, explanation, context);
 
   return panel;
 }
@@ -112,13 +124,31 @@ function getCurrentWhyExplanation(): WhyExplanation | null {
  * - Must use evidence-framed language ("records show")
  * - Must not imply authorization or approval
  * - Must preserve fail-closed truthfulness
+ * ARC-BRAND-001: Logo in header (WRD-0115: branding-truthful)
  */
 function getWhyPanelHtml(
   nonce: string,
+  panel: vscode.WebviewPanel,
   explanation: WhyExplanation | null,
+  context?: vscode.ExtensionContext,
 ): string {
   const csp = buildCSPWithNonce(nonce);
   const productName = 'ARC — Audit Ready Core';
+
+  // ARC-BRAND-001: Logo URI (WRD-0116: local only, no remote)
+  let logoUri = '';
+  if (context) {
+    const logoPath = vscode.Uri.joinPath(
+      context.extensionUri,
+      'Public',
+      'Logo',
+      'ARC LOGO.png',
+    );
+    logoUri = panel.webview.asWebviewUri(logoPath).toString();
+  }
+  const logoHtml = logoUri
+    ? `<div class="logo-container"><img src="${escapeHtml(logoUri)}" alt="ARC Logo" class="logo" /></div>`
+    : '';
 
   // WRD-0111: Absent state explicit
   if (!explanation) {

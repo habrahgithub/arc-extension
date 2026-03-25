@@ -1,13 +1,13 @@
 /**
  * Decision Feed — ARC-VIS-001 Surface 1
- * 
+ *
  * Purpose: Compact awareness of recent ARC decisions
  * Emphasis: "What has been happening lately?"
- * 
+ *
  * Distinct from Screen 3 (Audit Review):
  * - Screen 3 = detailed entry inspection
  * - Decision Feed = quick scanning, recent decisions only
- * 
+ *
  * WRD-0111: Degraded/stale/absent states render explicitly
  * WRD-0112: Evidence-framed wording
  * WRD-0113: ARC-UI-001a security baseline (CSP, sanitization)
@@ -30,9 +30,11 @@ interface DecisionEntry {
 /**
  * Create and show the Decision Feed WebviewPanel
  */
-export function createDecisionFeedPanel(): vscode.WebviewPanel {
+export function createDecisionFeedPanel(
+  context?: vscode.ExtensionContext,
+): vscode.WebviewPanel {
   const nonce = generateNonce();
-  
+
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
   const panel = vscode.window.createWebviewPanel(
     'arc.decisionFeed',
@@ -40,24 +42,34 @@ export function createDecisionFeedPanel(): vscode.WebviewPanel {
     vscode.ViewColumn.One,
     {
       enableScripts: true,
-      localResourceRoots: [],
+      localResourceRoots: context
+        ? [
+            context.extensionUri,
+            vscode.Uri.joinPath(context.extensionUri, 'Public', 'Logo'),
+          ]
+        : [],
     },
   );
 
   panel.webview.options = {
     enableScripts: true,
-    localResourceRoots: [],
+    localResourceRoots: context
+      ? [
+          context.extensionUri,
+          vscode.Uri.joinPath(context.extensionUri, 'Public', 'Logo'),
+        ]
+      : [],
   };
 
   const decisions = readRecentDecisions();
-  panel.webview.html = getDecisionFeedHtml(nonce, decisions);
+  panel.webview.html = getDecisionFeedHtml(nonce, panel, decisions, context);
 
   return panel;
 }
 
 /**
  * Read recent decisions from audit log
- * 
+ *
  * OBS-S-7071: Read-only, no new persistence
  */
 function readRecentDecisions(): DecisionEntry[] {
@@ -65,18 +77,18 @@ function readRecentDecisions(): DecisionEntry[] {
   if (!workspaceFolder) {
     return [];
   }
-  
+
   const auditPath = path.join(workspaceFolder, '.arc', 'audit.jsonl');
-  
+
   if (!fs.existsSync(auditPath)) {
     return [];
   }
-  
+
   try {
     const content = fs.readFileSync(auditPath, 'utf8');
     const lines = content.trim().split('\n').filter(Boolean);
     const entries: DecisionEntry[] = [];
-    
+
     for (const line of lines) {
       try {
         const entry = JSON.parse(line) as DecisionEntry;
@@ -85,7 +97,7 @@ function readRecentDecisions(): DecisionEntry[] {
         // Skip malformed lines
       }
     }
-    
+
     // Return last 10 decisions, most recent first
     return entries.slice(-10).reverse();
   } catch {
@@ -95,17 +107,35 @@ function readRecentDecisions(): DecisionEntry[] {
 
 /**
  * Generate Decision Feed HTML
- * 
+ *
  * WRD-0111: Degraded/stale/absent states render explicitly
  * WRD-0112: Evidence-framed wording ("records show")
+ * ARC-BRAND-001: Logo in header (WRD-0115: branding-truthful)
  */
 function getDecisionFeedHtml(
   nonce: string,
+  panel: vscode.WebviewPanel,
   decisions: DecisionEntry[],
+  context?: vscode.ExtensionContext,
 ): string {
   const csp = buildCSPWithNonce(nonce);
   const productName = 'ARC — Audit Ready Core';
-  
+
+  // ARC-BRAND-001: Logo URI (WRD-0116: local only, no remote)
+  let logoUri = '';
+  if (context) {
+    const logoPath = vscode.Uri.joinPath(
+      context.extensionUri,
+      'Public',
+      'Logo',
+      'ARC LOGO.png',
+    );
+    logoUri = panel.webview.asWebviewUri(logoPath).toString();
+  }
+  const logoHtml = logoUri
+    ? `<div class="logo-container"><img src="${escapeHtml(logoUri)}" alt="ARC Logo" class="logo" /></div>`
+    : '';
+
   // WRD-0111: Absent state explicit
   if (decisions.length === 0) {
     return `<!DOCTYPE html>
@@ -128,7 +158,7 @@ function getDecisionFeedHtml(
 </body>
 </html>`;
   }
-  
+
   // Decision badge colors
   const decisionColors: Record<string, string> = {
     ALLOW: 'background: #0e639c; color: #fff;',
@@ -136,8 +166,10 @@ function getDecisionFeedHtml(
     REQUIRE_PLAN: 'background: #f48771; color: #000;',
     BLOCK: 'background: #ff0000; color: #fff;',
   };
-  
-  const decisionsHtml = decisions.map(d => `
+
+  const decisionsHtml = decisions
+    .map(
+      (d) => `
     <div class="decision-entry">
       <div class="entry-header">
         <span class="decision-badge" style="${escapeHtml(decisionColors[d.decision])}">${escapeHtml(d.decision)}</span>
@@ -147,8 +179,10 @@ function getDecisionFeedHtml(
       <div class="risk">Risk: ${escapeHtml(d.risk_level)}</div>
       <div class="reason">${escapeHtml(d.reason)}</div>
     </div>
-  `).join('');
-  
+  `,
+    )
+    .join('');
+
   const notices = `
     <p class="notice">Records show ${decisions.length} recent decision${decisions.length === 1 ? '' : 's'}. This feed is for awareness only and does not authorize, override, or bypass save decisions.</p>
   `;

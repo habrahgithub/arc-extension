@@ -4,7 +4,8 @@
  * ARC-UI-001a: Screen 1 (Review Home) — COMPLETE
  * ARC-UI-001b: Screen 2 (Runtime Status) + Screen 3 (Audit Review) — COMPLETE
  * ARC-UI-001c: Screen 4 (Blueprint Proof) + Screen 5 (False-Positive) + Screen 6 (Guided Workflow) — COMPLETE
- * ARC-VIS-001: Decision Feed + Audit Timeline + Why Panel — IN PROGRESS
+ * ARC-VIS-001: Decision Feed + Audit Timeline + Why Panel — COMPLETE
+ * ARC-BRAND-001: Logo integration — IN PROGRESS
  *
  * Excludes Screen 7 (Command Centre) — Parked future concept (WRD-0095)
  */
@@ -29,12 +30,13 @@ import { createWhyPanelPanel } from './webview/WhyPanel';
  *
  * OBS-S-7039: UI registration in extension.ts
  * OBS-S-7051: Command IDs declared
+ * ARC-BRAND-001: Pass context for logo loading
  */
 export function registerUiCommands(context: vscode.ExtensionContext): void {
-  // Screen 1: Review Home (ARC-UI-001a)
+  // Screen 1: Review Home (ARC-UI-001a, ARC-BRAND-001)
   context.subscriptions.push(
     vscode.commands.registerCommand('arc.ui.reviewHome', () => {
-      const panel = createReviewHomePanel();
+      const panel = createReviewHomePanel(context);
 
       panel.webview.onDidReceiveMessage(
         (message) => handleReviewHomeMessage(message),
@@ -79,22 +81,22 @@ export function registerUiCommands(context: vscode.ExtensionContext): void {
     }),
   );
 
-  // ARC-VIS-001: Decision Visibility Layer
+  // ARC-VIS-001: Decision Visibility Layer (ARC-BRAND-001)
   context.subscriptions.push(
     vscode.commands.registerCommand('arc.ui.decisionFeed', () => {
-      createDecisionFeedPanel();
+      createDecisionFeedPanel(context);
     }),
   );
 
   context.subscriptions.push(
     vscode.commands.registerCommand('arc.ui.auditTimeline', () => {
-      createAuditTimelinePanel();
+      createAuditTimelinePanel(context);
     }),
   );
 
   context.subscriptions.push(
     vscode.commands.registerCommand('arc.ui.whyPanel', () => {
-      createWhyPanelPanel();
+      createWhyPanelPanel(context);
     }),
   );
 }

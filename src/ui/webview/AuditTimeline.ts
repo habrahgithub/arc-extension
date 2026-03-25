@@ -1,13 +1,13 @@
 /**
  * Audit Timeline — ARC-VIS-001 Surface 2
- * 
+ *
  * Purpose: Chronological evidence-oriented activity trail
  * Emphasis: "Sequence and progression over time"
- * 
+ *
  * Distinct from Screen 3 (Audit Review):
  * - Screen 3 = detailed entry inspection (specific fields)
  * - Audit Timeline = chronological flow (sequence/progression)
- * 
+ *
  * WRD-0111: Degraded/stale/absent states render explicitly
  * WRD-0112: Evidence-framed wording ("records show")
  * WRD-0113: ARC-UI-001a security baseline (CSP, sanitization)
@@ -31,9 +31,11 @@ interface TimelineEntry {
 /**
  * Create and show the Audit Timeline WebviewPanel
  */
-export function createAuditTimelinePanel(): vscode.WebviewPanel {
+export function createAuditTimelinePanel(
+  context?: vscode.ExtensionContext,
+): vscode.WebviewPanel {
   const nonce = generateNonce();
-  
+
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
   const panel = vscode.window.createWebviewPanel(
     'arc.auditTimeline',
@@ -41,24 +43,34 @@ export function createAuditTimelinePanel(): vscode.WebviewPanel {
     vscode.ViewColumn.One,
     {
       enableScripts: true,
-      localResourceRoots: [],
+      localResourceRoots: context
+        ? [
+            context.extensionUri,
+            vscode.Uri.joinPath(context.extensionUri, 'Public', 'Logo'),
+          ]
+        : [],
     },
   );
 
   panel.webview.options = {
     enableScripts: true,
-    localResourceRoots: [],
+    localResourceRoots: context
+      ? [
+          context.extensionUri,
+          vscode.Uri.joinPath(context.extensionUri, 'Public', 'Logo'),
+        ]
+      : [],
   };
 
   const entries = readAuditTimeline();
-  panel.webview.html = getAuditTimelineHtml(nonce, entries);
+  panel.webview.html = getAuditTimelineHtml(nonce, panel, entries, context);
 
   return panel;
 }
 
 /**
  * Read audit timeline from audit log
- * 
+ *
  * OBS-S-7071: Read-only, no new persistence
  */
 function readAuditTimeline(): TimelineEntry[] {
@@ -66,18 +78,18 @@ function readAuditTimeline(): TimelineEntry[] {
   if (!workspaceFolder) {
     return [];
   }
-  
+
   const auditPath = path.join(workspaceFolder, '.arc', 'audit.jsonl');
-  
+
   if (!fs.existsSync(auditPath)) {
     return [];
   }
-  
+
   try {
     const content = fs.readFileSync(auditPath, 'utf8');
     const lines = content.trim().split('\n').filter(Boolean);
     const entries: TimelineEntry[] = [];
-    
+
     for (const line of lines) {
       try {
         const entry = JSON.parse(line) as TimelineEntry;
@@ -86,7 +98,7 @@ function readAuditTimeline(): TimelineEntry[] {
         // Skip malformed lines
       }
     }
-    
+
     // Return all entries in chronological order (oldest first for timeline)
     return entries;
   } catch {
@@ -96,17 +108,35 @@ function readAuditTimeline(): TimelineEntry[] {
 
 /**
  * Generate Audit Timeline HTML
- * 
+ *
  * WRD-0111: Degraded/stale/absent states render explicitly
  * WRD-0112: Evidence-framed wording
+ * ARC-BRAND-001: Logo in header (WRD-0115: branding-truthful)
  */
 function getAuditTimelineHtml(
   nonce: string,
+  panel: vscode.WebviewPanel,
   entries: TimelineEntry[],
+  context?: vscode.ExtensionContext,
 ): string {
   const csp = buildCSPWithNonce(nonce);
   const productName = 'ARC — Audit Ready Core';
-  
+
+  // ARC-BRAND-001: Logo URI (WRD-0116: local only, no remote)
+  let logoUri = '';
+  if (context) {
+    const logoPath = vscode.Uri.joinPath(
+      context.extensionUri,
+      'Public',
+      'Logo',
+      'ARC LOGO.png',
+    );
+    logoUri = panel.webview.asWebviewUri(logoPath).toString();
+  }
+  const logoHtml = logoUri
+    ? `<div class="logo-container"><img src="${escapeHtml(logoUri)}" alt="ARC Logo" class="logo" /></div>`
+    : '';
+
   // WRD-0111: Absent state explicit
   if (entries.length === 0) {
     return `<!DOCTYPE html>
@@ -129,7 +159,7 @@ function getAuditTimelineHtml(
 </body>
 </html>`;
   }
-  
+
   // Group entries by date for timeline visualization
   const entriesByDate = new Map<string, TimelineEntry[]>();
   for (const entry of entries) {
@@ -138,11 +168,15 @@ function getAuditTimelineHtml(
     existing.push(entry);
     entriesByDate.set(date, existing);
   }
-  
-  const timelineHtml = Array.from(entriesByDate.entries()).map(([date, dayEntries]) => `
+
+  const timelineHtml = Array.from(entriesByDate.entries())
+    .map(
+      ([date, dayEntries]) => `
     <div class="timeline-day">
       <div class="day-header">${escapeHtml(date)}</div>
-      ${dayEntries.map(entry => `
+      ${dayEntries
+        .map(
+          (entry) => `
         <div class="timeline-entry">
           <div class="entry-time">${escapeHtml(entry.ts.split('T')[1]?.split('.')[0] ?? '')}</div>
           <div class="entry-content">
@@ -151,10 +185,14 @@ function getAuditTimelineHtml(
             <span class="risk">Risk: ${escapeHtml(entry.risk_level)}</span>
           </div>
         </div>
-      `).join('')}
+      `,
+        )
+        .join('')}
     </div>
-  `).join('');
-  
+  `,
+    )
+    .join('');
+
   const notices = `
     <p class="notice">Records show ${entries.length} audit entr${entries.length === 1 ? 'y' : 'ies'} in chronological order. This timeline is for evidence review only and does not certify completeness or authorize decisions.</p>
   `;
