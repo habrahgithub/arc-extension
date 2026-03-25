@@ -1,11 +1,95 @@
 # ARC — Audit Ready Core
 
-Phase 7.10 internal pilot readiness of the ARC local-first VS Code governance extension, following the Phase 7.9 precision and false-positive reduction.
+**Governed code enforcement for AI-assisted development in a local-first VS Code extension.**
+
+ARC helps development teams maintain code quality and governance standards by intercepting saves and requiring explicit justification for high-risk changes. Built for teams that need audit trails, proof-backed decisions, and fail-closed enforcement.
+
+## Quick Start
+
+### Install
+
+1. Download the latest `.vsix` from the releases page
+2. In VS Code: Extensions → `...` → **Install from VSIX...**
+3. Select the downloaded `.vsix` file
+4. Reload VS Code when prompted
+
+### Verify Installation
+
+1. Open any code file in your workspace
+2. Make a change to a governed file (e.g., `auth.ts`, `schema.sql`, `package.json`)
+3. Attempt to save — ARC will prompt for acknowledgment or proof
+4. Use `Ctrl+Shift+P` → **ARC: Review Audit Log** to see enforcement decisions
+
+### What ARC Does
+
+| Decision         | When                                    | Action Required                    |
+| ---------------- | --------------------------------------- | ---------------------------------- |
+| **ALLOW**        | Low-risk changes (UI components, tests) | None — save proceeds               |
+| **WARN**         | Medium-risk changes (config, schemas)   | Acknowledge risk before save       |
+| **REQUIRE_PLAN** | High-risk changes (auth, core logic)    | Link to governance blueprint proof |
+| **BLOCK**        | Critical-risk violations                | Save blocked — must address risk   |
+
+### Key Features
+
+- **Local-first**: All enforcement happens locally; no cloud dependency required
+- **Audit trail**: Append-only log of all save decisions with hash-chain integrity
+- **Blueprint proofs**: Link high-risk changes to governance directives
+- **Review surfaces**: Built-in UI for audit inspection, proof review, and decision context
+- **Fail-closed**: Missing configuration defaults to strictest enforcement
+
+## Requirements
+
+- VS Code 1.90.0 or later
+- Node.js 20+ (for building from source)
+- No external services required (optional: Ollama for local AI evaluation)
+
+## Configuration
+
+ARC works out of the box with sensible defaults. Optional configuration via `.arc/router.json`:
+
+```json
+{
+  "mode": "RULE_ONLY",
+  "localLaneEnabled": false,
+  "cloudLaneEnabled": false
+}
+```
+
+| Setting            | Default     | Description                                                         |
+| ------------------ | ----------- | ------------------------------------------------------------------- |
+| `mode`             | `RULE_ONLY` | Enforcement mode (`RULE_ONLY`, `LOCAL_PREFERRED`, `CLOUD_ASSISTED`) |
+| `localLaneEnabled` | `false`     | Enable local AI model evaluation                                    |
+| `cloudLaneEnabled` | `false`     | Enable cloud fallback (requires separate approval)                  |
+
+## Commands
+
+| Command                                 | Description                                        |
+| --------------------------------------- | -------------------------------------------------- |
+| `ARC: Review Audit Log`                 | Inspect recent save decisions                      |
+| `ARC: Show Active Workspace Status`     | View current workspace targeting and route posture |
+| `ARC: Review Blueprint Proofs`          | Review linked governance blueprints                |
+| `ARC: Review False-Positive Candidates` | Advisory review of potential false positives       |
+| `ARC: Show Welcome Guide`               | Display onboarding information                     |
+
+## Limitations
+
+- **Heuristic classification**: Risk assessment is rule-based, not semantic analysis
+- **File-level audit integrity**: Hash chains verify individual files, not archive completeness
+- **Local-only blueprints**: Team/shared blueprint deployment not yet supported
+- **Cloud disabled by default**: Cloud fallback requires explicit configuration and approval
+
+## Support
+
+- **Issues**: Report via GitHub Issues
+- **Documentation**: See `docs/` for architecture and testing details
+- **Evidence**: Governance evidence bundles in `artifacts/`
+
+---
 
 ## Internal Pilot Status
 
-**Status:** INTERNAL PILOT READY  
-**Phase:** 7.10 — Pilot Readiness / UAT Pack  
+**Status:** INTERNAL PILOT READY
+**Phase:** 7.10 — Pilot Readiness / UAT Pack
 **Evidence:** `docs/PHASE-7.10-UAT-SCENARIOS.md`, `docs/PHASE-7.10-ROLLBACK-DRILL.md`
 
 **Pilot Scope:**

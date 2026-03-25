@@ -11,8 +11,33 @@
     "node": ">=20"
   },
   "categories": [
+    "Programming Languages",
     "Other"
   ],
+  "keywords": [
+    "governance",
+    "code quality",
+    "audit",
+    "compliance",
+    "enforcement",
+    "local-first",
+    "save governance",
+    "blueprint proof",
+    "audit trail"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/habrahgithub/lintel.git"
+  },
+  "bugs": {
+    "url": "https://github.com/habrahgithub/lintel/issues"
+  },
+  "homepage": "https://github.com/habrahgithub/lintel#readme",
+  "icon": "Public/Logo/ARC LOGO.png",
+  "galleryBanner": {
+    "color": "#1e1e1e",
+    "theme": "dark"
+  },
   "activationEvents": [
     "onStartupFinished",
     "onCommand:arc.showWelcome",
