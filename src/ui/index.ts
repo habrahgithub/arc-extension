@@ -3,7 +3,8 @@
  *
  * ARC-UI-001a: Screen 1 (Review Home) — COMPLETE
  * ARC-UI-001b: Screen 2 (Runtime Status) + Screen 3 (Audit Review) — COMPLETE
- * ARC-UI-001c: Screen 4 (Blueprint Proof) + Screen 5 (False-Positive) + Screen 6 (Guided Workflow) — IN PROGRESS
+ * ARC-UI-001c: Screen 4 (Blueprint Proof) + Screen 5 (False-Positive) + Screen 6 (Guided Workflow) — COMPLETE
+ * ARC-VIS-001: Decision Feed + Audit Timeline + Why Panel — IN PROGRESS
  *
  * Excludes Screen 7 (Command Centre) — Parked future concept (WRD-0095)
  */
@@ -18,6 +19,10 @@ import { createAuditReviewPanel } from './webview/AuditReview';
 import { createBlueprintProofReviewPanel } from './webview/BlueprintProofReview';
 import { createFalsePositiveReviewPanel } from './webview/FalsePositiveReview';
 import { createGuidedProofWorkflowPanel } from './webview/GuidedProofWorkflow';
+// ARC-VIS-001: Decision Visibility Layer
+import { createDecisionFeedPanel } from './webview/DecisionFeed';
+import { createAuditTimelinePanel } from './webview/AuditTimeline';
+import { createWhyPanelPanel } from './webview/WhyPanel';
 
 /**
  * Register all ARC-UI commands
@@ -71,6 +76,25 @@ export function registerUiCommands(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     vscode.commands.registerCommand('arc.ui.guidedWorkflow', () => {
       createGuidedProofWorkflowPanel();
+    }),
+  );
+
+  // ARC-VIS-001: Decision Visibility Layer
+  context.subscriptions.push(
+    vscode.commands.registerCommand('arc.ui.decisionFeed', () => {
+      createDecisionFeedPanel();
+    }),
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('arc.ui.auditTimeline', () => {
+      createAuditTimelinePanel();
+    }),
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('arc.ui.whyPanel', () => {
+      createWhyPanelPanel();
     }),
   );
 }
