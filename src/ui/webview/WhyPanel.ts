@@ -1,14 +1,14 @@
 /**
  * Why Panel — ARC-VIS-001 Surface 3
- * 
+ *
  * Purpose: Explanation surface for why a decision occurred
  * Emphasis: "Why this happened" (not "what to do next")
- * 
+ *
  * Distinct from other surfaces:
  * - Decision Feed = "What has been happening lately?"
  * - Audit Timeline = "Sequence and progression over time"
  * - Why Panel = "Why this happened"
- * 
+ *
  * WRD-0110: **WORDING SUBMITTED FOR WARDEN REVIEW BEFORE MERGE**
  * WRD-0111: Degraded/stale/absent states render explicitly
  * WRD-0112: Evidence-framed wording ("records show")
@@ -22,7 +22,8 @@ import { buildCSPWithNonce, generateNonce } from '../csp';
 import { escapeHtml } from '../sanitize';
 
 interface WhyExplanation {
-  filePath: string;
+  ts: string;
+  file_path: string;
   decision: string;
   reason: string;
   risk_level: string;
@@ -37,7 +38,7 @@ interface WhyExplanation {
  */
 export function createWhyPanelPanel(): vscode.WebviewPanel {
   const nonce = generateNonce();
-  
+
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
   const panel = vscode.window.createWebviewPanel(
     'arc.whyPanel',
@@ -62,39 +63,39 @@ export function createWhyPanelPanel(): vscode.WebviewPanel {
 
 /**
  * Get explanation for current/recent decision
- * 
+ *
  * OBS-S-7071: Read-only, no new persistence
  */
 function getCurrentWhyExplanation(): WhyExplanation | null {
   const activeFile = vscode.window.activeTextEditor?.document.uri.fsPath;
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-  
+
   if (!activeFile || !workspaceFolder) {
     return null;
   }
-  
+
   const auditPath = path.join(workspaceFolder, '.arc', 'audit.jsonl');
-  
+
   if (!fs.existsSync(auditPath)) {
     return null;
   }
-  
+
   try {
     const content = fs.readFileSync(auditPath, 'utf8');
     const lines = content.trim().split('\n').filter(Boolean);
-    
+
     // Find most recent decision for active file
     for (const line of lines.reverse()) {
       try {
         const entry = JSON.parse(line) as WhyExplanation;
-        if (entry.filePath === activeFile) {
+        if (entry.file_path === activeFile) {
           return entry;
         }
       } catch {
         // Skip malformed lines
       }
     }
-    
+
     return null;
   } catch {
     return null;
@@ -103,9 +104,9 @@ function getCurrentWhyExplanation(): WhyExplanation | null {
 
 /**
  * Generate Why Panel HTML
- * 
+ *
  * **WRD-0110: WORDING SUBMITTED FOR WARDEN REVIEW BEFORE MERGE**
- * 
+ *
  * Wording constraints:
  * - Must be explanatory, not instructional
  * - Must use evidence-framed language ("records show")
@@ -118,7 +119,7 @@ function getWhyPanelHtml(
 ): string {
   const csp = buildCSPWithNonce(nonce);
   const productName = 'ARC — Audit Ready Core';
-  
+
   // WRD-0111: Absent state explicit
   if (!explanation) {
     return `<!DOCTYPE html>
@@ -141,7 +142,7 @@ function getWhyPanelHtml(
 </body>
 </html>`;
   }
-  
+
   // Decision color
   const decisionColors: Record<string, string> = {
     ALLOW: 'background: #0e639c; color: #fff;',
@@ -149,19 +150,20 @@ function getWhyPanelHtml(
     REQUIRE_PLAN: 'background: #f48771; color: #000;',
     BLOCK: 'background: #ff0000; color: #fff;',
   };
-  
+
   // **WRD-0110: Wording submitted for Warden review**
   const whyContent = getWhyContent(explanation);
-  
-  const rulesHtml = explanation.matched_rules.length > 0
-    ? `<div class="section">
+
+  const rulesHtml =
+    explanation.matched_rules.length > 0
+      ? `<div class="section">
       <div class="section-title">Matched Rules</div>
-      <div class="rules-list">${explanation.matched_rules.map(r => `<span class="rule-badge">${escapeHtml(r)}</span>`).join('')}</div>
+      <div class="rules-list">${explanation.matched_rules.map((r) => `<span class="rule-badge">${escapeHtml(r)}</span>`).join('')}</div>
     </div>`
-    : '';
-  
+      : '';
+
   const notices = `
-    <p class="notice">Records show this explanation is derived from the audit entry for ${escapeHtml(explanation.filePath)}. This panel explains why the decision occurred; it does not authorize, override, or bypass save decisions.</p>
+    <p class="notice">Records show this explanation is derived from the audit entry for ${escapeHtml(explanation.file_path)}. This panel explains why the decision occurred; it does not authorize, override, or bypass save decisions.</p>
   `;
 
   return `<!DOCTYPE html>
@@ -188,7 +190,7 @@ function getWhyPanelHtml(
   
   <div class="decision-banner" style="background: ${escapeHtml(decisionColors[explanation.decision] || '#252526')}">
     <span class="decision-badge" style="${escapeHtml(decisionColors[explanation.decision] || '')}">${escapeHtml(explanation.decision)}</span>
-    <div class="file-path" style="margin-top: 8px; font-weight: 600;">${escapeHtml(explanation.filePath)}</div>
+    <div class="file-path" style="margin-top: 8px; font-weight: 600;">${escapeHtml(explanation.file_path)}</div>
   </div>
   
   <div class="section">
@@ -215,23 +217,23 @@ function getWhyPanelHtml(
 
 /**
  * Get "why" content based on decision type
- * 
+ *
  * **WRD-0110: WORDING SUBMITTED FOR WARDEN REVIEW**
  */
 function getWhyContent(explanation: WhyExplanation): string {
   switch (explanation.decision) {
     case 'ALLOW':
       return `Records show this save was allowed because the file did not trigger any rules requiring higher-level review. The risk assessment was ${escapeHtml(explanation.risk_level.toLowerCase())} and no additional proof was required.`;
-    
+
     case 'WARN':
-      return `Records show this save triggered a warning because ${escapeHtml(explanation.reason.toLowerCase())}. The file was allowed to proceed after acknowledgment, but the risk was flagged for operator awareness.`;
-    
+      return `Records show this save triggered a warning because ${escapeHtml(explanation.reason.toLowerCase())}. The file was allowed to proceed after acknowledgment, and the risk was flagged for operator awareness.`;
+
     case 'REQUIRE_PLAN':
       return `Records show this save required a governance plan because ${escapeHtml(explanation.reason.toLowerCase())}. A directive-linked blueprint proof was required before the save could proceed.`;
-    
+
     case 'BLOCK':
       return `Records show this save was blocked because ${escapeHtml(explanation.reason.toLowerCase())}. The risk level and matched rules did not meet the threshold for allowed saves.`;
-    
+
     default:
       return `Records show a decision was made: ${escapeHtml(explanation.decision)}. The reason was: ${escapeHtml(explanation.reason)}`;
   }
