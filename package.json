@@ -2,7 +2,7 @@
   "name": "lintel",
   "displayName": "ARC — Audit Ready Core",
   "description": "Governed code enforcement for AI-assisted development in a local-first VS Code extension.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "publisher": "swd",
   "license": "Apache-2.0",
@@ -33,7 +33,7 @@
     "url": "https://github.com/habrahgithub/lintel/issues"
   },
   "homepage": "https://github.com/habrahgithub/lintel#readme",
-  "icon": "Public/Logo/ARC-LOGO.png",
+  "icon": "Public/Logo/ARC-ICON-1024.png",
   "galleryBanner": {
     "color": "#1e1e1e",
     "theme": "dark"
