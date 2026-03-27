@@ -4,6 +4,19 @@
 
 ARC helps development teams maintain code quality and governance standards by intercepting saves and requiring explicit justification for high-risk changes. Built for teams that need audit trails, proof-backed decisions, and fail-closed enforcement.
 
+## Beta Release Status
+
+**Status:** PUBLIC BETA CANDIDATE  
+**Planned channels:** Visual Studio Marketplace + Open VSX  
+**Feedback:** GitHub Issues / invited tester feedback
+
+ARC is being prepared for a controlled beta release. The current product posture is:
+
+- local-first by default
+- cloud lanes disabled by default
+- suitable for developer testing and workflow feedback
+- still evolving in wording, heuristics, and operator polish
+
 ## Quick Start
 
 ### Install

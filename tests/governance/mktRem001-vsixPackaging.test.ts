@@ -8,6 +8,18 @@ const projectRoot = path.resolve(
   '..',
 );
 
+const latestVsixName = 'lintel-0.1.3.vsix';
+const latestVsixPath = path.join(projectRoot, latestVsixName);
+
+function readVsixBinary(vsixPath: string): string {
+  return fs.readFileSync(vsixPath, 'latin1');
+}
+
+function estimateVsixFileCount(vsixPath: string): number {
+  const binary = readVsixBinary(vsixPath);
+  return (binary.match(/PK\x03\x04/g) ?? []).length;
+}
+
 /**
  * Governance tests for LINTEL-MKT-REM-001 — VSIX Packaging Remediation
  *
@@ -44,19 +56,14 @@ describe('LINTEL-MKT-REM-001 — VSIX Packaging Governance', () => {
     });
 
     it('VSIX excludes development-only files', () => {
-      const vsixPath = path.join(projectRoot, 'lintel-0.1.1.vsix');
+      const vsixPath = latestVsixPath;
       if (!fs.existsSync(vsixPath)) {
         // Skip if VSIX not built yet
         return;
       }
 
       // List VSIX contents
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-require-imports, @typescript-eslint/no-unsafe-call
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-require-imports, @typescript-eslint/no-unsafe-call
-      const { execSync } = require('child_process');
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-      const contents = execSync(`unzip -l ${vsixPath}`, { encoding: 'utf8' });
+      const contents = readVsixBinary(vsixPath);
 
       // Should NOT contain excluded patterns
       expect(contents).not.toContain('artifacts/');
@@ -70,15 +77,12 @@ describe('LINTEL-MKT-REM-001 — VSIX Packaging Governance', () => {
 
   describe('WRD-0120: No Secrets/Credentials/PII', () => {
     it('VSIX contains no secret/credential patterns', () => {
-      const vsixPath = path.join(projectRoot, 'lintel-0.1.0.vsix');
+      const vsixPath = latestVsixPath;
       if (!fs.existsSync(vsixPath)) {
         return;
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-require-imports, @typescript-eslint/no-unsafe-call
-      const { execSync } = require('child_process');
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-      const contents = execSync(`unzip -l ${vsixPath}`, { encoding: 'utf8' });
+      const contents = readVsixBinary(vsixPath);
 
       // Should NOT contain secret-related filenames
       expect(contents).not.toMatch(/\.env(?!\.example)/i);
@@ -91,15 +95,12 @@ describe('LINTEL-MKT-REM-001 — VSIX Packaging Governance', () => {
     });
 
     it('No .env files except .env.example in VSIX', () => {
-      const vsixPath = path.join(projectRoot, 'lintel-0.1.0.vsix');
+      const vsixPath = latestVsixPath;
       if (!fs.existsSync(vsixPath)) {
         return;
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-require-imports, @typescript-eslint/no-unsafe-call
-      const { execSync } = require('child_process');
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-      const contents = execSync(`unzip -l ${vsixPath}`, { encoding: 'utf8' });
+      const contents = readVsixBinary(vsixPath);
 
       // .env.example is OK, but not other .env files
       expect(contents).not.toMatch(/\.env[^.]/);
@@ -108,34 +109,28 @@ describe('LINTEL-MKT-REM-001 — VSIX Packaging Governance', () => {
 
   describe('WRD-0122: Public/Logo/ Retained', () => {
     it('VSIX includes Public/Logo/ for runtime', () => {
-      const vsixPath = path.join(projectRoot, 'lintel-0.1.0.vsix');
+      const vsixPath = latestVsixPath;
       if (!fs.existsSync(vsixPath)) {
         return;
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-require-imports, @typescript-eslint/no-unsafe-call
-      const { execSync } = require('child_process');
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-      const contents = execSync(`unzip -l ${vsixPath}`, { encoding: 'utf8' });
+      const contents = readVsixBinary(vsixPath);
 
       // Should contain Public/Logo/
       expect(contents).toContain('Public/');
       expect(contents).toContain('Logo/');
-      expect(contents).toContain('ARC-LOGO.png');
+      expect(contents).toContain('ARC-ICON-1024.png');
     });
   });
 
   describe('WRD-0123: rules/ Shipping Declaration', () => {
     it('rules/ directory is included with justification', () => {
-      const vsixPath = path.join(projectRoot, 'lintel-0.1.0.vsix');
+      const vsixPath = latestVsixPath;
       if (!fs.existsSync(vsixPath)) {
         return;
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-require-imports, @typescript-eslint/no-unsafe-call
-      const { execSync } = require('child_process');
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-      const contents = execSync(`unzip -l ${vsixPath}`, { encoding: 'utf8' });
+      const contents = readVsixBinary(vsixPath);
 
       // Should contain rules/ (runtime classification rules)
       expect(contents).toContain('rules/');
@@ -161,15 +156,12 @@ describe('LINTEL-MKT-REM-001 — VSIX Packaging Governance', () => {
 
   describe('OBS-S-7092: artifacts/** Excluded', () => {
     it('VSIX excludes artifacts/ directory', () => {
-      const vsixPath = path.join(projectRoot, 'lintel-0.1.0.vsix');
+      const vsixPath = latestVsixPath;
       if (!fs.existsSync(vsixPath)) {
         return;
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-require-imports, @typescript-eslint/no-unsafe-call
-      const { execSync } = require('child_process');
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-      const contents = execSync(`unzip -l ${vsixPath}`, { encoding: 'utf8' });
+      const contents = readVsixBinary(vsixPath);
 
       // Should NOT contain artifacts/
       expect(contents).not.toContain('artifacts/');
@@ -178,7 +170,7 @@ describe('LINTEL-MKT-REM-001 — VSIX Packaging Governance', () => {
 
   describe('Packaging Size Reduction', () => {
     it('VSIX size is reasonable (< 5 MB)', () => {
-      const vsixPath = path.join(projectRoot, 'lintel-0.1.0.vsix');
+      const vsixPath = latestVsixPath;
       if (!fs.existsSync(vsixPath)) {
         return;
       }
@@ -191,20 +183,13 @@ describe('LINTEL-MKT-REM-001 — VSIX Packaging Governance', () => {
     });
 
     it('VSIX file count is reasonable (< 100 files)', () => {
-      const vsixPath = path.join(projectRoot, 'lintel-0.1.0.vsix');
+      const vsixPath = latestVsixPath;
       if (!fs.existsSync(vsixPath)) {
         return;
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-require-imports, @typescript-eslint/no-unsafe-call
-      const { execSync } = require('child_process');
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-      const contents = execSync(`unzip -l ${vsixPath}`, { encoding: 'utf8' });
-
-      // Count lines (rough file count estimate)
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-      const lineCount = contents.split('\n').length;
-      expect(lineCount).toBeLessThan(100);
+      const fileCount = estimateVsixFileCount(vsixPath);
+      expect(fileCount).toBeLessThan(100);
     });
   });
 });
