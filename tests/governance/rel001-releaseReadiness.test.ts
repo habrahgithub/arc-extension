@@ -78,8 +78,8 @@ describe('LINTEL-REL-001 — Release Readiness Governance', () => {
       // Should be private (not for public npm)
       expect(packageJson.private).toBe(true);
 
-      // Should not claim open-source license
-      expect(packageJson.license).toBe('UNLICENSED');
+      // Should have appropriate license (Apache-2.0 per WRD-0124)
+      expect(packageJson.license).toBe('Apache-2.0');
 
       // Should have internal publisher
       expect(packageJson.publisher).toBe('swd');

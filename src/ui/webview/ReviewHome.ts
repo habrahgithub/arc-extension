@@ -93,25 +93,25 @@ function getReviewHomeHtml(
     {
       title: 'Runtime Status',
       description: 'Active workspace and decision context',
-      command: 'arc.showRuntimeStatus',
+      command: 'arc.ui.runtimeStatus',
       icon: '📊',
     },
     {
       title: 'Audit Review',
       description: 'Inspect recent audit entries',
-      command: 'arc.reviewAudit',
+      command: 'arc.ui.auditReview',
       icon: '📋',
     },
     {
       title: 'Blueprint Proof Review',
       description: 'Proof lifecycle and validation state',
-      command: 'arc.reviewBlueprints',
+      command: 'arc.ui.blueprintProof',
       icon: '📄',
     },
     {
       title: 'False-Positive Review',
       description: 'Advisory candidate inspection',
-      command: 'arc.reviewFalsePositives',
+      command: 'arc.ui.falsePositiveReview',
       icon: '⚠️',
     },
   ];

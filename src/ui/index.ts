@@ -5,7 +5,8 @@
  * ARC-UI-001b: Screen 2 (Runtime Status) + Screen 3 (Audit Review) — COMPLETE
  * ARC-UI-001c: Screen 4 (Blueprint Proof) + Screen 5 (False-Positive) + Screen 6 (Guided Workflow) — COMPLETE
  * ARC-VIS-001: Decision Feed + Audit Timeline + Why Panel — COMPLETE
- * ARC-BRAND-001: Logo integration — IN PROGRESS
+ * ARC-BRAND-001: Logo integration — COMPLETE
+ * ARC-UX-VALIDATION-001: First-run UX validation — IN PROGRESS
  *
  * Excludes Screen 7 (Command Centre) — Parked future concept (WRD-0095)
  */
