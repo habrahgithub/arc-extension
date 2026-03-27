@@ -1,6 +1,6 @@
 # ARC Beta Release Checklist
 
-**Version target:** 0.1.3  
+**Version target:** 0.1.4  
 **Channel:** Controlled beta  
 **Registries:** Visual Studio Marketplace, Open VSX
 
@@ -81,7 +81,7 @@ Prerequisites:
 Example:
 
 ```bash
-npx ovsx publish lintel-0.1.3.vsix -p "$OVSX_PAT"
+npx ovsx publish arc-audit-ready-core-0.1.4.vsix -p "$OVSX_PAT"
 ```
 
 If publishing from a different file path, adjust the filename accordingly.

@@ -8,7 +8,7 @@ const projectRoot = path.resolve(
   '..',
 );
 
-const latestVsixName = 'lintel-0.1.3.vsix';
+const latestVsixName = 'arc-audit-ready-core-0.1.4.vsix';
 const latestVsixPath = path.join(projectRoot, latestVsixName);
 
 function readVsixBinary(vsixPath: string): string {
@@ -17,7 +17,8 @@ function readVsixBinary(vsixPath: string): string {
 
 function estimateVsixFileCount(vsixPath: string): number {
   const binary = readVsixBinary(vsixPath);
-  return (binary.match(/PK\x03\x04/g) ?? []).length;
+  const zipLocalHeader = `PK${String.fromCharCode(3)}${String.fromCharCode(4)}`;
+  return binary.split(zipLocalHeader).length - 1;
 }
 
 /**

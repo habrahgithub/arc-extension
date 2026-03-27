@@ -147,18 +147,15 @@ describe('Phase 7.10 — Pilot Readiness Governance', () => {
   });
 
   describe('WRD-0084: Internal-Pilot Wording Only', () => {
-    it('README states internal readiness only', () => {
+    it('README stays beta-bounded and does not overclaim readiness', () => {
       const readmePath = path.join(projectRoot, 'README.md');
       const readme = fs.readFileSync(readmePath, 'utf8');
 
-      // Should state internal pilot status
-      expect(readme).toContain('INTERNAL PILOT READY');
-      expect(readme).toContain('Internal lab use only');
-
-      // Should NOT claim public readiness
-      expect(readme).toContain('Not Certified:');
-      expect(readme).toContain('Public release readiness');
-      expect(readme).toContain('Marketplace readiness');
+      // Public README may state beta posture, but must not overclaim full readiness
+      expect(readme).toContain('Public beta candidate');
+      expect(readme).not.toMatch(/production[- ]ready/i);
+      expect(readme).not.toMatch(/marketplace[- ]ready/i);
+      expect(readme).not.toMatch(/public release is ready/i);
     });
 
     it('UAT doc states internal-only scope', () => {
@@ -230,9 +227,6 @@ describe('Phase 7.10 — Pilot Readiness Governance', () => {
       expect(readme).not.toMatch(
         /authorizes new|enables new capability|grants new permission/i,
       );
-
-      // Should reference existing boundaries
-      expect(readme).toContain('boundaries remain in effect');
     });
   });
 
@@ -242,8 +236,8 @@ describe('Phase 7.10 — Pilot Readiness Governance', () => {
       const readme = fs.readFileSync(readmePath, 'utf8');
 
       // Should reference evidence by file path
-      expect(readme).toContain('docs/PHASE-7.10-UAT-SCENARIOS.md');
-      expect(readme).toContain('docs/PHASE-7.10-ROLLBACK-DRILL.md');
+      expect(readme).toContain('artifacts/ARC-UX-VALIDATION-001-LOG.md');
+      expect(readme).toContain('artifacts/evidence/ARC-UX-VALIDATION-001/');
 
       // Should not self-certify readiness
       expect(readme).not.toMatch(/self[- ]certified|certifies itself/i);

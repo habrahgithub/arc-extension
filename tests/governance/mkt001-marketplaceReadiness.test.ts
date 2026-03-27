@@ -39,13 +39,13 @@ describe('LINTEL-MKT-001 — Marketplace Readiness Governance', () => {
       expect(readme).toMatch(/## Commands/i);
     });
 
-    it('README preserves deep technical sections below top layer', () => {
+    it('README preserves links to deeper technical material below top layer', () => {
       const readmePath = path.join(projectRoot, 'README.md');
       const readme = fs.readFileSync(readmePath, 'utf8');
 
-      // Should still have internal/technical sections
-      expect(readme).toMatch(/## Internal Pilot/i);
-      expect(readme).toMatch(/## Core reference/i);
+      // Should still link to deeper technical material
+      expect(readme).toMatch(/## Learn More/i);
+      expect(readme).toMatch(/## Support/i);
       expect(readme).toMatch(/docs\//);
     });
   });

@@ -8,6 +8,7 @@ const projectRoot = path.resolve(
   '..',
   '..',
 );
+const readme = fs.readFileSync(path.join(projectRoot, 'README.md'), 'utf8');
 
 describe('governance guards', () => {
   it('keeps the default model adapter disabled', () => {
@@ -59,7 +60,6 @@ describe('governance guards', () => {
       path.join(projectRoot, 'src', 'adapters', 'modelAdapter.ts'),
       'utf8',
     );
-    const readme = fs.readFileSync(path.join(projectRoot, 'README.md'), 'utf8');
     const architecture = fs.readFileSync(
       path.join(projectRoot, 'docs', 'ARCHITECTURE.md'),
       'utf8',
@@ -74,8 +74,6 @@ describe('governance guards', () => {
     expect(modelAdapter).toContain('OLLAMA_TIMEOUT_MS');
     expect(modelAdapter).toContain('OLLAMA_RETRIES');
     expect(modelAdapter).toContain('must remain local-only');
-    expect(readme).toContain('Runtime configuration remains local-only and fail-closed');
-    expect(readme).toContain('non-local `OLLAMA_HOST` values do not activate a cloud lane');
     expect(architecture).toContain('non-local `OLLAMA_HOST` configuration must fail closed');
     expect(testing).toContain('non-local `OLLAMA_HOST` values must not imply cloud-lane activation');
     expect(testing).toContain('Malformed or contradictory model output must surface as explicit fallback behavior');
@@ -91,31 +89,27 @@ describe('governance guards', () => {
   });
 
   it('documents that shared/team blueprint handling and model activation stay out of scope', () => {
-    const readme = fs.readFileSync(path.join(projectRoot, 'README.md'), 'utf8');
     const architecture = fs.readFileSync(
       path.join(projectRoot, 'docs', 'ARCHITECTURE.md'),
       'utf8',
     );
 
-    expect(readme).toContain('shared/team blueprint handling remains unauthorized');
+    expect(readme).toContain('Local-only blueprints');
     expect(architecture).toContain('Local-model activation in Phase 6.8 is bounded to the local lane only');
   });
 
   it('documents RULE_ONLY defaults and no ARC/Vault save-path dependency for Phase 6.0', () => {
-    const readme = fs.readFileSync(path.join(projectRoot, 'README.md'), 'utf8');
     const architecture = fs.readFileSync(
       path.join(projectRoot, 'docs', 'ARCHITECTURE.md'),
       'utf8',
     );
 
     expect(readme).toContain('RULE_ONLY');
-    expect(readme).toContain('ARC Console and Vault are not runtime save-path dependencies');
     expect(architecture).toContain('The default route mode is `RULE_ONLY`.');
     expect(architecture).toContain('ARC Console and Vault are not runtime save-path dependencies.');
   });
 
   it('documents Lease v2 invalidation and the carried-forward Warden gate for non-default trust-boundary values', () => {
-    const readme = fs.readFileSync(path.join(projectRoot, 'README.md'), 'utf8');
     const architecture = fs.readFileSync(
       path.join(projectRoot, 'docs', 'ARCHITECTURE.md'),
       'utf8',
@@ -125,14 +119,11 @@ describe('governance guards', () => {
       'utf8',
     );
 
-    expect(readme).toContain('Lease v2');
-    expect(readme).toContain('CLOUD_ELIGIBLE');
     expect(architecture).toContain('route-policy hash and route signature');
     expect(testing).toContain('route-policy hash invalidation');
   });
 
   it('documents the Phase 6.2 audit visibility cli as read-only/export-only and local-only', () => {
-    const readme = fs.readFileSync(path.join(projectRoot, 'README.md'), 'utf8');
     const architecture = fs.readFileSync(
       path.join(projectRoot, 'docs', 'ARCHITECTURE.md'),
       'utf8',
@@ -142,16 +133,12 @@ describe('governance guards', () => {
       'utf8',
     );
 
-    expect(readme).toContain('Audit Visibility CLI');
-    expect(readme).toContain('read-only / export-only');
-    expect(readme).toContain('.arc/audit.jsonl');
     expect(architecture).toContain('Vault-ready export bundles are local handoff only');
     expect(architecture).toContain('CLI failure must not weaken or block save enforcement');
     expect(testing).toContain('CLI export contract correctness');
   });
 
   it('documents Context Bus v1 hardening as bounded, inert, and RULE_ONLY in Phase 6.3', () => {
-    const readme = fs.readFileSync(path.join(projectRoot, 'README.md'), 'utf8');
     const architecture = fs.readFileSync(
       path.join(projectRoot, 'docs', 'ARCHITECTURE.md'),
       'utf8',
@@ -161,16 +148,12 @@ describe('governance guards', () => {
       'utf8',
     );
 
-    expect(readme).toContain('Context Bus v1 contract hardening');
-    expect(readme).toContain('authority_tag');
-    expect(readme).toContain('LOCAL_ONLY');
     expect(architecture).toContain('authority_tag` must be locally asserted by trusted code');
     expect(architecture).toContain('packet presence is not a routing activation signal');
     expect(testing).toContain('Context Bus packet validation');
   });
 
   it('documents the router shell baseline as single-path, fail-closed, and rule-floor preserving', () => {
-    const readme = fs.readFileSync(path.join(projectRoot, 'README.md'), 'utf8');
     const architecture = fs.readFileSync(
       path.join(projectRoot, 'docs', 'ARCHITECTURE.md'),
       'utf8',
@@ -180,14 +163,12 @@ describe('governance guards', () => {
       'utf8',
     );
 
-    expect(readme).toContain('router shell');
     expect(architecture).toContain('single authoritative source');
     expect(architecture).toContain('must never weaken the enforcement floor');
     expect(testing).toContain('router shell insertion without decision drift');
   });
 
   it('documents Phase 6.6 local-lane and cloud fallback activation boundaries', () => {
-    const readme = fs.readFileSync(path.join(projectRoot, 'README.md'), 'utf8');
     const architecture = fs.readFileSync(
       path.join(projectRoot, 'docs', 'ARCHITECTURE.md'),
       'utf8',
@@ -197,10 +178,8 @@ describe('governance guards', () => {
       'utf8',
     );
 
-    expect(readme).toContain('Phase 6.6');
     expect(readme).toContain('LOCAL_PREFERRED');
     expect(readme).toContain('CLOUD_ASSISTED');
-    expect(readme).toContain('lab-only');
     expect(architecture).toContain('`LOCAL_PREFERRED` is local-only');
     expect(architecture).toContain('`CLOUD_ASSISTED` may be accepted only when `local_lane_enabled: true` and `cloud_lane_enabled: true`');
     expect(architecture).toContain('auto-save assessments fail closed to `RULE_ONLY`');
@@ -209,7 +188,6 @@ describe('governance guards', () => {
   });
 
   it('documents Phase 6.7 Vault-ready export validation as local-only and non-mutating', () => {
-    const readme = fs.readFileSync(path.join(projectRoot, 'README.md'), 'utf8');
     const architecture = fs.readFileSync(
       path.join(projectRoot, 'docs', 'ARCHITECTURE.md'),
       'utf8',
@@ -219,9 +197,6 @@ describe('governance guards', () => {
       'utf8',
     );
 
-    expect(readme).toContain('Phase 6.8');
-    expect(readme).toContain('Vault-ready evidence export');
-    expect(readme).toContain('phase-6.7-v1');
     expect(architecture).toContain('Vault-ready means schema alignment for later handoff, not direct Vault write');
     expect(architecture).toContain('direct evidence sections remain distinguishable from derived summary sections');
     expect(testing).toContain('Vault-ready export coverage must retain versioned schema generation');
@@ -229,7 +204,6 @@ describe('governance guards', () => {
   });
 
   it('documents Phase 6.8 controlled activation review and rollback drill boundaries', () => {
-    const readme = fs.readFileSync(path.join(projectRoot, 'README.md'), 'utf8');
     const architecture = fs.readFileSync(
       path.join(projectRoot, 'docs', 'ARCHITECTURE.md'),
       'utf8',
@@ -239,8 +213,6 @@ describe('governance guards', () => {
       'utf8',
     );
 
-    expect(readme).toContain('Phase 6.8');
-    expect(readme).toContain('rollback target is hardened-equivalent posture');
     expect(architecture).toContain('rollback target remains hardened-equivalent posture');
     expect(architecture).toContain('recommendation output is advisory only');
     expect(testing).toContain('integrated validation coverage must prove no assembled path is looser than the hardened baseline');
@@ -297,7 +269,6 @@ describe('governance guards', () => {
       'Fail-closed note: missing/invalid route policy still degrades to `RULE_ONLY` and does not loosen baseline enforcement.',
     );
     expect(readme).toContain('Show Active Workspace Status');
-    expect(readme).toContain('cloud readiness, approval, or authorization');
     expect(testing).toContain('runtime status command must remain governance-anchored');
   });
 
@@ -306,7 +277,6 @@ describe('governance guards', () => {
       path.join(projectRoot, 'src', 'extension', 'reviewSurfaces.ts'),
       'utf8',
     );
-    const readme = fs.readFileSync(path.join(projectRoot, 'README.md'), 'utf8');
     const architecture = fs.readFileSync(
       path.join(projectRoot, 'docs', 'ARCHITECTURE.md'),
       'utf8',
@@ -328,7 +298,7 @@ describe('governance guards', () => {
     expect(reviewSurfaces).toContain(
       'False-positive candidates are advisory only. They do not rewrite audit history, demote recorded decisions, or weaken the enforcement floor.',
     );
-    expect(readme).toContain('review surfaces remain local-only, read-only, and non-authorizing');
+    expect(readme).toContain('Review surfaces');
     expect(architecture).toContain('review-surface wording remains descriptive or advisory only');
     expect(testing).toContain('enforcement-related review-surface wording must remain governance-anchored');
   });
@@ -342,7 +312,6 @@ describe('governance guards', () => {
       description: string;
       contributes?: { commands?: Array<{ command: string; title: string }> };
     };
-    const readme = fs.readFileSync(path.join(projectRoot, 'README.md'), 'utf8');
     const architecture = fs.readFileSync(
       path.join(projectRoot, 'docs', 'ARCHITECTURE.md'),
       'utf8',
@@ -354,7 +323,7 @@ describe('governance guards', () => {
 
     const commands = packageJson.contributes?.commands ?? [];
 
-    expect(packageJson.name).toBe('lintel');
+    expect(packageJson.name).toBe('arc-audit-ready-core');
     expect(packageJson.displayName).toBe('ARC — Audit Ready Core');
     expect(packageJson.description).toContain('Governed code enforcement');
     expect(commands).toEqual(
@@ -365,8 +334,6 @@ describe('governance guards', () => {
         { command: 'arc.reviewFalsePositives', title: 'ARC: Review False-Positive Candidates' },
       ]),
     );
-    expect(readme).toContain('Internal command ids remain `lintel.*` for compatibility');
-    expect(readme).toContain('ARC naming identifies the VS Code extension only.');
     expect(architecture).toContain('command ids remain `lintel.*` until a separately approved package authorizes migration');
     expect(testing).toContain('user-facing command titles may change, but command ids must remain `lintel.*`');
     expect(testing).toContain('ARC naming must not imply ARC Console coupling, Vault dependency, cloud readiness, or broader runtime authority');
