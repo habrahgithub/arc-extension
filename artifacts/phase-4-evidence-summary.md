@@ -1,4 +1,4 @@
-# LINTEL Phase 4 Evidence Summary
+# ARC Phase 4 Evidence Summary
 
 ## Scope executed
 - optional local workspace mapping support at `.arc/workspace-map.json`

@@ -121,7 +121,7 @@ describe('LINTEL-MKT-REM-001 — VSIX Packaging Governance', () => {
       // Should contain Public/Logo/
       expect(contents).toContain('Public/');
       expect(contents).toContain('Logo/');
-      expect(contents).toContain('ARC LOGO.png');
+      expect(contents).toContain('ARC-LOGO.png');
     });
   });
 

@@ -1,4 +1,4 @@
-# LINTEL Security and Risk Audit Summary
+# ARC Security and Risk Audit Summary
 
 **Artifact Type:** Supporting security evidence  
 **Status:** Informational evidence artifact  
@@ -102,12 +102,12 @@ Security value:
 
 This summary supports the following bounded statements:
 
-- LINTEL is **local-first**
-- LINTEL is **rule-first**
-- LINTEL uses **bounded review surfaces**
-- LINTEL uses **append-only local audit logging**
-- LINTEL preserves **fail-closed behavior** when routing or model conditions are not satisfied
-- LINTEL maintains a **low runtime dependency surface**
+- ARC is **local-first**
+- ARC is **rule-first**
+- ARC uses **bounded review surfaces**
+- ARC uses **append-only local audit logging**
+- ARC preserves **fail-closed behavior** when routing or model conditions are not satisfied
+- ARC maintains a **low runtime dependency surface**
 
 This summary must **not** be used to claim:
 

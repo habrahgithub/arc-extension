@@ -115,7 +115,7 @@ function getAuditTimelineHtml(
   entries: TimelineEntry[],
   context?: vscode.ExtensionContext,
 ): string {
-  const csp = buildCSPWithNonce(nonce);
+  const csp = buildCSPWithNonce(nonce, panel.webview.cspSource);
   const productName = 'ARC — Audit Ready Core';
 
   // ARC-BRAND-001: Logo URI (WRD-0116: local only, no remote)
@@ -125,7 +125,7 @@ function getAuditTimelineHtml(
       context.extensionUri,
       'Public',
       'Logo',
-      'ARC LOGO.png',
+      'ARC-ICON-1024.png',
     );
     logoUri = panel.webview.asWebviewUri(logoPath).toString();
   }

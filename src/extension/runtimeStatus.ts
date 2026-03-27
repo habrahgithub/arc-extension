@@ -96,7 +96,7 @@ export function renderRuntimeStatusMarkdown(
       : 'none detected';
 
   const sections = [
-    '# LINTEL Active Workspace Status',
+    '# ARC Active Workspace Status',
     '',
     `> ${RUNTIME_STATUS_OBSERVATIONAL_NOTICE}`,
     '',

@@ -3,7 +3,7 @@ import * as vscode from 'vscode';
 /**
  * Welcome Surface — Bounded Operator Onboarding
  *
- * This surface provides first-use guidance for the LINTEL extension.
+ * This surface provides first-use guidance for the ARC extension.
  * It is descriptive only and does not authorize, widen, or bypass enforcement.
  *
  * Governance Anchors:
@@ -18,7 +18,7 @@ import * as vscode from 'vscode';
  */
 export const WELCOME_CONTENT = `# ARC — Audit Ready Core
 
-## Welcome to LINTEL
+## Welcome to ARC
 
 This extension provides **governed code enforcement** for AI-assisted development in VS Code.
 
@@ -26,7 +26,7 @@ This extension provides **governed code enforcement** for AI-assisted developmen
 
 ## Core Identity
 
-**LINTEL** is a local-first IDE governance layer that enforces safe, auditable AI-assisted development by intercepting risky changes at save-time.
+**ARC** is a local-first IDE governance layer that enforces safe, auditable AI-assisted development by intercepting risky changes at save-time.
 
 **Extension Identity:** ARC — Audit Ready Core
 
@@ -38,7 +38,7 @@ This extension provides **governed code enforcement** for AI-assisted developmen
 
 ### Save-Time Enforcement
 
-When you save a file, LINTEL:
+When you save a file, ARC:
 1. **Classifies risk** based on file paths and patterns (auth, schema, config, infra)
 2. **Evaluates rules** to determine the appropriate decision
 3. **Enforces the decision** before the save completes
@@ -55,7 +55,7 @@ When you save a file, LINTEL:
 
 ### Fail-Closed Posture
 
-When the local model (Ollama) is unavailable or returns malformed output, LINTEL **fails closed** to the established rule-based enforcement floor. Model failure never weakens the baseline protection.
+When the local model (Ollama) is unavailable or returns malformed output, ARC **fails closed** to the established rule-based enforcement floor. Model failure never weakens the baseline protection.
 
 ---
 
@@ -74,7 +74,7 @@ When the local model (Ollama) is unavailable or returns malformed output, LINTEL
 
 ### 1. Understand Your Workspace
 
-LINTEL targets a governed root for enforcement. By default:
+ARC targets a governed root for enforcement. By default:
 - If opened in a workspace folder: uses the workspace root
 - Otherwise: uses a fallback storage location
 
@@ -102,7 +102,7 @@ See linked blueprint proofs for REQUIRE_PLAN saves:
 
 ## Configuration
 
-LINTEL uses local-only configuration for runtime parameters. No cloud defaults or remote secrets are required.
+ARC uses local-only configuration for runtime parameters. No cloud defaults or remote secrets are required.
 
 ### Environment Variables (Optional)
 

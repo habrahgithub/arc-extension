@@ -1,4 +1,4 @@
-# LINTEL Phase 5 Evidence Summary
+# ARC Phase 5 Evidence Summary
 
 ## Scope executed
 - consistent `LOCAL_ONLY` proof enforcement across all proof-resolution paths

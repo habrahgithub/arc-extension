@@ -2,7 +2,7 @@
   "name": "lintel",
   "displayName": "ARC — Audit Ready Core",
   "description": "Governed code enforcement for AI-assisted development in a local-first VS Code extension.",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
   "publisher": "swd",
   "license": "Apache-2.0",

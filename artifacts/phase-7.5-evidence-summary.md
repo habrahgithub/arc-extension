@@ -142,7 +142,7 @@ expect(content).toContain('does not authorize, widen, or bypass');
 
 The welcome surface provides:
 
-1. **Core Identity** — Explains LINTEL as local-first IDE governance layer
+1. **Core Identity** — Explains ARC as a local-first IDE governance layer
 2. **What It Does** — Save-time enforcement with 4 decision types
 3. **What It Does NOT Do** — Explicit list of non-features (cloud, marketplace, authorization)
 4. **First Steps** — Links to existing commands for workspace, status, audit, blueprints

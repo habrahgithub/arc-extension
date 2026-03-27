@@ -1,4 +1,4 @@
-# LINTEL-MKT-001 — Marketplace Readiness Evidence
+# ARC Marketplace Readiness Evidence
 
 **Directive ID:** LINTEL-MKT-001
 **Title:** Marketplace-Readiness Preparation
@@ -229,4 +229,4 @@ pack     ✓ (44 files, 1.36 MB)
 
 ---
 
-**End of LINTEL-MKT-001 Evidence Summary**
+**End of ARC Marketplace Readiness Evidence Summary**

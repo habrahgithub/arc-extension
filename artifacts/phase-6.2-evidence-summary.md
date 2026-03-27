@@ -1,4 +1,4 @@
-# LINTEL Phase 6.2 Evidence Summary
+# ARC Phase 6.2 Evidence Summary
 
 ## Scope implemented
 - Audit Visibility CLI added as a local-only, read-only / export-only surface

@@ -75,7 +75,7 @@
 - `npm run build` ✅
 
 ## Result summary
-- LINTEL now emits a versioned, locally validated, Vault-ready evidence bundle
+- ARC now emits a versioned, locally validated, Vault-ready evidence bundle
 - export remains local-only and non-mutating
 - malformed or incomplete source evidence is preserved truthfully as `PARTIAL`
 - Vault and ARC remain outside the runtime save path

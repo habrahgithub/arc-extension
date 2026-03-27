@@ -1,4 +1,4 @@
-# LINTEL Phase 1 Evidence Summary
+# ARC Phase 1 Evidence Summary
 
 ## Implementation summary
 - Created a new governed Phase 1 repo at `projects/lintel`

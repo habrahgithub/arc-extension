@@ -1,4 +1,4 @@
-# LINTEL Phase 3 Evidence Summary
+# ARC Phase 3 Evidence Summary
 
 ## Scope executed
 - REQUIRE_PLAN proof artifact workflow only (`LINTEL-PH3-001`)

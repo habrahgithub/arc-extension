@@ -1,4 +1,4 @@
-# LINTEL Phase 6.4 Evidence Summary
+# ARC Phase 6.4 Evidence Summary
 
 ## Scope implemented
 - formal RULE_ONLY router shell added on top of the existing authoritative route-policy resolution path

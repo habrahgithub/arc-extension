@@ -1,4 +1,4 @@
-# LINTEL-MKT-REM-001 — VSIX Packaging Remediation Evidence
+# ARC VSIX Packaging Remediation Evidence
 
 **Directive ID:** LINTEL-MKT-REM-001  
 **Title:** WRD-0091 VSIX Content Remediation for Marketplace Readiness  
@@ -188,4 +188,4 @@ pack     ✓ (44 files, 1.36 MB)
 
 ---
 
-**End of LINTEL-MKT-REM-001 Evidence Summary**
+**End of ARC VSIX Packaging Remediation Evidence Summary**

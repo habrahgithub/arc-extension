@@ -51,7 +51,7 @@ export class LocalReviewSurfaceService {
       () => {
         const auditPath = path.join(this.workspaceRoot, '.arc', 'audit.jsonl');
         if (!fs.existsSync(auditPath)) {
-          return '# LINTEL Audit Review\n\nNo local audit log is present yet.';
+          return '# ARC Audit Review\n\nNo local audit log is present yet.';
         }
 
         // Phase 7.8 — WRD-0077: Handle audit-read degradation
@@ -68,7 +68,7 @@ export class LocalReviewSurfaceService {
 
         if (auditReadError) {
           return [
-            '# LINTEL Audit Review',
+            '# ARC Audit Review',
             '',
             '## Audit-read degradation',
             '',
@@ -89,7 +89,7 @@ export class LocalReviewSurfaceService {
         ]);
 
         return [
-          '# LINTEL Audit Review',
+          '# ARC Audit Review',
           '',
           ...operatorContext,
           '',
@@ -152,7 +152,7 @@ export class LocalReviewSurfaceService {
         ]);
 
         const sections = [
-          '# LINTEL Blueprint Review',
+          '# ARC Blueprint Review',
           '',
           ...operatorContext,
           '',
@@ -237,7 +237,7 @@ export class LocalReviewSurfaceService {
         ]);
 
         return [
-          '# LINTEL False-Positive Review',
+          '# ARC False-Positive Review',
           '',
           ...operatorContext,
           '',

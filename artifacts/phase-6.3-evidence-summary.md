@@ -1,4 +1,4 @@
-# LINTEL Phase 6.3 Evidence Summary
+# ARC Phase 6.3 Evidence Summary
 
 ## Scope implemented
 - Context Bus v1 contract hardening added to local packet construction

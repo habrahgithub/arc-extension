@@ -1,4 +1,4 @@
-# LINTEL Phase 6.1 Evidence Summary
+# ARC Phase 6.1 Evidence Summary
 
 ## Scope executed
 - Lease v2 exact-governed-state fingerprinting

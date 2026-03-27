@@ -366,7 +366,7 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('lintel.reviewAudit', async () => {
       const filePath = vscode.window.activeTextEditor?.document.uri.fsPath;
       await openMarkdownPreview(
-        'LINTEL Audit Review',
+        'ARC Audit Review',
         reviewSurfaceFor(filePath).renderAuditReview(),
       );
     }),
@@ -437,7 +437,7 @@ export function activate(context: vscode.ExtensionContext): void {
       }
 
       await openMarkdownPreview(
-        'LINTEL Active Workspace Status',
+        'ARC Active Workspace Status',
         renderRuntimeStatusMarkdown({
           target,
           autoSaveMode: mode,
@@ -463,14 +463,14 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('lintel.reviewBlueprints', async () => {
       const filePath = vscode.window.activeTextEditor?.document.uri.fsPath;
       await openMarkdownPreview(
-        'LINTEL Blueprint Review',
+        'ARC Blueprint Review',
         reviewSurfaceFor(filePath).renderBlueprintReview(),
       );
     }),
     vscode.commands.registerCommand('lintel.reviewFalsePositives', async () => {
       const filePath = vscode.window.activeTextEditor?.document.uri.fsPath;
       await openMarkdownPreview(
-        'LINTEL False-Positive Review',
+        'ARC False-Positive Review',
         reviewSurfaceFor(filePath).renderFalsePositiveReview(),
       );
     }),

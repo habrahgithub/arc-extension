@@ -468,7 +468,7 @@ function reducedGuaranteeNotice(input: SaveInput): string | undefined {
     input.autoSaveMode === 'afterDelay' ||
     input.autoSaveMode === 'onFocusChange'
   ) {
-    return 'LINTEL is running in a reduced-guarantee auto-save mode.';
+    return 'ARC is running in a reduced-guarantee auto-save mode.';
   }
 
   return undefined;

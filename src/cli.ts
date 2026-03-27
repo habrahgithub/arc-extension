@@ -18,7 +18,7 @@ interface ParsedArgs {
 }
 
 const HELP_TEXT = [
-  'LINTEL Audit Visibility CLI (Phase 6.7)',
+  'ARC Audit Visibility CLI (Phase 6.7)',
   '',
   'Read-only / export-only commands:',
   '  query            Query local audit history',

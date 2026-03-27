@@ -35,12 +35,15 @@ export function generateNonce(): string {
  * - base-uri 'none': No <base> tag manipulation
  * - form-action 'none': No form submissions (read-only UI)
  */
-export function buildCSPWithNonce(nonce: string): string {
+export function buildCSPWithNonce(
+  nonce: string,
+  cspSource = "'self'",
+): string {
   return [
     "default-src 'none'",
     `script-src 'nonce-${nonce}'`,
     "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data:",
+    `img-src ${cspSource} data:`,
     "font-src 'self'",
     "connect-src 'none'",
     "frame-src 'none'",

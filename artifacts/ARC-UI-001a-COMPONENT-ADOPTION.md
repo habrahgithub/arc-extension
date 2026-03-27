@@ -38,7 +38,7 @@ The extracted runtime UI template was used as a **design reference only**, not a
 
 | Excluded | Reason |
 |----------|--------|
-| Cloud/hybrid runtime controls | Not implemented in Lintel |
+| Cloud/hybrid runtime controls | Not implemented in ARC |
 | Agent orchestration UI | Out of scope |
 | Command centre patterns | Screen 7 parked (WRD-0095) |
 | Execution stream display | No execution authority |
@@ -70,7 +70,7 @@ The extracted runtime UI template was used as a **design reference only**, not a
 ### Why Original Implementation
 
 - Template assumed different architecture (React-based)
-- Lintel uses vanilla TypeScript + VS Code Webview API
+- ARC uses vanilla TypeScript + VS Code Webview API
 - Security requirements (CSP, sanitization) required custom implementation
 - Bounded scope (1 screen) didn't justify full template adoption
 
@@ -108,7 +108,7 @@ The extracted runtime UI template was used as a **design reference only**, not a
 **Why patterns were useful:**
 1. Card layout → navigation hub design
 2. Badge pattern → posture indicators
-3. CSP pattern → enhanced for Lintel security needs
+3. CSP pattern → enhanced for ARC security needs
 
 ---
 

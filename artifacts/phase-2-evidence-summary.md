@@ -1,4 +1,4 @@
-# LINTEL Phase 2 Evidence Summary
+# ARC Phase 2 Evidence Summary
 
 ## Implementation summary
 - Added a save lifecycle controller to track committed snapshots, pending reverts, and restore suppression
@@ -26,7 +26,7 @@
 - `.arc/.gitignore` keeps runtime audit artifacts excluded by design
 
 ## Rollback note
-Phase 2 rollback remains isolated to the nested LINTEL repo at `projects/lintel`. No shared platform runtime or external service dependency was introduced.
+Phase 2 rollback remains isolated to the nested ARC repo at `projects/lintel`. No shared platform runtime or external service dependency was introduced.
 
 ## Open findings / intentional deferrals
 - blueprint-backed `REQUIRE_PLAN` proof remains deferred to Phase 3

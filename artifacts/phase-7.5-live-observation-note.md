@@ -5,7 +5,7 @@
 **Observed artifact:** `.arc/blueprints/LINTEL-PH7-5-001.md`
 
 ## Observation
-LINTEL/ARC became visibly active while Phase 7.5 planning and implementation work was happening in the same governed workspace.
+ARC became visibly active while Phase 7.5 planning and implementation work was happening in the same governed workspace.
 
 ## Why this appears visible now
 - the active file is a canonical proof-path artifact under `.arc/blueprints/`

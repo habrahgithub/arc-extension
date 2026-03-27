@@ -1,4 +1,4 @@
-# LINTEL Phase 6.0 Evidence Summary
+# ARC Phase 6.0 Evidence Summary
 
 ## Scope executed
 - route-policy contract scaffolding with explicit `RULE_ONLY` fail-closed defaults

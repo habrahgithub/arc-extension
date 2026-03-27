@@ -65,7 +65,7 @@ function getReviewHomeHtml(
   panel: vscode.WebviewPanel,
   context?: vscode.ExtensionContext,
 ): string {
-  const csp = buildCSPWithNonce(nonce);
+  const csp = buildCSPWithNonce(nonce, panel.webview.cspSource);
   const productName = 'ARC — Audit Ready Core';
   const postureNotes = [
     'Local-only governance',
@@ -80,7 +80,7 @@ function getReviewHomeHtml(
       context.extensionUri,
       'Public',
       'Logo',
-      'ARC LOGO.png',
+      'ARC-ICON-1024.png',
     );
     logoUri = panel.webview.asWebviewUri(logoPath).toString();
   }

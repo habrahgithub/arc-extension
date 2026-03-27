@@ -1,4 +1,4 @@
-# LINTEL Phase 7.0 Evidence Summary
+# ARC Phase 7.0 Evidence Summary
 
 ## Scope implemented
 - truthful workspace-target resolution for nested projects inside a larger VS Code workspace
