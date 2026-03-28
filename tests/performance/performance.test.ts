@@ -32,7 +32,6 @@ class FastLocalAdapter {
   readonly enabledByDefault = true;
 
   evaluate(_context: ContextPayload): Promise<ModelEvaluationResult | undefined> {
-    void _context;
     return Promise.resolve({
       decision: 'BLOCK',
       reason: 'Perf harness model tightened the rule-floor decision.',
