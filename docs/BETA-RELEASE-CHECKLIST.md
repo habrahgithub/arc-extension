@@ -1,6 +1,6 @@
 # ARC Beta Release Checklist
 
-**Version target:** 0.1.4  
+**Version target:** 0.1.5  
 **Channel:** Controlled beta  
 **Registries:** Visual Studio Marketplace, Open VSX
 
@@ -81,7 +81,7 @@ Prerequisites:
 Example:
 
 ```bash
-npx ovsx publish arc-audit-ready-core-0.1.4.vsix -p "$OVSX_PAT"
+npx ovsx publish arc-audit-ready-core-0.1.5.vsix -p "$OVSX_PAT"
 ```
 
 If publishing from a different file path, adjust the filename accordingly.

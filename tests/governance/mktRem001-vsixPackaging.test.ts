@@ -8,7 +8,7 @@ const projectRoot = path.resolve(
   '..',
 );
 
-const latestVsixName = 'arc-audit-ready-core-0.1.4.vsix';
+const latestVsixName = 'arc-audit-ready-core-0.1.5.vsix';
 const latestVsixPath = path.join(projectRoot, latestVsixName);
 
 function readVsixBinary(vsixPath: string): string {

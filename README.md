@@ -130,8 +130,8 @@ ARC improves security posture through local-first enforcement, fail-closed defau
 
 ## Support
 
-- **Issues:** https://github.com/habrahgithub/lintel/issues
-- **Repository:** https://github.com/habrahgithub/lintel
+- **Issues:** https://github.com/habrahgithub/arc-extension/issues
+- **Repository:** https://github.com/habrahgithub/arc-extension
 - **License:** Apache-2.0
 
 ## Learn More
