@@ -203,6 +203,8 @@ export function handleReviewHomeMessage(message: unknown): void {
       'arc.ui.blueprintProof',
       'arc.ui.falsePositiveReview',
       'arc.ui.guidedWorkflow',
+      // ARC-UI-002: Task Board
+      'arc.ui.taskBoard',
     ];
     if (allowed.includes(msg.cmd)) {
       void vscode.commands.executeCommand(msg.cmd);

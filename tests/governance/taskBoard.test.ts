@@ -19,8 +19,8 @@ describe('Task Board v1 (ARC-UI-002)', () => {
     fs.rmSync(testWorkspace, { recursive: true, force: true });
   });
 
-  describe('Status Derivation', () => {
-    it('classifies template-only blueprint as Created', () => {
+  describe('Status Derivation (Path A)', () => {
+    it('classifies untouched template as Created', () => {
       // Template with [REQUIRED] placeholders should be Created
       const template = `# LINTEL Blueprint: TEST-001
 **Directive ID:** TEST-001
@@ -49,28 +49,25 @@ describe('Task Board v1 (ARC-UI-002)', () => {
       const service = new LocalReviewSurfaceService(testWorkspace);
       const output = service.renderTaskBoard();
 
-      // Template with [REQUIRED] placeholders is classified as In Progress
-      // because it has blueprint structure but incomplete content
-      expect(output).toContain('🔄 In Progress');
+      // Template with [REQUIRED] placeholders is classified as Created (Path A)
+      expect(output).toContain('📋 Created');
       expect(output).toContain('TEST-001');
     });
 
-    it('classifies partially-filled blueprint as In Progress', () => {
-      const partial = `# LINTEL Blueprint: TEST-002
+    it('classifies edited-but-incomplete blueprint as In Progress', () => {
+      // Edited content without [REQUIRED] placeholders but still incomplete
+      const edited = `# LINTEL Blueprint: TEST-002
 **Directive ID:** TEST-002
 
 ## Objective
-This is a complete objective section with substantive content describing the change.
+This is my custom objective describing the actual change I'm making.
 
 ## Scope
-This is a complete scope section listing the affected files and systems.
-
-## Constraints
-This section has some content but may be incomplete.
+This is my custom scope listing the files I'm changing.
 `;
       fs.writeFileSync(
         path.join(testWorkspace, '.arc/blueprints/TEST-002.md'),
-        partial,
+        edited,
         'utf8',
       );
 

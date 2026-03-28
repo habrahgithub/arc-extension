@@ -320,7 +320,7 @@ export class LocalReviewSurfaceService {
           ...operatorContext,
           '',
           '- Task derivation: from `.arc/blueprints/*.md` validation state',
-          '- Status mapping: Created → In Progress → Completed (based on proof validity)',
+          '- Status mapping: Created (template) → In Progress (edited) → Completed (valid)',
           '- No external sync: board reflects local evidence only',
           '',
         ];
@@ -330,9 +330,12 @@ export class LocalReviewSurfaceService {
           return sections.join('\n');
         }
 
-        // Derive task items from blueprint proof state
+        // Derive task items from blueprint proof state and content analysis
         const items: TaskBoardItem[] = files.map((fileName) => {
           const directiveId = fileName.replace(/\.md$/, '');
+          const blueprintPath = path.join(blueprintsDir, fileName);
+          const content = fs.readFileSync(blueprintPath, 'utf8');
+
           const resolution = this.blueprintArtifacts.resolveProof({
             directiveId,
             blueprintId:
@@ -340,7 +343,8 @@ export class LocalReviewSurfaceService {
             blueprintMode: 'LOCAL_ONLY',
           });
 
-          const status = deriveTaskStatus(resolution);
+          // Path A classification: detect untouched template vs edited-but-incomplete
+          const status = deriveTaskStatusPathA(resolution, content);
           const qualityScore = calculateTaskQualityScore(resolution, status);
 
           return {
@@ -505,29 +509,33 @@ function getFalsePositiveQualityLabel(entry: AuditEntry): string {
 }
 
 // Phase 7.10 — Task Board v1 status derivation (ARC-UI-002)
-// Derives task status from blueprint proof resolution
-function deriveTaskStatus(
+// Path A classification: detects untouched template vs edited-but-incomplete
+function deriveTaskStatusPathA(
   resolution: BlueprintProofResolution,
+  content: string,
 ): 'Created' | 'In Progress' | 'Completed' {
   // Completed = blueprint proof resolves as VALID
   if (resolution.status === 'VALID') {
     return 'Completed';
   }
 
-  // In Progress = blueprint has directive-specific content but proof is not yet VALID
-  // This includes: INCOMPLETE_ARTIFACT, INVALID_DIRECTIVE, MISMATCHED_BLUEPRINT_ID, MALFORMED_ARTIFACT
-  if (
-    resolution.status === 'INCOMPLETE_ARTIFACT' ||
-    resolution.status === 'INVALID_DIRECTIVE' ||
-    resolution.status === 'MISMATCHED_BLUEPRINT_ID' ||
-    resolution.status === 'MALFORMED_ARTIFACT'
-  ) {
-    return 'In Progress';
+  // Created = blueprint exists but is still the untouched template
+  // Detect via: INCOMPLETE_TEMPLATE banner or [REQUIRED] placeholders still present
+  const hasTemplateMarkers =
+    content.includes('Status: INCOMPLETE_TEMPLATE') ||
+    content.includes('[REQUIRED]') ||
+    content.includes('Describe the specific change intent') ||
+    content.includes('List the files or surfaces') ||
+    content.includes('Record the non-scope, risk bounds');
+
+  if (hasTemplateMarkers) {
+    return 'Created';
   }
 
-  // Created = blueprint file exists but remains template-like or materially incomplete
-  // This includes: MISSING_DIRECTIVE, MISSING_ARTIFACT, UNAUTHORIZED_MODE
-  return 'Created';
+  // In Progress = blueprint has been edited but proof is not yet VALID
+  // This includes: INCOMPLETE_ARTIFACT, INVALID_DIRECTIVE, MISMATCHED_BLUEPRINT_ID, MALFORMED_ARTIFACT
+  // where the content has been edited (no template markers)
+  return 'In Progress';
 }
 
 // Phase 7.10 — Task Board quality scoring (advisory only)
