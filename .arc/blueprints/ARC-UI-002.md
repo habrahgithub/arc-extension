@@ -53,10 +53,10 @@ This returns the extension to prior review surfaces without affecting blueprint 
 ### Phase 1 — Evidence model and status derivation
 
 - Add bounded Task Board read model to `src/extension/reviewSurfaces.ts`
-- Derive each board item from `.arc/blueprints/*.md` using `BlueprintArtifactStore` validation results
-- Use v1 status mapping aligned with `BlueprintProofResolution` states:
-  - **Created** = blueprint file or directive is missing/unauthorized (`MISSING_DIRECTIVE`, `MISSING_ARTIFACT`, `UNAUTHORIZED_MODE`)
-  - **In Progress** = blueprint exists but proof is not yet `VALID` (`INCOMPLETE_ARTIFACT`, `INVALID_DIRECTIVE`, `MISMATCHED_BLUEPRINT_ID`, `MALFORMED_ARTIFACT`)
+- Derive each board item from `.arc/blueprints/*.md` using `BlueprintArtifactStore` validation results AND content analysis
+- Use v1 status mapping (Path A classification):
+  - **Created** = blueprint exists but is still the untouched template (detected via `[REQUIRED]` placeholders or `INCOMPLETE_TEMPLATE` banner)
+  - **In Progress** = blueprint has been edited (no template markers) but proof is not yet `VALID`
   - **Completed** = blueprint proof resolves as `VALID`
 - Keep the model read-only and local-only
 
