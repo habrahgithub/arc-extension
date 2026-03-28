@@ -106,6 +106,28 @@ ARC works out of the box with sensible defaults. Optional configuration lives in
 - **Cloud disabled by default** — cloud fallback requires explicit configuration and approval
 - **Observational diagnostics only** — status surfaces describe posture; they do not authorize changes
 
+## FAQ
+
+### What programming languages does ARC support?
+
+ARC is language-agnostic at the VS Code save layer. Today its built-in rules are strongest for common config, auth, and schema files such as `package.json`, `.env`, `schema.sql`, `*.sql`, and `*.prisma`.
+
+### How does ARC detect high-risk changes?
+
+ARC currently uses heuristic rules based on file paths, filenames, and extensions. For example, auth/session paths and core config files can trigger higher-risk handling, while schema files often trigger review-aware warnings.
+
+### Can I disable cloud options?
+
+Yes. Cloud is disabled by default. If you do not want cloud fallback, keep `cloudLaneEnabled: false` in `.arc/router.json`. `RULE_ONLY` mode also works without cloud services.
+
+### How will ARC affect my workflow?
+
+Most low-risk saves continue normally. Medium-risk saves may ask for acknowledgment, and higher-risk saves may require a linked plan or proof before the save proceeds. The goal is to add friction only where risk is higher.
+
+### How does ARC help with code security?
+
+ARC improves security posture through local-first enforcement, fail-closed defaults, visible save-time decisions, append-only audit logging, and proof-backed handling for higher-risk changes. It is a governance and review layer, not a full semantic security scanner.
+
 ## Support
 
 - **Issues:** https://github.com/habrahgithub/lintel/issues
