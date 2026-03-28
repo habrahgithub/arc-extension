@@ -138,6 +138,7 @@
     "test:integration": "vitest run tests/integration",
     "test:e2e": "vitest run tests/e2e",
     "test:governance": "vitest run tests/governance",
+    "test:performance": "vitest run tests/performance",
     "smoke:harness": "node ./scripts/smoke_harness.js",
     "pack": "vsce package --no-dependencies --allow-missing-repository",
     "pack:release": "vsce package --no-dependencies --allow-missing-repository --out ./dist/release/"

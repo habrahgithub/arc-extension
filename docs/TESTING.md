@@ -5,10 +5,26 @@
 - integration: save orchestrator, lifecycle controller, audit rotation and verification, route-metadata truthfulness, router shell behavior, local-lane activation gate, cloud fallback gate, and Audit Visibility CLI command behavior
 - e2e: decision matrix, auto-save protection, proof-artifact enforcement, resilient local review behavior, Phase 6.2 observational CLI behavior preservation, Phase 6.3 Context Bus inertness preservation, Phase 6.4 router-shell preservation, Phase 6.5 local-lane activation gate, Phase 6.6 cloud fallback gate, Phase 6.7 Vault-ready export validation, and Phase 6.8 integrated rollback drill
 - governance: adapter posture, runtime artifact hygiene, contract truthfulness, documentation guardrails, and command-surface constraints
+- performance: deterministic beta baselines for classification, rule evaluation, model-evaluation harness behavior, and total explicit-save assessment time
 - smoke harness: deterministic local-only operator validation for repeatable non-cloud checks
 
 ## Required contract
 All command gates in the active phase package must exist and pass before closure.
+
+## Performance suite
+
+- Run with `npm run test:performance`
+- The suite is intentionally local and deterministic:
+  - no live Ollama dependency
+  - no cloud dependency
+  - model timings use a bounded local stub adapter
+- The suite records beta baselines for:
+  - `classifyFile()`
+  - `evaluateRules()`
+  - model-evaluation harness behavior
+  - `SaveOrchestrator.assessSave()` in explicit-save `LOCAL_PREFERRED` mode
+- Thresholds are conservative beta gates, not realtime guarantees
+- Retain concise summaries/transcripts for release evidence under `artifacts/ARC-PERF-001/`
 
 ## Phase 7.0 emphasis
 - workspace-target resolution must prefer nested governed roots truthfully when boundary markers exist
