@@ -61,15 +61,15 @@ function getGuidedWorkflowHtml(nonce: string): string {
   const steps = [
     {
       step: 1,
-      title: 'Provide Directive ID',
+      title: 'Enter Change ID',
       content:
-        'When prompted for a REQUIRE_PLAN save, enter the directive ID that links your change to a governance plan (e.g., LINTEL-PH5-001). The directive ID must be in uppercase, hyphenated format.',
+        'When prompted for a plan-linked save, enter the Change ID that links your change to a governance plan (e.g., LINTEL-PH5-001). The Change ID must be in uppercase, hyphenated format.',
     },
     {
       step: 2,
       title: 'Open Blueprint Artifact',
       content:
-        'ARC will open or create the blueprint file at `.arc/blueprints/<directive-id>.md`. This is your local proof artifact — you must complete all required sections with directive-specific content.',
+        'ARC will open or create the blueprint file at `.arc/blueprints/<change-id>.md`. This is your local proof artifact — you must complete all required sections with directive-specific content.',
     },
     {
       step: 3,
@@ -93,7 +93,7 @@ function getGuidedWorkflowHtml(nonce: string): string {
       step: 6,
       title: 'Review Proof Status',
       content:
-        'After a successful save, you can review the proof status using the Blueprint Proof Review surface. Records will show the directive linkage in the audit entry.',
+        'After a successful save, you can review the proof status using the Blueprint Proof Review surface. Records will show the change linkage in the audit entry.',
     },
   ];
 

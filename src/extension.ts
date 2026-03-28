@@ -81,21 +81,21 @@ async function openMarkdownPreview(
   void title;
 }
 
+// **WRD-0102: Instructional wording — submitted for Warden review**
 async function promptForDirectiveId(): Promise<string | undefined> {
   return vscode.window.showInputBox({
-    title: 'ARC REQUIRE_PLAN proof',
-    prompt:
-      'Enter the directive ID that links your change to a governance plan.',
+    title: 'ARC — Plan-Linked Save',
+    prompt: 'Enter the Change ID that links this save to a governance plan.',
     placeHolder: 'LINTEL-PH5-001',
     ignoreFocusOut: true,
     validateInput: (value) => {
       if (!value.trim()) {
-        return 'Directive ID is required for REQUIRE_PLAN saves.';
+        return 'Change ID is required for plan-linked saves.';
       }
 
       return isValidDirectiveId(value.trim())
         ? undefined
-        : 'Use an uppercase, hyphenated directive ID such as LINTEL-PH5-001.';
+        : 'Use an uppercase, hyphenated Change ID such as LINTEL-PH5-001.';
     },
   });
 }

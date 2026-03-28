@@ -110,9 +110,9 @@ export class BlueprintArtifactStore {
         ok: false,
         status: 'MISSING_DIRECTIVE',
         reason:
-          'REQUIRE_PLAN saves need a directive ID (e.g., LINTEL-PH5-001) and a linked local blueprint artifact.',
+          'Plan-linked saves require a Change ID (e.g., LINTEL-PH5-001) and a linked local blueprint artifact.',
         nextAction:
-          'Provide a directive ID and create the local blueprint before saving. Note: This is a hard enforcement block, not a warning.',
+          'Provide a Change ID and create the local blueprint before saving.',
       };
     }
 
@@ -120,9 +120,9 @@ export class BlueprintArtifactStore {
       return {
         ok: false,
         status: 'INVALID_DIRECTIVE',
-        reason: `Directive ID "${proof.directiveId}" is not valid. Phase 5 requires uppercase, hyphenated format (e.g., LINTEL-PH5-001).`,
+        reason: `Change ID "${proof.directiveId}" is not valid. Use uppercase, hyphenated format (e.g., LINTEL-PH5-001).`,
         nextAction:
-          'Use an uppercase, hyphenated directive ID. Example: LINTEL-PH5-001',
+          'Use an uppercase, hyphenated Change ID. Example: LINTEL-PH5-001',
       };
     }
 
