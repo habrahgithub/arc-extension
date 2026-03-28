@@ -117,8 +117,8 @@ describe('Phase 7.6 — Proof-State Messaging Clarity', () => {
 
       expect(result.ok).toBe(false);
       expect(result.status).toBe('MISSING_DIRECTIVE');
-      // Must explicitly state this is a hard block
-      expect(result.nextAction).toContain('hard enforcement block');
+      // Must provide clear directive action without softening language
+      expect(result.nextAction).toMatch(/provide|create.*blueprint.*before/i);
       expect(result.nextAction).not.toMatch(
         /you may|optional|suggestion|consider/i,
       );

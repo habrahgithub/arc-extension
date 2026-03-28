@@ -1,14 +1,20 @@
 import * as vscode from 'vscode';
-import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { buildCSPWithNonce, generateNonce } from '../csp';
 import { escapeHtml } from '../sanitize';
+import {
+  LocalReviewSurfaceService,
+  type TaskBoardItem,
+} from '../../extension/reviewSurfaces';
 
 // Phase 7.10 — Task Board v1 (ARC-UI-002)
+// Uses centralized review-surface model from reviewSurfaces.ts
 export function createTaskBoardPanel(
   context: vscode.ExtensionContext,
 ): vscode.WebviewPanel {
   const nonce = generateNonce();
+  const workspaceRoot = getWorkspaceRoot();
+  const reviewService = new LocalReviewSurfaceService(workspaceRoot);
 
   const panel = vscode.window.createWebviewPanel(
     'arcTaskBoard',
@@ -20,8 +26,8 @@ export function createTaskBoardPanel(
     },
   );
 
-  const workspaceRoot = getWorkspaceRoot();
-  const boardContent = renderTaskBoard(workspaceRoot);
+  // Use centralized review-surface rendering
+  const boardContent = reviewService.renderTaskBoard();
 
   const csp = buildCSPWithNonce(nonce, panel.webview.cspSource);
 
@@ -82,10 +88,13 @@ export function createTaskBoardPanel(
       font-size: 12px;
       margin-right: 8px;
     }
+    .posture-badges {
+      margin-bottom: 16px;
+    }
   </style>
 </head>
 <body>
-  ${boardContent}
+  ${renderMarkdown(boardContent)}
 </body>
 </html>
   `;
@@ -101,142 +110,26 @@ function getWorkspaceRoot(): string {
   return folders[0].uri.fsPath;
 }
 
-// Phase 7.10 — Task Board v1 rendering (ARC-UI-002)
-function renderTaskBoard(workspaceRoot: string): string {
-  const blueprintsDir = path.join(workspaceRoot, '.arc', 'blueprints');
-
-  if (!fs.existsSync(blueprintsDir)) {
-    return renderEmptyBoard('No `.arc/blueprints/` directory found.');
-  }
-
-  const files = fs
-    .readdirSync(blueprintsDir)
-    .filter((f) => f.endsWith('.md'))
-    .sort();
-
-  if (files.length === 0) {
-    return renderEmptyBoard(
-      'No blueprint artifacts found. Task board is empty.',
-    );
-  }
-
-  const items = files.map((fileName) => {
-    const directiveId = fileName.replace(/\.md$/, '');
-    const blueprintPath = path.join(blueprintsDir, fileName);
-    const content = fs.readFileSync(blueprintPath, 'utf8');
-    const status = deriveTaskStatus(content, fileName);
-    return { directiveId, blueprintPath, status };
-  });
-
-  const created = items.filter((i) => i.status === 'Created');
-  const inProgress = items.filter((i) => i.status === 'In Progress');
-  const completed = items.filter((i) => i.status === 'Completed');
-
-  return [
-    '<h1>ARC Task Board</h1>',
-    '<div class="posture-badges">',
-    '<span class="posture-badge">Read-only</span>',
-    '<span class="posture-badge">Local-only</span>',
-    '<span class="posture-badge">Non-authorizing</span>',
-    '</div>',
-    '<p><em>Task derivation: from <code>.arc/blueprints/*.md</code> content analysis</em></p>',
-    '<p><em>Status mapping: Created → In Progress → Completed (based on blueprint completeness)</em></p>',
-    '',
-    '<h2>Summary</h2>',
-    `<ul><li><strong>Created:</strong> ${created.length}</li>`,
-    `<li><strong>In Progress:</strong> ${inProgress.length}</li>`,
-    `<li><strong>Completed:</strong> ${completed.length}</li></ul>`,
-    '',
-    renderColumn(
-      '📋 Created',
-      'Blueprint exists but remains template-like or materially incomplete.',
-      created,
-    ),
-    renderColumn(
-      '🔄 In Progress',
-      'Blueprint has directive-specific content but is not yet complete.',
-      inProgress,
-    ),
-    renderColumn(
-      '✅ Completed',
-      'Blueprint appears complete with all required sections filled.',
-      completed,
-    ),
-  ].join('\n');
-}
-
-function renderEmptyBoard(message: string): string {
-  return [
-    '<h1>ARC Task Board</h1>',
-    '<div class="posture-badges">',
-    '<span class="posture-badge">Read-only</span>',
-    '<span class="posture-badge">Local-only</span>',
-    '<span class="posture-badge">Non-authorizing</span>',
-    '</div>',
-    `<p><em>${message}</em></p>`,
-  ].join('\n');
-}
-
-function renderColumn(
-  title: string,
-  description: string,
-  items: Array<{ directiveId: string; blueprintPath: string; status: string }>,
-): string {
-  const lines: string[] = [
-    `<h2>${title}</h2>`,
-    `<p><em>${description}</em></p>`,
-  ];
-
-  if (items.length === 0) {
-    lines.push('<p><em>No items in this column.</em></p>');
-    return lines.join('\n');
-  }
-
-  lines.push('<ul>');
-  for (const item of items) {
-    lines.push(
-      `<li><strong>${escapeHtml(item.directiveId)}</strong> — <code>${escapeHtml(item.blueprintPath)}</code></li>`,
-    );
-  }
-  lines.push('</ul>');
-
-  return lines.join('\n');
-}
-
-// Phase 7.10 — Simple status derivation from blueprint content
-function deriveTaskStatus(
-  content: string,
-  fileName: string,
-): 'Created' | 'In Progress' | 'Completed' {
-  // Check for template placeholders
-  const hasTemplatePlaceholders =
-    content.includes('[REQUIRED]') ||
-    content.includes('Describe the specific') ||
-    content.includes('List the files') ||
-    content.includes('Record the non-scope');
-
-  if (hasTemplatePlaceholders) {
-    return 'Created';
-  }
-
-  // Check for substantive content in key sections
-  const hasObjective = /## Objective\s*\n\s*[A-Z]/.test(content);
-  const hasScope = /## Scope\s*\n\s*[A-Z]/.test(content);
-  const hasConstraints = /## Constraints\s*\n\s*[A-Z]/.test(content);
-  const hasAcceptance = /## Acceptance Criteria\s*\n\s*[A-Z]/.test(content);
-  const hasRollback = /## Rollback Note\s*\n\s*[A-Z]/.test(content);
-
-  const sectionCount = [
-    hasObjective,
-    hasScope,
-    hasConstraints,
-    hasAcceptance,
-    hasRollback,
-  ].filter(Boolean).length;
-
-  if (sectionCount >= 5) {
-    return 'Completed';
-  }
-
-  return 'In Progress';
+// Simple markdown-to-HTML renderer for Task Board content
+function renderMarkdown(md: string): string {
+  return (
+    md
+      // Headers
+      .replace(/^# (.*$)/gm, '<h1>$1</h1>')
+      .replace(/^## (.*$)/gm, '<h2>$1</h2>')
+      .replace(/^### (.*$)/gm, '<h3>$1</h3>')
+      .replace(/^#### (.*$)/gm, '<h4>$1</h4>')
+      // Bold
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      // Italic
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      // Code
+      .replace(/`(.*?)`/g, '<code>$1</code>')
+      // Line breaks
+      .replace(/\n/g, '<br>\n')
+      // Horizontal rules
+      .replace(/^---$/gm, '<hr>')
+      // Lists (simple bullet handling)
+      .replace(/^- (.*$)/gm, '<li>$1</li>')
+  );
 }
