@@ -44,7 +44,7 @@ export function createWhyPanelPanel(
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
   const panel = vscode.window.createWebviewPanel(
     'arc.whyPanel',
-    'ARC — Why Panel',
+    'ARC XT — Why Panel',
     vscode.ViewColumn.One,
     {
       enableScripts: true,
@@ -129,7 +129,7 @@ function getWhyPanelHtml(
   context?: vscode.ExtensionContext,
 ): string {
   const csp = buildCSPWithNonce(nonce, panel.webview.cspSource);
-  const productName = 'ARC — Audit Ready Core';
+  const productName = 'ARC XT — Audit Ready Core';
 
   // ARC-BRAND-001: Logo URI (WRD-0116: local only, no remote)
   let logoUri = '';

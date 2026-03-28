@@ -84,7 +84,7 @@ async function openMarkdownPreview(
 // **WRD-0102: Instructional wording — submitted for Warden review**
 async function promptForDirectiveId(): Promise<string | undefined> {
   return vscode.window.showInputBox({
-    title: 'ARC — Plan-Linked Save',
+    title: 'ARC XT — Plan-Linked Save',
     prompt: 'Enter the Change ID that links this save to a governance plan.',
     placeHolder: 'LINTEL-PH5-001',
     ignoreFocusOut: true,
@@ -116,7 +116,7 @@ async function collectRequirePlanProof(
 
   if (resolution.status === 'MISSING_ARTIFACT') {
     const choice = await vscode.window.showWarningMessage(
-      `[ARC] ${resolution.reason}`,
+      `[ARC XT] ${resolution.reason}`,
       { modal: true },
       'Create Blueprint',
       'Cancel',
@@ -142,7 +142,7 @@ async function collectRequirePlanProof(
   }
 
   if (!resolution.ok || !resolution.link) {
-    void vscode.window.showWarningMessage(`[ARC] ${resolution.reason}`, {
+    void vscode.window.showWarningMessage(`[ARC XT] ${resolution.reason}`, {
       modal: true,
     });
     return {
@@ -156,7 +156,7 @@ async function collectRequirePlanProof(
   }
 
   const continueChoice = await vscode.window.showWarningMessage(
-    `[ARC] Plan-linked save: ${assessment.decision.reason}\nChange ID ${directiveId} linked to ${resolution.link.blueprintId}.`,
+    `[ARC XT] Plan-linked save: ${assessment.decision.reason}\nChange ID ${directiveId} linked to ${resolution.link.blueprintId}.`,
     { modal: true },
     'Continue',
     'Cancel',
@@ -237,7 +237,7 @@ export function activate(context: vscode.ExtensionContext): void {
   const mode = autoSaveMode();
   if (mode === 'afterDelay' || mode === 'onFocusChange') {
     void vscode.window.showInformationMessage(
-      `[ARC] Reduced-guarantee auto-save mode detected (${mode}). Explicit save remains the preferred path.`,
+      `[ARC XT] Reduced-guarantee auto-save mode detected (${mode}). Explicit save remains the preferred path.`,
     );
   }
 
@@ -249,7 +249,7 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('arc.reviewAudit', async () => {
       const filePath = vscode.window.activeTextEditor?.document.uri.fsPath;
       await openMarkdownPreview(
-        'ARC Audit Review',
+        'ARC XT — Audit Review',
         reviewSurfaceFor(filePath).renderAuditReview(),
       );
     }),
@@ -320,7 +320,7 @@ export function activate(context: vscode.ExtensionContext): void {
       }
 
       await openMarkdownPreview(
-        'ARC Active Workspace Status',
+        'ARC XT — Active Workspace Status',
         renderRuntimeStatusMarkdown({
           target,
           autoSaveMode: mode,
@@ -346,14 +346,14 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('arc.reviewBlueprints', async () => {
       const filePath = vscode.window.activeTextEditor?.document.uri.fsPath;
       await openMarkdownPreview(
-        'ARC Blueprint Proof Review',
+        'ARC XT — Blueprint Proof Review',
         reviewSurfaceFor(filePath).renderBlueprintReview(),
       );
     }),
     vscode.commands.registerCommand('arc.reviewFalsePositives', async () => {
       const filePath = vscode.window.activeTextEditor?.document.uri.fsPath;
       await openMarkdownPreview(
-        'ARC False-Positive Review',
+        'ARC XT — False-Positive Review',
         reviewSurfaceFor(filePath).renderFalsePositiveReview(),
       );
     }),
@@ -366,7 +366,7 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('lintel.reviewAudit', async () => {
       const filePath = vscode.window.activeTextEditor?.document.uri.fsPath;
       await openMarkdownPreview(
-        'ARC Audit Review',
+        'ARC XT — Audit Review',
         reviewSurfaceFor(filePath).renderAuditReview(),
       );
     }),
@@ -437,7 +437,7 @@ export function activate(context: vscode.ExtensionContext): void {
       }
 
       await openMarkdownPreview(
-        'ARC Active Workspace Status',
+        'ARC XT — Active Workspace Status',
         renderRuntimeStatusMarkdown({
           target,
           autoSaveMode: mode,
@@ -463,14 +463,14 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('lintel.reviewBlueprints', async () => {
       const filePath = vscode.window.activeTextEditor?.document.uri.fsPath;
       await openMarkdownPreview(
-        'ARC Blueprint Review',
+        'ARC XT — Blueprint Review',
         reviewSurfaceFor(filePath).renderBlueprintReview(),
       );
     }),
     vscode.commands.registerCommand('lintel.reviewFalsePositives', async () => {
       const filePath = vscode.window.activeTextEditor?.document.uri.fsPath;
       await openMarkdownPreview(
-        'ARC False-Positive Review',
+        'ARC XT — False-Positive Review',
         reviewSurfaceFor(filePath).renderFalsePositiveReview(),
       );
     }),
@@ -520,7 +520,7 @@ export function activate(context: vscode.ExtensionContext): void {
           if (assessment.decision.decision === 'BLOCK') {
             controller.finalizeSave(assessment, false);
             void vscode.window.showErrorMessage(
-              `[ARC] BLOCK: ${assessment.decision.reason}`,
+              `[ARC XT] BLOCK: ${assessment.decision.reason}`,
               { modal: true },
             );
             return [];
@@ -544,7 +544,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
           if (assessment.shouldPrompt) {
             const choice = await vscode.window.showWarningMessage(
-              `[ARC] ${assessment.decision.decision}: ${assessment.decision.reason}`,
+              `[ARC XT] ${assessment.decision.decision}: ${assessment.decision.reason}`,
               { modal: true },
               'Continue',
               'Cancel',
@@ -576,7 +576,7 @@ export function activate(context: vscode.ExtensionContext): void {
       );
       await vscode.workspace.applyEdit(edit);
       void vscode.window.showWarningMessage(
-        `[ARC] Save reverted: ${restore.reason}`,
+        `[ARC XT] Save reverted: ${restore.reason}`,
         { modal: true },
       );
     }),

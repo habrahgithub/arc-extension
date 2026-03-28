@@ -19,7 +19,7 @@ export function createTaskBoardPanel(
   // ARC-UI-004: No local resources loaded — inline HTML/CSS only
   const panel = vscode.window.createWebviewPanel(
     'arcTaskBoard',
-    'ARC Task Board',
+    'ARC XT Task Board',
     vscode.ViewColumn.One,
     {
       enableScripts: true,
@@ -38,7 +38,7 @@ export function createTaskBoardPanel(
   <meta http-equiv="Content-Security-Policy" content="${escapeHtml(csp)}">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ARC Task Board</title>
+  <title>ARC XT Task Board</title>
   <style>
     body {
       font-family: var(--vscode-font-family);

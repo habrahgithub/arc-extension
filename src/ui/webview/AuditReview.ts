@@ -46,7 +46,7 @@ export function createAuditReviewPanel(): vscode.WebviewPanel {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
   const panel = vscode.window.createWebviewPanel(
     'arcAuditReview',
-    'ARC — Audit Review',
+    'ARC XT — Audit Review',
     vscode.ViewColumn.One,
     {
       enableScripts: true,
@@ -118,7 +118,7 @@ function getAuditReviewHtml(
   data: { entries: AuditEntry[]; malformedCount: number; readError: boolean },
 ): string {
   const csp = buildCSPWithNonce(nonce);
-  const productName = 'ARC — Audit Ready Core';
+  const productName = 'ARC XT — Audit Ready Core';
   
   // OBS-S-7042: Audit-read degradation display
   if (data.readError) {

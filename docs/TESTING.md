@@ -74,7 +74,7 @@ All command gates in the active phase package must exist and pass before closure
 ## Phase 7.3 emphasis
 - manifest identity freeze must remain governance-anchored in package and documentation checks
 - user-facing command titles may change, but command ids must remain `lintel.*` unless a separate package authorizes migration
-- ARC naming must not imply ARC Console coupling, Vault dependency, cloud readiness, or broader runtime authority
+- ARC XT naming must not imply ARC Console coupling, Vault dependency, cloud readiness, or broader runtime authority
 - identity work must not introduce welcome screens, onboarding flows, or new UI surfaces
 
 ## Phase 7.4 emphasis

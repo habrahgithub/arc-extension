@@ -1,4 +1,4 @@
-# ARC Beta Release Checklist
+# ARC XT Beta Release Checklist
 
 **Version target:** 0.1.5  
 **Channel:** Controlled beta  
@@ -21,11 +21,11 @@ Confirm:
 
 - package builds successfully
 - latest `.vsix` installs cleanly
-- `ARC: Review Home` opens
-- `ARC: Decision Feed` opens
-- `ARC: Audit Timeline` opens
-- `ARC: Why Panel` opens
-- `ARC: Show Active Workspace Status` reflects ARC naming
+- `ARC XT: Review Home` opens
+- `ARC XT: Decision Feed` opens
+- `ARC XT: Audit Timeline` opens
+- `ARC XT: Why Panel` opens
+- `ARC XT: Show Active Workspace Status` reflects ARC XT naming
 - governed save still shows visible intervention on protected files
 
 ---
@@ -38,7 +38,7 @@ Confirm before publishing:
 - `preview: true` is present for beta posture
 - extension icon is `Public/Logo/ARC-ICON-1024.png`
 - LICENSE is present and Apache-2.0
-- README reflects ARC naming and beta posture
+- README reflects ARC XT naming and beta posture
 - no public-facing text incorrectly describes cloud/default readiness
 
 ---

@@ -164,7 +164,7 @@ describe('ARC-UI-001a — UI Foundation Governance', () => {
       const reviewHome = fs.readFileSync(reviewHomePath, 'utf8');
 
       // Should use correct product name
-      expect(reviewHome).toContain('ARC — Audit Ready Core');
+      expect(reviewHome).toContain('ARC XT — Audit Ready Core');
 
       // Should have posture notes
       expect(reviewHome).toContain('Local-only');

@@ -1,4 +1,4 @@
-# ARC — Audit Ready Core Architecture
+# ARC XT — Audit Ready Core Architecture
 
 ## Companion references
 
@@ -68,8 +68,8 @@
 
 ## Phase 7.3 additions
 
-- manifest identity freeze to `ARC — Audit Ready Core`
-- user-facing command titles aligned to `ARC:` while internal command ids remain `lintel.*`
+- manifest identity freeze to `ARC XT — Audit Ready Core`
+- user-facing command titles aligned to `ARC XT:` while internal command ids remain `lintel.*`
 - explicit compatibility wording distinguishing the extension identity from ARC Console, Vault, or broader control-plane authority
 
 ## Phase 7.4 additions
@@ -82,7 +82,7 @@
 ## Phase 7.5 additions
 
 - bounded welcome/onboarding surface for first-use operator guidance
-- `lintel.showWelcome` command (`ARC: Show Welcome Guide`) for onboarding
+- `lintel.showWelcome` command (`ARC XT: Show Welcome Guide`) for onboarding
 - explicit onboarding wording distinguishing extension identity from ARC Console, Vault, or control-plane
 - governance tests anchoring onboarding truthfulness (no authorization, cloud, or coupling implication)
 
@@ -468,7 +468,7 @@ The `hash` and `prev_hash` fields provide **file-level integrity only**:
 
 ## Identity boundary
 
-- ARC naming identifies the VS Code extension only; it does not imply ARC Console coupling, Vault dependency, or control-plane authority
+- ARC XT naming identifies the VS Code extension only; it does not imply ARC Console coupling, Vault dependency, or control-plane authority
 - command ids remain `lintel.*` until a separately approved package authorizes migration
 - branding may strengthen product identity but must not imply cloud readiness, marketplace readiness, or broader runtime permission
 - welcome and onboarding work remain outside the identity-freeze package boundary

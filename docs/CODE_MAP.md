@@ -1,6 +1,6 @@
 # LINTEL / ARC Code Map
 
-**Project:** ARC — Audit Ready Core (internal: `lintel`)
+**Project:** ARC XT — Audit Ready Core (internal: `lintel`)
 **Type:** VS Code extension — local-first governed save-time enforcement
 **Source:** 5,764 lines across 24 files | Tests: 5,186 lines across 37 files
 **Current phase:** 7.7 (Trigger Visibility and Save-Decision Traceability)
@@ -163,11 +163,11 @@ extension.ts: prompt/revert/allow based on decision
 
 | Command ID | Title | Surface |
 |---|---|---|
-| `lintel.showWelcome` | ARC: Show Welcome Guide | welcomeSurface.ts |
-| `lintel.reviewAudit` | ARC: Review Audit Log | reviewSurfaces.ts |
-| `lintel.showRuntimeStatus` | ARC: Show Active Workspace Status | runtimeStatus.ts |
-| `lintel.reviewBlueprints` | ARC: Review Blueprint Proofs | reviewSurfaces.ts |
-| `lintel.reviewFalsePositives` | ARC: Review False-Positive Candidates | reviewSurfaces.ts |
+| `lintel.showWelcome` | ARC XT: Show Welcome Guide | welcomeSurface.ts |
+| `lintel.reviewAudit` | ARC XT: Review Audit Log | reviewSurfaces.ts |
+| `lintel.showRuntimeStatus` | ARC XT: Show Active Workspace Status | runtimeStatus.ts |
+| `lintel.reviewBlueprints` | ARC XT: Review Blueprint Proofs | reviewSurfaces.ts |
+| `lintel.reviewFalsePositives` | ARC XT: Review False-Positive Candidates | reviewSurfaces.ts |
 
 ---
 
@@ -303,7 +303,7 @@ contracts/types.ts          ← everything depends on this
 
 | Boundary | Rule | Reference |
 |----------|------|-----------|
-| Identity | Display name = `ARC — Audit Ready Core`; internal ids = `lintel.*` | Phase 7.3 |
+| Identity | Display name = `ARC XT — Audit Ready Core`; internal ids = `lintel.*` | Phase 7.3 |
 | Blueprint mode | `LOCAL_ONLY` only; team/shared blocked | Phase 5 |
 | Cloud lane | Disabled by default; requires `cloud_lane_enabled: true` + approved local fallback | Phase 6.8 |
 | Audit integrity | File-level hash chain only; does not prove archive completeness | ARCHITECTURE.md |
@@ -326,7 +326,7 @@ contracts/types.ts          ← everything depends on this
 | 6.8 | Activation | Integrated validation, rollback drill, advisory recommendation |
 | 7.0 | Workspace | Nested workspace targeting, runtime status |
 | 7.1–7.2 | Governance | Review-surface contracts, runtime-status anchoring |
-| 7.3 | Identity | ARC naming freeze, command title alignment |
+| 7.3 | Identity | ARC XT display-name freeze, command title alignment |
 | 7.4 | Model hardening | Retry/timeout, parser hardening, runtime config |
 | 7.5 | Onboarding | Welcome surface, first-use guidance |
 | 7.6 | Proof clarity | Proof-state messaging refinement |

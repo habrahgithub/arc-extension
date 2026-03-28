@@ -97,8 +97,8 @@ describe('Phase 7.5 — Welcome Surface Governance', () => {
       );
 
       expect(welcomeCommand).toBeDefined();
-      expect(welcomeCommand?.title).toBe('ARC: Show Welcome Guide');
-      expect(welcomeCommand?.title).toContain('ARC:');
+      expect(welcomeCommand?.title).toBe('ARC XT: Show Welcome Guide');
+      expect(welcomeCommand?.title).toContain('ARC XT:');
     });
 
     it('preserves existing command identity without migration', () => {
@@ -221,7 +221,7 @@ describe('Phase 7.5 — Welcome Surface Governance', () => {
         displayName?: string;
       };
 
-      expect(packageJson.displayName).toBe('ARC — Audit Ready Core');
+      expect(packageJson.displayName).toBe('ARC XT — Audit Ready Core');
     });
 
     it('description reflects local-first governance posture', () => {

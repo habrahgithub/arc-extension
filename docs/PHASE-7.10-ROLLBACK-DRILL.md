@@ -122,11 +122,11 @@ npm run audit:cli -- verify
 
 **Steps:**
 1. Execute each command in VS Code:
-   - `ARC: Show Welcome Guide`
-   - `ARC: Review Audit Log`
-   - `ARC: Show Active Workspace Status`
-   - `ARC: Review Blueprint Proofs`
-   - `ARC: Review False-Positive Candidates`
+   - `ARC XT: Show Welcome Guide`
+   - `ARC XT: Review Audit Log`
+   - `ARC XT: Show Active Workspace Status`
+   - `ARC XT: Review Blueprint Proofs`
+   - `ARC XT: Review False-Positive Candidates`
 
 **Verification:**
 - Each command opens expected markdown preview

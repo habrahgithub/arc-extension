@@ -31,10 +31,10 @@ interface BenchmarkStats {
 class FastLocalAdapter {
   readonly enabledByDefault = true;
 
-  evaluate(_context: ContextPayload): Promise<ModelEvaluationResult | undefined> {
+  evaluate(context: ContextPayload): Promise<ModelEvaluationResult | undefined> {
     return Promise.resolve({
       decision: 'BLOCK',
-      reason: 'Perf harness model tightened the rule-floor decision.',
+      reason: `Perf harness model tightened the rule-floor decision for ${context.filePath}.`,
       risk_level: 'CRITICAL',
       violated_rules: ['AUTH_CHANGE', 'PERF_HARNESS'],
       next_action: 'Block and review the governed change.',

@@ -16,9 +16,9 @@ import * as vscode from 'vscode';
  * The welcome content as a pure string.
  * Exported for testing without VS Code dependency.
  */
-export const WELCOME_CONTENT = `# ARC — Audit Ready Core
+export const WELCOME_CONTENT = `# ARC XT — Audit Ready Core
 
-## Welcome to ARC
+## Welcome to ARC XT
 
 This extension provides **governed code enforcement** for AI-assisted development in VS Code.
 
@@ -26,9 +26,9 @@ This extension provides **governed code enforcement** for AI-assisted developmen
 
 ## Core Identity
 
-**ARC** is a local-first IDE governance layer that enforces safe, auditable AI-assisted development by intercepting risky changes at save-time.
+**ARC XT** is the local-first IDE governance extension within the ARC platform. It enforces safe, auditable AI-assisted development by intercepting risky changes at save-time.
 
-**Extension Identity:** ARC — Audit Ready Core
+**Extension Identity:** ARC XT — Audit Ready Core
 
 **Important Distinction:** This extension is the IDE enforcement layer only. It is not the ARC Console, Vault, or broader control-plane system.
 
@@ -38,7 +38,7 @@ This extension provides **governed code enforcement** for AI-assisted developmen
 
 ### Save-Time Enforcement
 
-When you save a file, ARC:
+When you save a file, ARC XT:
 1. **Classifies risk** based on file paths and patterns (auth, schema, config, infra)
 2. **Evaluates rules** to determine the appropriate decision
 3. **Enforces the decision** before the save completes
@@ -55,7 +55,7 @@ When you save a file, ARC:
 
 ### Fail-Closed Posture
 
-When the local model (Ollama) is unavailable or returns malformed output, ARC **fails closed** to the established rule-based enforcement floor. Model failure never weakens the baseline protection.
+When the local model (Ollama) is unavailable or returns malformed output, ARC XT **fails closed** to the established rule-based enforcement floor. Model failure never weakens the baseline protection.
 
 ---
 
@@ -74,35 +74,35 @@ When the local model (Ollama) is unavailable or returns malformed output, ARC **
 
 ### 1. Understand Your Workspace
 
-ARC targets a governed root for enforcement. By default:
+ARC XT targets a governed root for enforcement. By default:
 - If opened in a workspace folder: uses the workspace root
 - Otherwise: uses a fallback storage location
 
-View active workspace: **ARC: Show Active Workspace Status**
+View active workspace: **ARC XT: Show Active Workspace Status**
 
 ### 2. Review Runtime Status
 
 See current enforcement posture, auto-save mode, and route policy:
 
-**Command:** \`ARC: Show Active Workspace Status\`
+**Command:** \`ARC XT: Show Active Workspace Status\`
 
 ### 3. Review Audit Log
 
 See all enforcement decisions and risk flags:
 
-**Command:** \`ARC: Review Audit Log\`
+**Command:** \`ARC XT: Review Audit Log\`
 
 ### 4. Review Blueprints
 
 See linked blueprint proofs for REQUIRE_PLAN saves:
 
-**Command:** \`ARC: Review Blueprint Proofs\`
+**Command:** \`ARC XT: Review Blueprint Proofs\`
 
 ---
 
 ## Configuration
 
-ARC uses local-only configuration for runtime parameters. No cloud defaults or remote secrets are required.
+ARC XT uses local-only configuration for runtime parameters. No cloud defaults or remote secrets are required.
 
 ### Environment Variables (Optional)
 
@@ -143,11 +143,11 @@ This ensures explicit intent for sensitive changes.
 
 | Command | Description |
 |---------|-------------|
-| \`ARC: Review Audit Log\` | View append-only audit trail |
-| \`ARC: Show Active Workspace Status\` | See current enforcement posture |
-| \`ARC: Review Blueprint Proofs\` | Review linked blueprint artifacts |
-| \`ARC: Review False-Positive Candidates\` | Review potential false positives |
-| \`ARC: Show Welcome Guide\` | Show this welcome guide |
+| \`ARC XT: Review Audit Log\` | View append-only audit trail |
+| \`ARC XT: Show Active Workspace Status\` | See current enforcement posture |
+| \`ARC XT: Review Blueprint Proofs\` | Review linked blueprint artifacts |
+| \`ARC XT: Review False-Positive Candidates\` | Review potential false positives |
+| \`ARC XT: Show Welcome Guide\` | Show this welcome guide |
 
 ---
 

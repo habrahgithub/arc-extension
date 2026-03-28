@@ -49,7 +49,7 @@ describe('local review surfaces', () => {
     const proof = reviews.renderBlueprintReview();
     const falsePositives = reviews.renderFalsePositiveReview();
 
-    expect(audit).toContain('ARC Audit Review');
+    expect(audit).toContain('ARC XT Audit Review');
     expect(audit).toContain('## Operator context');
     expect(audit).toContain('Governed root');
     expect(audit).toContain(REVIEW_SURFACE_LOCAL_ONLY_NOTICE);

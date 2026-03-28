@@ -116,7 +116,7 @@ This is a complete rollback note with git commands, config changes, and database
       const service = new LocalReviewSurfaceService(testWorkspace);
       const output = service.renderTaskBoard();
 
-      expect(output).toContain('ARC Task Board');
+      expect(output).toContain('ARC XT Task Board');
       expect(output).toMatch(/No blueprint|empty/i);
     });
 
@@ -129,7 +129,7 @@ This is a complete rollback note with git commands, config changes, and database
       const service = new LocalReviewSurfaceService(testWorkspace);
       const output = service.renderTaskBoard();
 
-      expect(output).toContain('ARC Task Board');
+      expect(output).toContain('ARC XT Task Board');
       // Output mentions no blueprint artifacts found
       expect(output).toMatch(/No blueprint artifacts found|empty/i);
     });

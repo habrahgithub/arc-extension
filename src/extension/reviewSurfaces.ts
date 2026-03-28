@@ -64,7 +64,7 @@ export class LocalReviewSurfaceService {
       () => {
         const auditPath = path.join(this.workspaceRoot, '.arc', 'audit.jsonl');
         if (!fs.existsSync(auditPath)) {
-          return '# ARC Audit Review\n\nNo local audit log is present yet.';
+          return '# ARC XT Audit Review\n\nNo local audit log is present yet.';
         }
 
         // Phase 7.8 — WRD-0077: Handle audit-read degradation
@@ -81,7 +81,7 @@ export class LocalReviewSurfaceService {
 
         if (auditReadError) {
           return [
-            '# ARC Audit Review',
+            '# ARC XT Audit Review',
             '',
             '## Audit-read degradation',
             '',
@@ -102,7 +102,7 @@ export class LocalReviewSurfaceService {
         ]);
 
         return [
-          '# ARC Audit Review',
+          '# ARC XT Audit Review',
           '',
           ...operatorContext,
           '',
@@ -165,7 +165,7 @@ export class LocalReviewSurfaceService {
         ]);
 
         const sections = [
-          '# ARC Blueprint Review',
+          '# ARC XT Blueprint Review',
           '',
           ...operatorContext,
           '',
@@ -250,7 +250,7 @@ export class LocalReviewSurfaceService {
         ]);
 
         return [
-          '# ARC False-Positive Review',
+          '# ARC XT False-Positive Review',
           '',
           ...operatorContext,
           '',
@@ -315,7 +315,7 @@ export class LocalReviewSurfaceService {
         ]);
 
         const sections = [
-          '# ARC Task Board',
+          '# ARC XT Task Board',
           '',
           ...operatorContext,
           '',

@@ -46,7 +46,7 @@ export function createBlueprintProofReviewPanel(): vscode.WebviewPanel {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
   const panel = vscode.window.createWebviewPanel(
     'arcBlueprintProof',
-    'ARC — Blueprint Proof Review',
+    'ARC XT — Blueprint Proof Review',
     vscode.ViewColumn.One,
     {
       enableScripts: true,
@@ -138,7 +138,7 @@ function getBlueprintProofHtml(
   resolutions: BlueprintProofResolution[],
 ): string {
   const csp = buildCSPWithNonce(nonce);
-  const productName = 'ARC — Audit Ready Core';
+  const productName = 'ARC XT — Audit Ready Core';
   
   // Status badge colors (Phase 7.6: distinct rendering)
   const statusStyles: Record<BlueprintProofStatus, string> = {

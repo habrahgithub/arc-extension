@@ -28,7 +28,7 @@ export function createReviewHomePanel(
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
   const panel = vscode.window.createWebviewPanel(
     'arcReviewHome',
-    'ARC — Review Home',
+    'ARC XT — Review Home',
     vscode.ViewColumn.One,
     {
       enableScripts: true,
@@ -66,7 +66,7 @@ function getReviewHomeHtml(
   context?: vscode.ExtensionContext,
 ): string {
   const csp = buildCSPWithNonce(nonce, panel.webview.cspSource);
-  const productName = 'ARC — Audit Ready Core';
+  const productName = 'ARC XT — Audit Ready Core';
   const postureNotes = [
     'Local-only governance',
     'Descriptive-only review',

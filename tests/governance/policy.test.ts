@@ -324,19 +324,19 @@ describe('governance guards', () => {
     const commands = packageJson.contributes?.commands ?? [];
 
     expect(packageJson.name).toBe('arc-audit-ready-core');
-    expect(packageJson.displayName).toBe('ARC — Audit Ready Core');
+    expect(packageJson.displayName).toBe('ARC XT — Audit Ready Core');
     expect(packageJson.description).toContain('Governed code enforcement');
     expect(commands).toEqual(
       expect.arrayContaining([
-        { command: 'arc.reviewAudit', title: 'ARC: Review Audit Log' },
-        { command: 'arc.showRuntimeStatus', title: 'ARC: Show Active Workspace Status' },
-        { command: 'arc.reviewBlueprints', title: 'ARC: Review Blueprint Proofs' },
-        { command: 'arc.reviewFalsePositives', title: 'ARC: Review False-Positive Candidates' },
+        { command: 'arc.reviewAudit', title: 'ARC XT: Review Audit Log' },
+        { command: 'arc.showRuntimeStatus', title: 'ARC XT: Show Active Workspace Status' },
+        { command: 'arc.reviewBlueprints', title: 'ARC XT: Review Blueprint Proofs' },
+        { command: 'arc.reviewFalsePositives', title: 'ARC XT: Review False-Positive Candidates' },
       ]),
     );
     expect(architecture).toContain('command ids remain `lintel.*` until a separately approved package authorizes migration');
     expect(testing).toContain('user-facing command titles may change, but command ids must remain `lintel.*`');
-    expect(testing).toContain('ARC naming must not imply ARC Console coupling, Vault dependency, cloud readiness, or broader runtime authority');
+    expect(testing).toContain('ARC XT naming must not imply ARC Console coupling, Vault dependency, cloud readiness, or broader runtime authority');
   });
 
   it('defines a local audit visibility cli script without mutation commands or remote endpoints', () => {

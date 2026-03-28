@@ -51,12 +51,12 @@ This document defines the bounded internal UAT scenario matrix for Phase 7.10 pi
 
 | ID | Scenario | Expected Behavior | Verification Command | Evidence |
 |----|----------|-------------------|---------------------|----------|
-| R01 | Audit review with valid entries | Shows last 10 entries with decision counts | `ARC: Review Audit Log` | Markdown preview shows entries |
+| R01 | Audit review with valid entries | Shows last 10 entries with decision counts | `ARC XT: Review Audit Log` | Markdown preview shows entries |
 | R02 | Audit review with malformed lines | Skips malformed lines; shows warning | Corrupt an audit line manually | Warning shows malformed count |
-| R03 | Runtime status display | Shows workspace targeting, route posture, last decision | `ARC: Show Active Workspace Status` | Markdown shows governed root, audit path |
+| R03 | Runtime status display | Shows workspace targeting, route posture, last decision | `ARC XT: Show Active Workspace Status` | Markdown shows governed root, audit path |
 | R04 | Staleness indicator (file mismatch) | Shows "different file" warning | View status from different file than last save | Status shows `⚠️ From a different file` |
 | R05 | Staleness indicator (time threshold) | Shows "earlier session" warning | View status after 5+ minutes | Status shows `⚠️ From an earlier session` |
-| R06 | Blueprint review | Shows validation status for each blueprint | `ARC: Review Blueprint Proofs` | Markdown shows blueprint list with status |
+| R06 | Blueprint review | Shows validation status for each blueprint | `ARC XT: Review Blueprint Proofs` | Markdown shows blueprint list with status |
 | R07 | False-positive review (no candidates) | Shows "no candidates" message | Run on fresh workspace | Message shows no candidates |
 | R08 | False-positive review (with candidates) | Shows ranked candidates with quality labels | Run after WARN/REQUIRE_PLAN decisions | Candidates shown with ⚡/🔶/🔷 labels |
 

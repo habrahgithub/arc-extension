@@ -96,7 +96,7 @@ export function renderRuntimeStatusMarkdown(
       : 'none detected';
 
   const sections = [
-    '# ARC Active Workspace Status',
+    '# ARC XT Active Workspace Status',
     '',
     `> ${RUNTIME_STATUS_OBSERVATIONAL_NOTICE}`,
     '',

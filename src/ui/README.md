@@ -1,6 +1,6 @@
 # ARC UI Layer
 
-**Purpose:** Bounded internal review surface implementation for ARC — Audit Ready Core.
+**Purpose:** Bounded internal review surface implementation for ARC XT — Audit Ready Core.
 
 **Layer Boundary:** The UI layer (`src/ui/`) is a **read-only presentation layer** that depends on the Extension layer (`src/extension/`) and has **NO write access** to enforcement, proof, or audit state.
 
@@ -92,7 +92,7 @@ All WebviewPanels use restrictive CSP:
 ## Wording Guidelines (WRD-0096)
 
 **Identity:**
-- Use: "ARC — Audit Ready Core"
+- Use: "ARC XT — Audit Ready Core"
 - Use: "local-only", "descriptive-only", "non-authorizing"
 - Do NOT use: "cloud-ready", "production-ready", "marketplace-ready"
 

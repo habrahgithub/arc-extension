@@ -61,8 +61,8 @@ describe('Phase 7.10 — Pilot Readiness Governance', () => {
       expect(uatDoc).toContain('.arc/blueprints/');
 
       // Should reference actual commands
-      expect(uatDoc).toContain('ARC: Review Audit Log');
-      expect(uatDoc).toContain('ARC: Show Active Workspace Status');
+      expect(uatDoc).toContain('ARC XT: Review Audit Log');
+      expect(uatDoc).toContain('ARC XT: Show Active Workspace Status');
     });
 
     it('UAT scenarios are testable against current codebase', () => {
@@ -194,10 +194,10 @@ describe('Phase 7.10 — Pilot Readiness Governance', () => {
       const readme = fs.readFileSync(readmePath, 'utf8');
 
       // Should reference actual existing commands
-      expect(readme).toContain('ARC: Review Audit Log');
-      expect(readme).toContain('ARC: Show Active Workspace Status');
-      expect(readme).toContain('ARC: Review Blueprint Proofs');
-      expect(readme).toContain('ARC: Review False-Positive Candidates');
+      expect(readme).toContain('ARC XT: Review Audit Log');
+      expect(readme).toContain('ARC XT: Show Active Workspace Status');
+      expect(readme).toContain('ARC XT: Review Blueprint Proofs');
+      expect(readme).toContain('ARC XT: Review False-Positive Candidates');
 
       // Should not define new commands
       expect(readme).not.toMatch(/new command|additional command/i);

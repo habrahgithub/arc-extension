@@ -2,6 +2,8 @@
 
 **Directive ID:** ARCXT-BRAND-001
 
+> Status: CLOSED
+
 ## Objective
 
 Align the LINTEL extension's public-facing identity with ARC platform canon by migrating user-visible branding from **ARC — Audit Ready Core** to the bounded product identity **ARC XT — Audit Ready Core**, while keeping internal/runtime identifiers stable.
@@ -83,5 +85,13 @@ This returns the extension to the prior public identity without affecting runtim
 ## Execution Evidence
 
 - Opened as a bounded follow-on directive after `ARC-GOV-LOG-001` and `ARC-PERF-001` merged to `main`
+- Executed on branch `arc-r2-lintel-branding-directive` as a display-branding-only package
+- Updated public-facing extension identity to `ARC XT — Audit Ready Core` across manifest display metadata, welcome/review surfaces, canonical docs, and governance tests
+- Preserved internal package name `arc-audit-ready-core`, existing command ids, and webview/viewType identifiers
+- Verification completed:
+  - `npm run lint`
+  - `npm run typecheck`
+  - `npm run build`
+  - `npm run test`
 - Canonical evidence path: `artifacts/ARCXT-BRAND-001/`
-- No runtime logic changes are authorized by this directive
+- No runtime logic changes were authorized or introduced by this directive

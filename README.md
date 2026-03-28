@@ -1,8 +1,8 @@
-# ARC — Audit Ready Core
+# ARC XT — Audit Ready Core
 
 **Governed code enforcement for AI-assisted development in a local-first VS Code extension.**
 
-ARC helps development teams maintain code quality and governance standards by intercepting saves and requiring explicit justification for high-risk changes. It is built for teams that need audit trails, proof-backed decisions, and fail-closed enforcement inside VS Code.
+ARC XT helps development teams maintain code quality and governance standards by intercepting saves and requiring explicit justification for high-risk changes. It is built for teams that need audit trails, proof-backed decisions, and fail-closed enforcement inside VS Code.
 
 ## Beta Status
 
@@ -24,7 +24,7 @@ Current product posture:
 #### From Marketplace
 
 1. Open the Extensions view in VS Code
-2. Search for **ARC — Audit Ready Core**
+2. Search for **ARC XT — Audit Ready Core**
 3. Install the extension
 4. Reload VS Code when prompted
 
@@ -39,10 +39,10 @@ Current product posture:
 
 1. Open any code file in your workspace
 2. Make a change to a governed file such as `auth.ts`, `schema.sql`, or `package.json`
-3. Attempt to save — ARC will prompt for acknowledgment or proof when required
-4. Use `Ctrl+Shift+P` → **ARC: Review Audit Log** to inspect recent decisions
+3. Attempt to save — ARC XT will prompt for acknowledgment or proof when required
+4. Use `Ctrl+Shift+P` → **ARC XT: Review Audit Log** to inspect recent decisions
 
-## What ARC Does
+## What ARC XT Does
 
 | Decision | When | Action Required |
 | --- | --- | --- |
@@ -68,7 +68,7 @@ Current product posture:
 
 ## Configuration
 
-ARC works out of the box with sensible defaults. Optional configuration lives in `.arc/router.json`:
+ARC XT works out of the box with sensible defaults. Optional configuration lives in `.arc/router.json`:
 
 ```json
 {
@@ -88,15 +88,15 @@ ARC works out of the box with sensible defaults. Optional configuration lives in
 
 | Command | Description |
 | --- | --- |
-| `ARC: Review Home` | Open the main ARC review surface |
-| `ARC: Decision Feed` | View recent enforcement decisions |
-| `ARC: Audit Timeline` | Inspect chronological audit entries |
-| `ARC: Why Panel` | Explain the current or recent decision |
-| `ARC: Review Audit Log` | Inspect recent save decisions |
-| `ARC: Show Active Workspace Status` | View current workspace targeting and route posture |
-| `ARC: Review Blueprint Proofs` | Review linked governance blueprints |
-| `ARC: Review False-Positive Candidates` | Advisory review of potential false positives |
-| `ARC: Show Welcome Guide` | Display onboarding information |
+| `ARC XT: Review Home` | Open the main ARC XT review surface |
+| `ARC XT: Decision Feed` | View recent enforcement decisions |
+| `ARC XT: Audit Timeline` | Inspect chronological audit entries |
+| `ARC XT: Why Panel` | Explain the current or recent decision |
+| `ARC XT: Review Audit Log` | Inspect recent save decisions |
+| `ARC XT: Show Active Workspace Status` | View current workspace targeting and route posture |
+| `ARC XT: Review Blueprint Proofs` | Review linked governance blueprints |
+| `ARC XT: Review False-Positive Candidates` | Advisory review of potential false positives |
+| `ARC XT: Show Welcome Guide` | Display onboarding information |
 
 ## Limitations
 
@@ -108,25 +108,25 @@ ARC works out of the box with sensible defaults. Optional configuration lives in
 
 ## FAQ
 
-### What programming languages does ARC support?
+### What programming languages does ARC XT support?
 
-ARC is language-agnostic at the VS Code save layer. Today its built-in rules are strongest for common config, auth, and schema files such as `package.json`, `.env`, `schema.sql`, `*.sql`, and `*.prisma`.
+ARC XT is language-agnostic at the VS Code save layer. Today its built-in rules are strongest for common config, auth, and schema files such as `package.json`, `.env`, `schema.sql`, `*.sql`, and `*.prisma`.
 
-### How does ARC detect high-risk changes?
+### How does ARC XT detect high-risk changes?
 
-ARC currently uses heuristic rules based on file paths, filenames, and extensions. For example, auth/session paths and core config files can trigger higher-risk handling, while schema files often trigger review-aware warnings.
+ARC XT currently uses heuristic rules based on file paths, filenames, and extensions. For example, auth/session paths and core config files can trigger higher-risk handling, while schema files often trigger review-aware warnings.
 
 ### Can I disable cloud options?
 
 Yes. Cloud is disabled by default. If you do not want cloud fallback, keep `cloudLaneEnabled: false` in `.arc/router.json`. `RULE_ONLY` mode also works without cloud services.
 
-### How will ARC affect my workflow?
+### How will ARC XT affect my workflow?
 
 Most low-risk saves continue normally. Medium-risk saves may ask for acknowledgment, and higher-risk saves may require a linked plan or proof before the save proceeds. The goal is to add friction only where risk is higher.
 
-### How does ARC help with code security?
+### How does ARC XT help with code security?
 
-ARC improves security posture through local-first enforcement, fail-closed defaults, visible save-time decisions, append-only audit logging, and proof-backed handling for higher-risk changes. It is a governance and review layer, not a full semantic security scanner.
+ARC XT improves security posture through local-first enforcement, fail-closed defaults, visible save-time decisions, append-only audit logging, and proof-backed handling for higher-risk changes. It is a governance and review layer, not a full semantic security scanner.
 
 ## Support
 

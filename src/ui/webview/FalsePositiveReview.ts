@@ -40,7 +40,7 @@ export function createFalsePositiveReviewPanel(): vscode.WebviewPanel {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
   const panel = vscode.window.createWebviewPanel(
     'arcFalsePositive',
-    'ARC — False-Positive Review',
+    'ARC XT — False-Positive Review',
     vscode.ViewColumn.One,
     {
       enableScripts: true,
@@ -141,7 +141,7 @@ function getFalsePositiveHtml(
   candidates: FalsePositiveCandidate[],
 ): string {
   const csp = buildCSPWithNonce(nonce);
-  const productName = 'ARC — Audit Ready Core';
+  const productName = 'ARC XT — Audit Ready Core';
   
   if (candidates.length === 0) {
     return `<!DOCTYPE html>

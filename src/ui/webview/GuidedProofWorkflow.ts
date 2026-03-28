@@ -24,7 +24,7 @@ export function createGuidedProofWorkflowPanel(): vscode.WebviewPanel {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
   const panel = vscode.window.createWebviewPanel(
     'arcGuidedWorkflow',
-    'ARC — Guided Proof Workflow',
+    'ARC XT — Guided Proof Workflow',
     vscode.ViewColumn.One,
     {
       enableScripts: true,
@@ -55,7 +55,7 @@ export function createGuidedProofWorkflowPanel(): vscode.WebviewPanel {
  */
 function getGuidedWorkflowHtml(nonce: string): string {
   const csp = buildCSPWithNonce(nonce);
-  const productName = 'ARC — Audit Ready Core';
+  const productName = 'ARC XT — Audit Ready Core';
 
   // **WRD-0102: Instructional wording — submitted for Warden review**
   const steps = [
@@ -69,7 +69,7 @@ function getGuidedWorkflowHtml(nonce: string): string {
       step: 2,
       title: 'Open Blueprint Artifact',
       content:
-        'ARC will open or create the blueprint file at `.arc/blueprints/<change-id>.md`. This is your local proof artifact — you must complete all required sections with directive-specific content.',
+        'ARC XT will open or create the blueprint file at `.arc/blueprints/<change-id>.md`. This is your local proof artifact — you must complete all required sections with directive-specific content.',
     },
     {
       step: 3,
@@ -81,13 +81,13 @@ function getGuidedWorkflowHtml(nonce: string): string {
       step: 4,
       title: 'Save Blueprint File',
       content:
-        'Save the blueprint file after completing all sections. ARC will validate the blueprint structure and content.',
+        'Save the blueprint file after completing all sections. ARC XT will validate the blueprint structure and content.',
     },
     {
       step: 5,
       title: 'Re-save the Governed File',
       content:
-        'Return to your original file and attempt the save again. ARC will re-evaluate the save — a valid, complete blueprint satisfies the proof requirement, but other rules may still apply.',
+        'Return to your original file and attempt the save again. ARC XT will re-evaluate the save — a valid, complete blueprint satisfies the proof requirement, but other rules may still apply.',
     },
     {
       step: 6,

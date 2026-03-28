@@ -1,4 +1,4 @@
-# ARC — Audit Ready Core
+# ARC XT — Audit Ready Core
 
 ## Release Readiness Record (LINTEL-REL-001)
 
@@ -33,7 +33,7 @@
 | Field        | Value                    |
 | ------------ | ------------------------ |
 | Name         | `lintel`                 |
-| Display Name | `ARC — Audit Ready Core` |
+| Display Name | `ARC XT — Audit Ready Core` |
 | Version      | `0.1.0`                  |
 | Publisher    | `swd` (internal)         |
 | License      | `UNLICENSED`             |
@@ -89,12 +89,12 @@ npm run pack
 After installation, verify the extension is active:
 
 1. Open Command Palette (`Ctrl+Shift+P` or `Cmd+Shift+P`)
-2. Type `ARC:` — should show 5 commands:
-   - `ARC: Show Welcome Guide`
-   - `ARC: Review Audit Log`
-   - `ARC: Show Active Workspace Status`
-   - `ARC: Review Blueprint Proofs`
-   - `ARC: Review False-Positive Candidates`
+2. Type `ARC XT:` — should show 5 commands:
+   - `ARC XT: Show Welcome Guide`
+   - `ARC XT: Review Audit Log`
+   - `ARC XT: Show Active Workspace Status`
+   - `ARC XT: Review Blueprint Proofs`
+   - `ARC XT: Review False-Positive Candidates`
 
 ---
 
@@ -110,7 +110,7 @@ After installation, verify the extension is active:
    ```
 
 2. **Uninstall prior version**:
-   - Extensions view → Find "ARC — Audit Ready Core"
+   - Extensions view → Find "ARC XT — Audit Ready Core"
    - Click `Uninstall`
    - Reload VS Code
 
@@ -190,7 +190,7 @@ npm run pack
 | ------------------------------------------------------- | ------------------------------------------------- |
 | `code` CLI doesn't support `--extensionDevelopmentPath` | Use VSIX install path instead                     |
 | Auto-save triggers reduced-guarantee mode               | Prefer explicit saves (Ctrl+S/Cmd+S)              |
-| Nested project boundaries may be unclear                | Use `ARC: Show Active Workspace Status` to verify |
+| Nested project boundaries may be unclear                | Use `ARC XT: Show Active Workspace Status` to verify |
 
 ---
 
@@ -250,7 +250,7 @@ No automatic update checks are implemented (internal release posture).
 ### Installation Evidence
 
 - **Install Steps:** Documented above (repeatable)
-- **Verification Commands:** `ARC:` commands list (verifiable)
+- **Verification Commands:** `ARC XT:` commands list (verifiable)
 - **Audit Continuity:** `.arc/audit.jsonl` preserved across upgrades
 
 ### Release-Readiness Evidence
@@ -307,7 +307,7 @@ No automatic update checks are implemented (internal release posture).
 
 - [ ] VSIX package generated successfully (`npm run pack`)
 - [ ] VSIX installs cleanly in VS Code
-- [ ] All 5 `ARC:` commands functional after install
+- [ ] All 5 `ARC XT:` commands functional after install
 - [ ] Audit continuity preserved (if upgrading)
 - [ ] Governance tests pass (`npm run test:governance`)
 - [ ] No marketplace/public-release wording in docs
