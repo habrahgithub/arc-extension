@@ -520,21 +520,15 @@ function deriveTaskStatusPathA(
   }
 
   // Created = blueprint exists but is still the untouched template
-  // Detect via: INCOMPLETE_TEMPLATE banner or [REQUIRED] placeholders still present
+  // Detect via stable template signals only
   const hasTemplateMarkers =
-    content.includes('Status: INCOMPLETE_TEMPLATE') ||
-    content.includes('[REQUIRED]') ||
-    content.includes('Describe the specific change intent') ||
-    content.includes('List the files or surfaces') ||
-    content.includes('Record the non-scope, risk bounds');
+    content.includes('[REQUIRED]') || content.includes('INCOMPLETE_TEMPLATE');
 
   if (hasTemplateMarkers) {
     return 'Created';
   }
 
   // In Progress = blueprint has been edited but proof is not yet VALID
-  // This includes: INCOMPLETE_ARTIFACT, INVALID_DIRECTIVE, MISMATCHED_BLUEPRINT_ID, MALFORMED_ARTIFACT
-  // where the content has been edited (no template markers)
   return 'In Progress';
 }
 

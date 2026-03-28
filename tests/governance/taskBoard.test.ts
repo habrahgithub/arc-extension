@@ -160,7 +160,7 @@ This is a complete rollback note with git commands, config changes, and database
 
   describe('Column Rendering', () => {
     it('shows summary counts for each status', () => {
-      // Create one template (In Progress), one partial (In Progress), one complete (Completed)
+      // Create one template (Created), one partial (In Progress), one complete (Completed)
       fs.writeFileSync(
         path.join(testWorkspace, '.arc/blueprints/TEMPLATE-001.md'),
         '# Template\n\n## Objective\n[REQUIRED] placeholder.\n\n## Scope\n[REQUIRED].\n\n## Constraints\n[REQUIRED].\n\n## Acceptance Criteria\n[REQUIRED].\n\n## Rollback Note\n[REQUIRED].',

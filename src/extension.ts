@@ -156,7 +156,7 @@ async function collectRequirePlanProof(
   }
 
   const continueChoice = await vscode.window.showWarningMessage(
-    `[ARC] REQUIRE_PLAN: ${assessment.decision.reason}\nDirective ${directiveId} linked to ${resolution.link.blueprintId}.`,
+    `[ARC] Plan-linked save: ${assessment.decision.reason}\nChange ID ${directiveId} linked to ${resolution.link.blueprintId}.`,
     { modal: true },
     'Continue',
     'Cancel',
