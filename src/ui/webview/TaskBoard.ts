@@ -16,13 +16,13 @@ export function createTaskBoardPanel(
   const workspaceRoot = getWorkspaceRoot();
   const reviewService = new LocalReviewSurfaceService(workspaceRoot);
 
+  // ARC-UI-004: No local resources loaded — inline HTML/CSS only
   const panel = vscode.window.createWebviewPanel(
     'arcTaskBoard',
     'ARC Task Board',
     vscode.ViewColumn.One,
     {
       enableScripts: true,
-      localResourceRoots: [context.extensionUri],
     },
   );
 
