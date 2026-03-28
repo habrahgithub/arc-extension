@@ -1,7 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import type { AuditEntry } from '../contracts/types';
-import { BlueprintArtifactStore } from '../core/blueprintArtifacts';
+import {
+  BlueprintArtifactStore,
+  type BlueprintProofResolution,
+} from '../core/blueprintArtifacts';
 import { LocalPerformanceRecorder, measureSync } from '../core/performance';
 import { RoutePolicyStore } from '../core/routerPolicy';
 import { WorkspaceMappingStore } from '../core/workspaceMapping';
@@ -9,6 +12,16 @@ import { WorkspaceMappingStore } from '../core/workspaceMapping';
 interface AuditReadResult {
   entries: AuditEntry[];
   malformedCount: number;
+}
+
+// Phase 7.10 — Task Board v1 (ARC-UI-002)
+export interface TaskBoardItem {
+  directiveId: string;
+  blueprintPath: string;
+  status: 'Created' | 'In Progress' | 'Completed';
+  validationReason: string;
+  nextAction: string;
+  qualityScore: number;
 }
 
 export const REVIEW_SURFACE_LOCAL_ONLY_NOTICE =
@@ -277,6 +290,128 @@ export class LocalReviewSurfaceService {
     );
   }
 
+  // Phase 7.10 — Task Board v1 (ARC-UI-002)
+  renderTaskBoard(): string {
+    return measureSync(
+      (entry) => this.performanceRecorder.record(entry),
+      'review_task_board',
+      () => {
+        const mapping = this.workspaceMapping.load();
+        const blueprintsDir = path.join(
+          this.workspaceRoot,
+          '.arc',
+          'blueprints',
+        );
+        const files = fs.existsSync(blueprintsDir)
+          ? fs
+              .readdirSync(blueprintsDir)
+              .filter((file) => file.endsWith('.md'))
+              .sort()
+          : [];
+
+        const operatorContext = this.renderOperatorContext([
+          `Workspace mapping status: \`${mapping.status}\``,
+          'Task Board is read-only and local-only — it summarizes existing blueprint evidence but does not authorize or mutate work.',
+        ]);
+
+        const sections = [
+          '# ARC Task Board',
+          '',
+          ...operatorContext,
+          '',
+          '- Task derivation: from `.arc/blueprints/*.md` validation state',
+          '- Status mapping: Created → In Progress → Completed (based on proof validity)',
+          '- No external sync: board reflects local evidence only',
+          '',
+        ];
+
+        if (files.length === 0) {
+          sections.push('No blueprint artifacts found. Task board is empty.');
+          return sections.join('\n');
+        }
+
+        // Derive task items from blueprint proof state
+        const items: TaskBoardItem[] = files.map((fileName) => {
+          const directiveId = fileName.replace(/\.md$/, '');
+          const resolution = this.blueprintArtifacts.resolveProof({
+            directiveId,
+            blueprintId:
+              this.blueprintArtifacts.canonicalBlueprintId(directiveId),
+            blueprintMode: 'LOCAL_ONLY',
+          });
+
+          const status = deriveTaskStatus(resolution);
+          const qualityScore = calculateTaskQualityScore(resolution, status);
+
+          return {
+            directiveId,
+            blueprintPath:
+              resolution.link?.blueprintPath ??
+              this.blueprintArtifacts.blueprintPath(directiveId),
+            status,
+            validationReason: resolution.reason,
+            nextAction: resolution.nextAction,
+            qualityScore,
+          };
+        });
+
+        // Group by status
+        const created = items
+          .filter((i) => i.status === 'Created')
+          .sort((a, b) => b.qualityScore - a.qualityScore);
+        const inProgress = items
+          .filter((i) => i.status === 'In Progress')
+          .sort((a, b) => b.qualityScore - a.qualityScore);
+        const completed = items
+          .filter((i) => i.status === 'Completed')
+          .sort((a, b) => b.qualityScore - a.qualityScore);
+
+        sections.push('## Summary');
+        sections.push(`- **Created:** ${created.length}`);
+        sections.push(`- **In Progress:** ${inProgress.length}`);
+        sections.push(`- **Completed:** ${completed.length}`);
+        sections.push('');
+
+        // Render columns
+        sections.push('## 📋 Created');
+        sections.push(
+          '_Blueprint exists but remains template-like or materially incomplete._',
+        );
+        sections.push('');
+        if (created.length === 0) {
+          sections.push('_No items in this column._');
+        } else {
+          sections.push(...renderTaskColumn(created));
+        }
+        sections.push('');
+
+        sections.push('## 🔄 In Progress');
+        sections.push(
+          '_Blueprint has directive-specific content but proof is not yet VALID._',
+        );
+        sections.push('');
+        if (inProgress.length === 0) {
+          sections.push('_No items in this column._');
+        } else {
+          sections.push(...renderTaskColumn(inProgress));
+        }
+        sections.push('');
+
+        sections.push('## ✅ Completed');
+        sections.push('_Blueprint proof resolves as VALID._');
+        sections.push('');
+        if (completed.length === 0) {
+          sections.push('_No items in this column._');
+        } else {
+          sections.push(...renderTaskColumn(completed));
+        }
+
+        return sections.join('\n');
+      },
+      { workspace_root: this.workspaceRoot },
+    );
+  }
+
   private renderOperatorContext(notes: string[]): string[] {
     const routePolicy = this.routePolicy.load();
     return [
@@ -367,4 +502,76 @@ function getFalsePositiveQualityLabel(entry: AuditEntry): string {
     return '🔶 Medium (WARN decision, rule-only)';
   }
   return '🔷 Low (REQUIRE_PLAN or model-evaluated)';
+}
+
+// Phase 7.10 — Task Board v1 status derivation (ARC-UI-002)
+// Derives task status from blueprint proof resolution
+function deriveTaskStatus(
+  resolution: BlueprintProofResolution,
+): 'Created' | 'In Progress' | 'Completed' {
+  // Completed = blueprint proof resolves as VALID
+  if (resolution.status === 'VALID') {
+    return 'Completed';
+  }
+
+  // In Progress = blueprint has directive-specific content but proof is not yet VALID
+  // This includes: INCOMPLETE_ARTIFACT, INVALID_DIRECTIVE, MISMATCHED_BLUEPRINT_ID, MALFORMED_ARTIFACT
+  if (
+    resolution.status === 'INCOMPLETE_ARTIFACT' ||
+    resolution.status === 'INVALID_DIRECTIVE' ||
+    resolution.status === 'MISMATCHED_BLUEPRINT_ID' ||
+    resolution.status === 'MALFORMED_ARTIFACT'
+  ) {
+    return 'In Progress';
+  }
+
+  // Created = blueprint file exists but remains template-like or materially incomplete
+  // This includes: MISSING_DIRECTIVE, MISSING_ARTIFACT, UNAUTHORIZED_MODE
+  return 'Created';
+}
+
+// Phase 7.10 — Task Board quality scoring (advisory only)
+// Higher score = more complete/actionable task item
+function calculateTaskQualityScore(
+  resolution: BlueprintProofResolution,
+  status: string,
+): number {
+  let score = 0;
+
+  // Completed tasks get highest base score
+  if (status === 'Completed') {
+    score += 100;
+  } else if (status === 'In Progress') {
+    score += 50;
+  } else {
+    score += 10;
+  }
+
+  // Bonus for having a clear next action
+  if (resolution.nextAction && resolution.nextAction.length > 0) {
+    score += 20;
+  }
+
+  // Bonus for having a specific validation reason (not generic)
+  if (resolution.reason && !resolution.reason.includes('template')) {
+    score += 15;
+  }
+
+  return score;
+}
+
+// Phase 7.10 — Task Board column rendering
+function renderTaskColumn(items: TaskBoardItem[]): string[] {
+  const lines: string[] = [];
+  for (const item of items) {
+    lines.push(
+      `#### ${item.directiveId}`,
+      `- Status: **${item.status}**`,
+      `- Blueprint: \`${item.blueprintPath}\``,
+      `- Validation: ${item.validationReason}`,
+      `- Next action: ${item.nextAction}`,
+      '',
+    );
+  }
+  return lines;
 }

@@ -114,6 +114,12 @@ function getReviewHomeHtml(
       command: 'arc.ui.falsePositiveReview',
       icon: '⚠️',
     },
+    {
+      title: 'Task Board',
+      description: 'Blueprint-backed work items by status',
+      command: 'arc.ui.taskBoard',
+      icon: '📋',
+    },
   ];
 
   // Build HTML safely using template with escaped values

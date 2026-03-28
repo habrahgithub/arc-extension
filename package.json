@@ -59,7 +59,8 @@
     "onCommand:arc.ui.guidedWorkflow",
     "onCommand:arc.ui.decisionFeed",
     "onCommand:arc.ui.auditTimeline",
-    "onCommand:arc.ui.whyPanel"
+    "onCommand:arc.ui.whyPanel",
+    "onCommand:arc.ui.taskBoard"
   ],
   "contributes": {
     "commands": [
@@ -118,6 +119,10 @@
       {
         "command": "arc.ui.whyPanel",
         "title": "ARC: Why Panel"
+      },
+      {
+        "command": "arc.ui.taskBoard",
+        "title": "ARC: Task Board"
       }
     ]
   },

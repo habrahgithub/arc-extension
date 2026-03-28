@@ -279,6 +279,7 @@ export interface PerformanceEntry {
     | 'review_audit'
     | 'review_blueprints'
     | 'review_false_positives'
+    | 'review_task_board'
     | 'load_workspace_map';
   duration_ms: number;
   metadata?: Record<string, string | number | boolean | null>;

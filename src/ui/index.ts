@@ -25,6 +25,8 @@ import { createGuidedProofWorkflowPanel } from './webview/GuidedProofWorkflow';
 import { createDecisionFeedPanel } from './webview/DecisionFeed';
 import { createAuditTimelinePanel } from './webview/AuditTimeline';
 import { createWhyPanelPanel } from './webview/WhyPanel';
+// Phase 7.10 — Task Board v1 (ARC-UI-002)
+import { createTaskBoardPanel } from './webview/TaskBoard';
 
 /**
  * Register all ARC-UI commands
@@ -98,6 +100,13 @@ export function registerUiCommands(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     vscode.commands.registerCommand('arc.ui.whyPanel', () => {
       createWhyPanelPanel(context);
+    }),
+  );
+
+  // Phase 7.10 — Task Board v1 (ARC-UI-002)
+  context.subscriptions.push(
+    vscode.commands.registerCommand('arc.ui.taskBoard', () => {
+      createTaskBoardPanel(context);
     }),
   );
 }
