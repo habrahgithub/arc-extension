@@ -93,15 +93,20 @@ This returns the extension to prior review surfaces without affecting blueprint 
 
 ## Execution Evidence
 
-**Status derivation alignment:**
+**Status derivation alignment (Path A):**
 
-- **Created** = `MISSING_DIRECTIVE`, `MISSING_ARTIFACT`, `UNAUTHORIZED_MODE` (no usable blueprint)
-- **In Progress** = `INCOMPLETE_ARTIFACT`, `INVALID_DIRECTIVE`, `MISMATCHED_BLUEPRINT_ID`, `MALFORMED_ARTIFACT` (blueprint exists but incomplete)
+- **Created** = blueprint exists but is still the untouched template (detected via `[REQUIRED]` placeholders or `INCOMPLETE_TEMPLATE` banner)
+- **In Progress** = blueprint has been edited (no template markers) but proof is not yet `VALID`
 - **Completed** = `VALID` (blueprint proof is complete)
+
+**Implementation:**
+
+- `deriveTaskStatusPathA()` in `src/extension/reviewSurfaces.ts` reads blueprint content
+- Review Home whitelist includes `arc.ui.taskBoard` command
 
 **Test coverage:**
 
-- `tests/governance/taskBoard.test.ts` — 11 tests covering status derivation, empty states, read-only posture, column rendering, no writable state
+- `tests/governance/taskBoard.test.ts` — 11 tests covering Path A status derivation, empty states, read-only posture, column rendering, no writable state
 - `tests/governance/proofStateMessaging.test.ts` — Updated to match user-friendly wording from ARC-UX-001
 
 **Verification results:**
