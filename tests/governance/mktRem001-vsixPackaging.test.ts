@@ -8,13 +8,65 @@ const projectRoot = path.resolve(
   '..',
 );
 
-const latestVsixName = 'arc-audit-ready-core-0.1.5.vsix';
-const latestVsixPath = path.join(
-  projectRoot,
-  'artifacts',
-  'releases',
-  latestVsixName,
-);
+type Semver = { major: number; minor: number; patch: number };
+
+function parseSemver(input: string): Semver | null {
+  const m = input.trim().match(/^(\d+)\.(\d+)\.(\d+)$/);
+  if (!m) return null;
+  return { major: Number(m[1]), minor: Number(m[2]), patch: Number(m[3]) };
+}
+
+function cmpSemver(a: Semver, b: Semver): number {
+  if (a.major !== b.major) return a.major - b.major;
+  if (a.minor !== b.minor) return a.minor - b.minor;
+  return a.patch - b.patch;
+}
+
+function resolveLatestReleaseVsixPath(): string {
+  const releasesDir = path.join(projectRoot, 'artifacts', 'releases');
+  if (!fs.existsSync(releasesDir)) return '';
+
+  const entries = fs.readdirSync(releasesDir, { withFileTypes: true });
+  const candidates = entries
+    .filter((e) => e.isFile() && e.name.endsWith('.vsix'))
+    .map((e) => e.name)
+    .filter((name) => name.startsWith('arc-audit-ready-core-'));
+
+  // Prefer matching the current package.json version if present.
+  const pkgPath = path.join(projectRoot, 'package.json');
+  if (fs.existsSync(pkgPath)) {
+    try {
+      const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8')) as {
+        version?: string;
+      };
+      const v = typeof pkg.version === 'string' ? pkg.version : '';
+      const expected = `arc-audit-ready-core-${v}.vsix`;
+      if (candidates.includes(expected)) {
+        return path.join(releasesDir, expected);
+      }
+    } catch {
+      // Fall through to semver-based resolution.
+    }
+  }
+
+  // Otherwise choose the highest semver-like filename suffix.
+  let bestName = '';
+  let bestVer: Semver | null = null;
+  for (const name of candidates) {
+    const m = name.match(/^arc-audit-ready-core-(\d+\.\d+\.\d+)\.vsix$/);
+    if (!m) continue;
+    const ver = parseSemver(m[1]);
+    if (!ver) continue;
+    if (!bestVer || cmpSemver(ver, bestVer) > 0) {
+      bestVer = ver;
+      bestName = name;
+    }
+  }
+
+  return bestName ? path.join(releasesDir, bestName) : '';
+}
+
+const latestVsixPath = resolveLatestReleaseVsixPath();
 
 function readVsixBinary(vsixPath: string): string {
   return fs.readFileSync(vsixPath, 'latin1');

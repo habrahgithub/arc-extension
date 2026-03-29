@@ -50,7 +50,9 @@ export class TaskBoardViewProvider implements vscode.WebviewViewProvider {
       async (message: { command?: string }) => {
         switch (message.command) {
           case 'refresh':
-            webviewView.webview.html = this._getHtmlForWebview();
+            webviewView.webview.html = this._getHtmlForWebview(
+              webviewView.webview,
+            );
             break;
           case 'openFullTaskBoard':
             await vscode.commands.executeCommand('arc.ui.taskBoard');
@@ -137,7 +139,7 @@ export class TaskBoardViewProvider implements vscode.WebviewViewProvider {
 <body>
   <div class="header">
     <img class="logo" src="${logoUri}" alt="ARC XT logo" />
-    <h2>$(tasklist) ARC XT Task Board</h2>
+    <h2>ARC XT Task Board</h2>
   </div>
 
   <div class="section">
