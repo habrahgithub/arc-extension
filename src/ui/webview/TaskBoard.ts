@@ -16,13 +16,16 @@ export function createTaskBoardPanel(
   const workspaceRoot = getWorkspaceRoot();
   const reviewService = new LocalReviewSurfaceService(workspaceRoot);
 
-  // ARC-UI-004: No local resources loaded — inline HTML/CSS only
+  // ARC-BRAND-001: Scoped logo resource for header branding
   const panel = vscode.window.createWebviewPanel(
     'arcTaskBoard',
     'ARC XT Task Board',
     vscode.ViewColumn.One,
     {
       enableScripts: true,
+      localResourceRoots: [
+        vscode.Uri.joinPath(context.extensionUri, 'Public', 'Logo'),
+      ],
     },
   );
 
@@ -30,6 +33,19 @@ export function createTaskBoardPanel(
   const boardContent = reviewService.renderTaskBoard();
 
   const csp = buildCSPWithNonce(nonce, panel.webview.cspSource);
+
+  const logoPath = vscode.Uri.joinPath(
+    context.extensionUri,
+    'Public',
+    'Logo',
+    'ARC-ICON-1024.png',
+  );
+  const logoUri = panel.webview.asWebviewUri(logoPath).toString();
+
+  const rendered = renderMarkdown(boardContent);
+  const titleMatch = rendered.match(/<h1>(.*?)<\/h1>/s);
+  const titleHtml = titleMatch ? `<h1>${titleMatch[1]}</h1>` : '<h1>ARC XT Task Board</h1>';
+  const bodyHtml = titleMatch ? rendered.replace(titleMatch[0], '') : rendered;
 
   panel.webview.html = `
 <!DOCTYPE html>
@@ -47,9 +63,21 @@ export function createTaskBoardPanel(
       color: var(--vscode-foreground);
       background-color: var(--vscode-editor-background);
     }
-    h1 {
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
       border-bottom: 1px solid var(--vscode-panel-border);
       padding-bottom: 10px;
+      margin-bottom: 12px;
+    }
+    .logo {
+      width: 28px;
+      height: 28px;
+      object-fit: contain;
+    }
+    h1 {
+      margin: 0;
     }
     h2 {
       margin-top: 24px;
@@ -94,7 +122,11 @@ export function createTaskBoardPanel(
   </style>
 </head>
 <body>
-  ${renderMarkdown(boardContent)}
+  <div class="header">
+    <img class="logo" src="${escapeHtml(logoUri)}" alt="ARC XT logo" />
+    ${titleHtml}
+  </div>
+  ${bodyHtml}
 </body>
 </html>
   `;

@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { buildCSPWithNonce, generateNonce } from '../ui/csp';
 import { LocalReviewSurfaceService } from './reviewSurfaces';
 
 /**
@@ -15,6 +16,7 @@ import { LocalReviewSurfaceService } from './reviewSurfaces';
  * LocalReviewSurfaceService.renderTaskBoard() for consistency with Review Home.
  *
  * WARDEN HARDENING: CSP nonce applied, no inline scripts without nonce.
+ * ARC-BRAND-001: Logo integration with scoped localResourceRoots.
  */
 
 export class TaskBoardViewProvider implements vscode.WebviewViewProvider {
@@ -36,10 +38,13 @@ export class TaskBoardViewProvider implements vscode.WebviewViewProvider {
 
     webviewView.webview.options = {
       enableScripts: true,
-      localResourceRoots: [this._extensionUri],
+      // Scoped to Public/Logo only (WRD-0129 follow-up hardening)
+      localResourceRoots: [
+        vscode.Uri.joinPath(this._extensionUri, 'Public', 'Logo'),
+      ],
     };
 
-    webviewView.webview.html = this._getHtmlForWebview();
+    webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
 
     webviewView.webview.onDidReceiveMessage(
       async (message: { command?: string }) => {
@@ -60,24 +65,33 @@ export class TaskBoardViewProvider implements vscode.WebviewViewProvider {
 
   public refresh(): void {
     if (this._view) {
-      this._view.webview.html = this._getHtmlForWebview();
+      this._view.webview.html = this._getHtmlForWebview(this._view.webview);
     }
   }
 
-  private _getHtmlForWebview(): string {
+  private _getHtmlForWebview(webview: vscode.Webview): string {
     // Use canonical derived Task Board state from LocalReviewSurfaceService
     const taskBoardMarkdown = this._reviewService.renderTaskBoard();
     const workspaceRoot = this._workspaceRoot;
 
     // Generate CSP nonce for security hardening
-    const nonce = this._generateNonce();
+    const nonce = generateNonce();
+    const csp = buildCSPWithNonce(nonce, webview.cspSource);
+
+    const logoPath = vscode.Uri.joinPath(
+      this._extensionUri,
+      'Public',
+      'Logo',
+      'ARC-ICON-1024.png',
+    );
+    const logoUri = webview.asWebviewUri(logoPath).toString();
 
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-${nonce}'; script-src 'nonce-${nonce}';">
+  <meta http-equiv="Content-Security-Policy" content="${csp}">
   <title>ARC XT Task Board</title>
   <style nonce="${nonce}">
     :root {
@@ -96,8 +110,10 @@ export class TaskBoardViewProvider implements vscode.WebviewViewProvider {
       margin: 0;
       padding: 8px;
     }
-    h2 { font-size: 13px; font-weight: 600; margin: 0 0 8px 0; }
+    h2 { font-size: 13px; font-weight: 600; margin: 0; }
     h3 { font-size: 12px; font-weight: 600; margin: 10px 0 4px 0; color: #858585; }
+    .header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .logo { width: 18px; height: 18px; object-fit: contain; }
     .section { margin-bottom: 12px; padding: 6px; background-color: var(--vscode-editor-background); border-radius: 4px; }
     .row { display: flex; justify-content: space-between; align-items: center; padding: 3px 0; }
     .label { color: #858585; }
@@ -119,7 +135,10 @@ export class TaskBoardViewProvider implements vscode.WebviewViewProvider {
   </style>
 </head>
 <body>
-  <h2>$(tasklist) ARC XT Task Board</h2>
+  <div class="header">
+    <img class="logo" src="${logoUri}" alt="ARC XT logo" />
+    <h2>$(tasklist) ARC XT Task Board</h2>
+  </div>
 
   <div class="section">
     <div class="row">
@@ -147,10 +166,6 @@ export class TaskBoardViewProvider implements vscode.WebviewViewProvider {
   private _truncatePath(path: string, maxLength = 20): string {
     if (path.length <= maxLength) return path;
     return '...' + path.slice(-maxLength + 3);
-  }
-
-  private _generateNonce(): string {
-    return Math.random().toString(36).substring(2, 15);
   }
 
   private _markdownToHtml(markdown: string): string {
