@@ -2,7 +2,15 @@
 
 **Directive ID:** ARC-UX-002
 
-> Status: OPENED
+> Status: CLOSED — 2026-03-29
+
+## Execution Evidence
+
+- `src/extension/statusBarItem.ts` — StatusBarItemService with 6 enforcement states
+- `src/extension/taskBoardView.ts` — TaskBoardViewProvider (left sidebar webview)
+- `src/extension.ts` — Integrated status bar and task board refresh on save
+- `package.json` — viewsContainers and views contributions for arc-xt-container
+- Verification: lint ✅ typecheck ✅ build ✅ test ✅ (352 passing)
 
 ## Objective
 
@@ -83,4 +91,3 @@ This returns ARC XT to the current command/panel-driven UX without affecting enf
 - Opened from the external-review incorporation audit on 2026-03-29
 - Sidebar Task Board addition is an explicit operator request and is folded into this UX package
 - No runtime enforcement changes are authorized by this directive opening
-

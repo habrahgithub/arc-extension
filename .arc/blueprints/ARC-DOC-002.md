@@ -2,7 +2,14 @@
 
 **Directive ID:** ARC-DOC-002
 
-> Status: OPENED
+> Status: CLOSED — 2026-03-29
+
+## Execution Evidence
+
+- `docs/PRIVACY-AND-AUDIT.md` — What's logged/not logged, excerpt boundary clarified (WRD-0128 fix)
+- `docs/WORKSPACE-MAPPING-GUIDE.md` — workspace-map.json operator guide
+- `docs/TEAM_DEPLOYMENT.md` — Team deployment guidance (multi-developer environments)
+- Verification: lint ✅ typecheck ✅ build ✅ test ✅ (352 passing)
 
 ## Objective
 
@@ -77,4 +84,3 @@ If documentation wording introduces confusion or overclaim:
 - Opened from the external-review incorporation audit on 2026-03-29
 - Warden elevated the privacy/logging transparency gap due to the existence of `ContextPayload.excerpt`
 - No runtime behavior changes are authorized by this directive opening
-

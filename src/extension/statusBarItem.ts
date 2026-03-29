@@ -68,7 +68,7 @@ export class StatusBarItemService {
       vscode.StatusBarAlignment.Right,
       100, // Priority (higher = more to the right)
     );
-    this.statusBarItem.command = 'lintel.showRuntimeStatus';
+    this.statusBarItem.command = 'arc.showRuntimeStatus';
     this.statusBarItem.show();
     this.updateStatus('READY');
   }

@@ -124,7 +124,27 @@
         "command": "arc.ui.taskBoard",
         "title": "ARC XT: Task Board"
       }
-    ]
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "arc-xt-container",
+          "title": "ARC XT",
+          "icon": "$(shield-check)"
+        }
+      ]
+    },
+    "views": {
+      "arc-xt-container": [
+        {
+          "type": "webview",
+          "id": "arc.ui.taskBoard",
+          "name": "Task Board",
+          "icon": "$(tasklist)",
+          "contextualTitle": "ARC XT Task Board"
+        }
+      ]
+    }
   },
   "main": "./dist/extension.js",
   "scripts": {

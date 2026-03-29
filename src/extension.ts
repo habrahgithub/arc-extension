@@ -13,6 +13,7 @@ import { renderRuntimeStatusMarkdown } from './extension/runtimeStatus';
 import { SaveLifecycleController } from './extension/saveLifecycleController';
 import { SaveOrchestrator } from './extension/saveOrchestrator';
 import { StatusBarItemService } from './extension/statusBarItem';
+import { TaskBoardViewProvider } from './extension/taskBoardView';
 import { WelcomeSurfaceService } from './extension/welcomeSurface';
 import { resolveWorkspaceTarget } from './extension/workspaceTargeting';
 // ARC-UI-001a — Internal Review Surface Upgrade (UI layer)
@@ -183,6 +184,21 @@ export function activate(context: vscode.ExtensionContext): void {
   const welcomeSurface = new WelcomeSurfaceService(context);
   const statusBarItem = new StatusBarItemService();
   context.subscriptions.push(statusBarItem);
+
+  // ARC-UX-002 — Register Task Board View Provider (left sidebar)
+  const targetForFirstFile = targetFor(
+    vscode.window.activeTextEditor?.document.uri.fsPath,
+  );
+  const taskBoardProvider = new TaskBoardViewProvider(
+    context.extensionUri,
+    targetForFirstFile.effectiveRoot,
+  );
+  context.subscriptions.push(
+    vscode.window.registerWebviewViewProvider(
+      TaskBoardViewProvider.viewType,
+      taskBoardProvider,
+    ),
+  );
 
   function targetFor(filePath?: string) {
     return resolveWorkspaceTarget(filePath, workspaceFolderRoots, fallbackRoot);
@@ -522,6 +538,7 @@ export function activate(context: vscode.ExtensionContext): void {
               assessment.decision.decision,
               false,
             );
+            taskBoardProvider.refresh();
             return [];
           }
 
@@ -531,6 +548,7 @@ export function activate(context: vscode.ExtensionContext): void {
               assessment.decision.decision,
               true,
             );
+            taskBoardProvider.refresh();
             void vscode.window.showErrorMessage(
               `[ARC XT] BLOCK: ${assessment.decision.reason}`,
               { modal: true },
@@ -555,6 +573,7 @@ export function activate(context: vscode.ExtensionContext): void {
               assessment.decision.decision,
               !planFlow.acknowledged,
             );
+            taskBoardProvider.refresh();
             return [];
           }
 
@@ -571,11 +590,13 @@ export function activate(context: vscode.ExtensionContext): void {
               assessment.decision.decision,
               choice !== 'Continue',
             );
+            taskBoardProvider.refresh();
             return [];
           }
 
           controller.finalizeSave(assessment, false);
           statusBarItem.updateFromDecision(assessment.decision.decision, false);
+          taskBoardProvider.refresh();
           return [];
         })(),
       );

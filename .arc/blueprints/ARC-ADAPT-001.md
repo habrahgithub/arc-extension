@@ -2,7 +2,16 @@
 
 **Directive ID:** ARC-ADAPT-001
 
-> Status: OPENED
+> Status: CLOSED — 2026-03-29
+
+## Execution Evidence
+
+- `src/adapters/modelAdapter.ts` — Backoff/jitter (500ms/200ms), warmup ping, sleep helper
+- `tests/unit/modelAdapter.test.ts` — Updated for warmup ping (2 fetch calls)
+- New env vars: `OLLAMA_BACKOFF_MS`, `OLLAMA_JITTER_MS`
+- Local-only boundary enforced (ALLOWED_LOCAL_HOSTNAMES check)
+- Verification: lint ✅ typecheck ✅ build ✅ test ✅ (352 passing)
+- WARDEN REVIEW: PASS — local-only, no cloud-lane widening
 
 ## Objective
 
@@ -76,4 +85,3 @@ If adapter hardening creates instability:
 - Opened from the external-review incorporation audit on 2026-03-29
 - Sentinel confirmed current retries are immediate and warmup/readiness support is absent
 - Warden requires merge-gate review for any local readiness or heartbeat behavior
-
