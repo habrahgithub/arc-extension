@@ -119,9 +119,9 @@ describe('LINTEL-REL-001 — Release Readiness Governance', () => {
   });
 
   describe('OBS-S-7032: VSIX Evidence Retention', () => {
-    it('VSIX package exists in project root', () => {
-      // VSIX is generated in project root by pack script
-      const files = fs.readdirSync(projectRoot);
+    it('VSIX package exists in artifacts/releases', () => {
+      const releasesPath = path.join(projectRoot, 'artifacts', 'releases');
+      const files = fs.readdirSync(releasesPath);
       const vsixFiles = files.filter((f) => f.endsWith('.vsix'));
 
       expect(vsixFiles.length).toBeGreaterThan(0);
@@ -135,8 +135,8 @@ describe('LINTEL-REL-001 — Release Readiness Governance', () => {
         version?: string;
       };
 
-      // VSIX is in project root
-      const files = fs.readdirSync(projectRoot);
+      const releasesPath = path.join(projectRoot, 'artifacts', 'releases');
+      const files = fs.readdirSync(releasesPath);
       const vsixFiles = files.filter((f) => f.endsWith('.vsix'));
 
       // VSIX filename should contain version
@@ -258,15 +258,15 @@ describe('LINTEL-REL-001 — Release Readiness Governance', () => {
 
   describe('WRD-0089: VSIX Contents Safety', () => {
     it('VSIX does not include credential files', () => {
-      // VSIX is generated in project root
-      const files = fs.readdirSync(projectRoot);
+      const releasesPath = path.join(projectRoot, 'artifacts', 'releases');
+      const files = fs.readdirSync(releasesPath);
       const vsixFile = files.find((f) => f.endsWith('.vsix'));
 
       expect(vsixFile).toBeDefined();
 
       // VSIX is a zip file - we check it doesn't have obvious credential patterns
       // In production, would unzip and scan contents
-      const vsixPath = path.join(projectRoot, vsixFile!);
+      const vsixPath = path.join(releasesPath, vsixFile!);
       const vsixStats = fs.statSync(vsixPath);
 
       // VSIX should exist and have reasonable size

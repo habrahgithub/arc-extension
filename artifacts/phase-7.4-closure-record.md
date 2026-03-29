@@ -123,8 +123,8 @@ Files: 3 changed, 325 insertions(+), 1 deletion(-)
 
 - `projects/lintel/artifacts/phase-7.4-evidence-summary.md` — Implementation evidence
 - `agents/axis/App Idea Blueprints/LINTEL_phase_7_4_forge_execution_package.md` — Closed execution package
-- `projects/lintel/PHASE0_PROGRESS_ASSESSMENT.md` — Baseline assessment
-- `projects/lintel/PHASE0_EXECUTIVE_SUMMARY.md` — Executive summary
+- `projects/lintel/docs/records/PHASE0_PROGRESS_ASSESSMENT.md` — Baseline assessment
+- `projects/lintel/docs/records/PHASE0_EXECUTIVE_SUMMARY.md` — Executive summary
 
 ---
 

@@ -81,7 +81,7 @@ Prerequisites:
 Example:
 
 ```bash
-npx ovsx publish arc-audit-ready-core-0.1.5.vsix -p "$OVSX_PAT"
+npx ovsx publish artifacts/releases/arc-audit-ready-core-0.1.5.vsix -p "$OVSX_PAT"
 ```
 
 If publishing from a different file path, adjust the filename accordingly.
