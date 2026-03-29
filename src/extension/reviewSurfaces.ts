@@ -44,6 +44,34 @@ export const REVIEW_SURFACE_AUDIT_READ_ERROR_NOTICE =
 export const REVIEW_SURFACE_FALSE_POSITIVE_QUALITY_NOTICE =
   'False-positive candidates are ranked by likelihood. This ranking is advisory only and does not override recorded decisions or weaken enforcement.';
 
+function describeWorkspaceMappingStatus(status: string): string {
+  switch (status) {
+    case 'MISSING':
+      return '`MISSING` (not configured; using built-in defaults)';
+    case 'INVALID':
+      return '`INVALID` (invalid JSON; using built-in defaults)';
+    case 'UNAUTHORIZED_MODE':
+      return '`UNAUTHORIZED_MODE` (shared/team mapping not authorized; ignoring mapping)';
+    case 'LOADED':
+      return '`LOADED` (configured)';
+    default:
+      return `\`${status}\``;
+  }
+}
+
+function describeRoutePolicyStatus(status: string): string {
+  switch (status) {
+    case 'MISSING':
+      return '`MISSING` (not configured; fail-closed to `RULE_ONLY`)';
+    case 'INVALID':
+      return '`INVALID` (invalid config; fail-closed to `RULE_ONLY`)';
+    case 'LOADED':
+      return '`LOADED` (configured)';
+    default:
+      return `\`${status}\``;
+  }
+}
+
 export class LocalReviewSurfaceService {
   private readonly blueprintArtifacts: BlueprintArtifactStore;
   private readonly workspaceMapping: WorkspaceMappingStore;
@@ -160,7 +188,7 @@ export class LocalReviewSurfaceService {
               .sort()
           : [];
         const operatorContext = this.renderOperatorContext([
-          `Workspace mapping status: \`${mapping.status}\``,
+          `Workspace mapping status: ${describeWorkspaceMappingStatus(mapping.status)}`,
           REVIEW_SURFACE_PROOF_REQUIRED_NOTICE,
         ]);
 
@@ -244,7 +272,7 @@ export class LocalReviewSurfaceService {
           .map((c) => c.entry);
 
         const operatorContext = this.renderOperatorContext([
-          `Workspace mapping status: \`${mapping.status}\``,
+          `Workspace mapping status: ${describeWorkspaceMappingStatus(mapping.status)}`,
           REVIEW_SURFACE_FALSE_POSITIVE_NOTICE,
           REVIEW_SURFACE_FALSE_POSITIVE_QUALITY_NOTICE,
         ]);
@@ -254,7 +282,7 @@ export class LocalReviewSurfaceService {
           '',
           ...operatorContext,
           '',
-          `- Workspace mapping status: ${mapping.status}`,
+          `- Workspace mapping status: ${describeWorkspaceMappingStatus(mapping.status)}`,
           `- Local review only: yes`,
           `- Malformed lines skipped: ${audit.malformedCount}`,
           `- Candidates shown: ${candidates.length} (ranked by false-positive likelihood)`,
@@ -310,7 +338,7 @@ export class LocalReviewSurfaceService {
           : [];
 
         const operatorContext = this.renderOperatorContext([
-          `Workspace mapping status: \`${mapping.status}\``,
+          `Workspace mapping status: ${describeWorkspaceMappingStatus(mapping.status)}`,
           'Task Board is read-only and local-only — it summarizes existing blueprint evidence but does not authorize or mutate work.',
         ]);
 
@@ -421,7 +449,7 @@ export class LocalReviewSurfaceService {
     return [
       '## Operator context',
       `- Governed root: \`${this.workspaceRoot}\``,
-      `- Route policy status: \`${routePolicy.status}\``,
+      `- Route policy status: ${describeRoutePolicyStatus(routePolicy.status)}`,
       `- Effective route mode: \`${routePolicy.config.mode}\``,
       `- Route note: ${routePolicy.reason}`,
       `- Review contract: ${REVIEW_SURFACE_LOCAL_ONLY_NOTICE}`,

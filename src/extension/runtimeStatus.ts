@@ -77,6 +77,20 @@ function describeSaveContext(snapshot: RuntimeStatusSnapshot): string {
   return 'Current posture preserves the established fail-closed enforcement floor for the active workspace root.';
 }
 
+function describeRoutePolicyStatus(routePolicy: RoutePolicyResolution): string {
+  switch (routePolicy.status) {
+    case 'MISSING':
+      return '`MISSING` (not configured; fail-closed to `RULE_ONLY`)';
+    case 'INVALID':
+      return '`INVALID` (invalid config; fail-closed to `RULE_ONLY`)';
+    case 'LOADED':
+      return '`LOADED` (configured)';
+  }
+
+  /* istanbul ignore next -- defensive fallback for future enum expansion */
+  return `\`${String(routePolicy.status)}\``;
+}
+
 export function renderRuntimeStatusMarkdown(
   snapshot: RuntimeStatusSnapshot,
 ): string {
@@ -110,7 +124,7 @@ export function renderRuntimeStatusMarkdown(
     `- Route-policy path: \`${routerPath}\``,
     '',
     '## Route posture',
-    `- Route policy status: \`${snapshot.routePolicy.status}\``,
+    `- Route policy status: ${describeRoutePolicyStatus(snapshot.routePolicy)}`,
     `- Effective mode: \`${snapshot.routePolicy.config.mode}\``,
     `- Local lane enabled: \`${snapshot.routePolicy.config.localLaneEnabled}\``,
     `- Cloud lane enabled: \`${snapshot.routePolicy.config.cloudLaneEnabled}\``,
