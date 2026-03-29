@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ARC XT Activity Bar Icon (monochrome, theme-tinted via currentColor)
+
+  Design goals:
+  - Crisp at 16–24px
+  - Simple geometry (avoids blur from downscaled PNGs)
+  - No brand overclaims; icon only
+-->
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+  <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <!-- outer ring -->
+    <circle cx="12" cy="12" r="9"/>
+    <!-- core dot -->
+    <circle cx="12" cy="11" r="1.6"/>
+    <!-- lower cradle -->
+    <path d="M7.5 16.6c2.8 2.2 6.2 2.2 9 0"/>
+    <!-- top notch -->
+    <path d="M10 6.8h4"/>
+  </g>
+</svg>
+

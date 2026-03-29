@@ -2,7 +2,7 @@
   "name": "arc-audit-ready-core",
   "displayName": "ARC XT — Audit Ready Core",
   "description": "Governed code enforcement for AI-assisted development in a local-first VS Code extension. Public beta candidate for ARC XT.",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "preview": true,
   "private": true,
   "publisher": "swd",
@@ -130,7 +130,7 @@
         {
           "id": "arc-xt-container",
           "title": "ARC XT",
-          "icon": "Public/Logo/ARC-ICON-1024.png"
+          "icon": "Public/Logo/arc-activitybar.svg"
         }
       ]
     },

@@ -1,6 +1,6 @@
 # ARC XT Beta Release Checklist
 
-**Version target:** 0.1.9  
+**Version target:** 0.1.10  
 **Channel:** Controlled beta  
 **Registries:** Visual Studio Marketplace, Open VSX
 
@@ -81,7 +81,7 @@ Prerequisites:
 Example:
 
 ```bash
-npx ovsx publish artifacts/releases/arc-audit-ready-core-0.1.9.vsix -p "$OVSX_PAT"
+npx ovsx publish artifacts/releases/arc-audit-ready-core-0.1.10.vsix -p "$OVSX_PAT"
 ```
 
 If publishing from a different file path, adjust the filename accordingly.
