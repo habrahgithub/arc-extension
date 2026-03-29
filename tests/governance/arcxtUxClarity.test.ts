@@ -62,7 +62,9 @@ describe('ARCXT-UX-CLARITY-001 — Config Template Governance', () => {
 
       // Verify file exists and has correct content
       expect(fs.existsSync(routerPath)).toBe(true);
-      const written = JSON.parse(fs.readFileSync(routerPath, 'utf8'));
+      const written: unknown = JSON.parse(
+        fs.readFileSync(routerPath, 'utf8'),
+      ) as unknown;
       expect(written).toEqual(content);
     });
 
@@ -78,7 +80,9 @@ describe('ARCXT-UX-CLARITY-001 — Config Template Governance', () => {
 
       // Verify file exists and has correct content
       expect(fs.existsSync(mappingPath)).toBe(true);
-      const written = JSON.parse(fs.readFileSync(mappingPath, 'utf8'));
+      const written: unknown = JSON.parse(
+        fs.readFileSync(mappingPath, 'utf8'),
+      ) as unknown;
       expect(written).toEqual(content);
     });
 
