@@ -2,7 +2,7 @@
   "name": "arc-audit-ready-core",
   "displayName": "ARC XT — Audit Ready Core",
   "description": "Governed code enforcement for AI-assisted development in a local-first VS Code extension. Public beta candidate for ARC XT.",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "preview": true,
   "private": true,
   "publisher": "swd",
@@ -60,10 +60,7 @@
     "onCommand:arc.ui.decisionFeed",
     "onCommand:arc.ui.auditTimeline",
     "onCommand:arc.ui.whyPanel",
-    "onCommand:arc.ui.taskBoard",
-    "onCommand:arc.createMinimalRoutePolicy",
-    "onCommand:arc.createMinimalWorkspaceMapping",
-    "onCommand:arc.createMinimalArcConfig"
+    "onCommand:arc.ui.taskBoard"
   ],
   "contributes": {
     "commands": [
@@ -126,18 +123,6 @@
       {
         "command": "arc.ui.taskBoard",
         "title": "ARC XT: Task Board"
-      },
-      {
-        "command": "arc.createMinimalRoutePolicy",
-        "title": "ARC XT: Create Minimal Route Policy"
-      },
-      {
-        "command": "arc.createMinimalWorkspaceMapping",
-        "title": "ARC XT: Create Minimal Workspace Mapping"
-      },
-      {
-        "command": "arc.createMinimalArcConfig",
-        "title": "ARC XT: Create Minimal ARC Config (Both)"
       }
     ],
     "viewsContainers": {
@@ -145,7 +130,7 @@
         {
           "id": "arc-xt-container",
           "title": "ARC XT",
-          "icon": "Public/Logo/ARC-ICON-1024.png"
+          "icon": "$(shield-check)"
         }
       ]
     },
