@@ -171,9 +171,9 @@ This ensures explicit intent for sensitive changes.
 
 ## Version
 
-**Extension Version:** 0.1.0  
-**Governance Framework:** ARC-GOV-RULE-002  
-**Phase:** 7.5 — Welcome Surface and Operator Onboarding
+**Extension Version:** 0.1.5
+**Governance Framework:** ARC-GOV-RULE-002
+**Phase:** Phase 7.10+ / Beta Baseline
 
 ---
 
