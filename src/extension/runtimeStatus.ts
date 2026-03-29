@@ -50,6 +50,13 @@ export const STALENESS_THRESHOLD_MS = 5 * 60 * 1000;
 export const RUNTIME_STATUS_STALENESS_NOTICE =
   'Staleness note: displayed decision context may be from a different file or time window. This is descriptive only and does not invalidate prior decisions.';
 
+// ARCXT-UX-CLARITY-001 — User-POV clarity for MISSING status
+export const RUNTIME_STATUS_ROUTE_POLICY_MISSING_CLARITY =
+  'Route policy is optional. MISSING status means safe fail-closed RULE_ONLY mode with all lanes disabled.';
+
+export const RUNTIME_STATUS_WORKSPACE_MAPPING_MISSING_CLARITY =
+  'Workspace mapping is optional. MISSING status means built-in safe defaults are applied (LOCAL_ONLY, no rules).';
+
 function describeReason(reason: WorkspaceTargetResolution['reason']): string {
   switch (reason) {
     case 'NESTED_BOUNDARY':
@@ -80,9 +87,9 @@ function describeSaveContext(snapshot: RuntimeStatusSnapshot): string {
 function describeRoutePolicyStatus(routePolicy: RoutePolicyResolution): string {
   switch (routePolicy.status) {
     case 'MISSING':
-      return '`MISSING` (not configured; fail-closed to `RULE_ONLY`)';
+      return '`MISSING` (optional config not present; fail-closed to safe `RULE_ONLY`)';
     case 'INVALID':
-      return '`INVALID` (invalid config; fail-closed to `RULE_ONLY`)';
+      return '`INVALID` (config present but invalid; fail-closed to safe `RULE_ONLY`)';
     case 'LOADED':
       return '`LOADED` (configured)';
   }
@@ -109,6 +116,12 @@ export function renderRuntimeStatusMarkdown(
       ? snapshot.target.markers.map((marker) => `\`${marker}\``).join(', ')
       : 'none detected';
 
+  // ARCXT-UX-CLARITY-001: Add clarity notices for MISSING status
+  const clarityNotes: string[] = [];
+  if (snapshot.routePolicy.status === 'MISSING') {
+    clarityNotes.push(RUNTIME_STATUS_ROUTE_POLICY_MISSING_CLARITY);
+  }
+
   const sections = [
     '# ARC XT Active Workspace Status',
     '',
@@ -130,6 +143,9 @@ export function renderRuntimeStatusMarkdown(
     `- Cloud lane enabled: \`${snapshot.routePolicy.config.cloudLaneEnabled}\``,
     `- Cloud data class: \`${snapshot.routePolicy.config.cloudDataClass}\``,
     `- Policy reason: ${snapshot.routePolicy.reason}`,
+    ...(clarityNotes.length > 0
+      ? ['', '## Config clarity', ...clarityNotes.map((note) => `- ${note}`)]
+      : []),
     '',
     '## Save behavior context',
     `- Auto-save mode: \`${snapshot.autoSaveMode}\``,

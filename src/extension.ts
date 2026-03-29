@@ -18,6 +18,12 @@ import { WelcomeSurfaceService } from './extension/welcomeSurface';
 import { resolveWorkspaceTarget } from './extension/workspaceTargeting';
 // ARC-UI-001a — Internal Review Surface Upgrade (UI layer)
 import { registerUiCommands } from './ui';
+// ARCXT-UX-CLARITY-001 — Minimal config template creation commands
+import {
+  createMinimalArcConfig,
+  createMinimalRoutePolicy,
+  createMinimalWorkspaceMapping,
+} from './extension/configTemplates';
 
 function autoSaveMode():
   | 'off'
@@ -493,6 +499,22 @@ export function activate(context: vscode.ExtensionContext): void {
         'ARC XT — False-Positive Review',
         reviewSurfaceFor(filePath).renderFalsePositiveReview(),
       );
+    }),
+    // ARCXT-UX-CLARITY-001 — Minimal config template creation commands
+    vscode.commands.registerCommand(
+      'arc.createMinimalRoutePolicy',
+      async () => {
+        await createMinimalRoutePolicy();
+      },
+    ),
+    vscode.commands.registerCommand(
+      'arc.createMinimalWorkspaceMapping',
+      async () => {
+        await createMinimalWorkspaceMapping();
+      },
+    ),
+    vscode.commands.registerCommand('arc.createMinimalArcConfig', async () => {
+      await createMinimalArcConfig();
     }),
 
     vscode.workspace.onDidOpenTextDocument((document) => {

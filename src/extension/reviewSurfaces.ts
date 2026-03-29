@@ -44,12 +44,19 @@ export const REVIEW_SURFACE_AUDIT_READ_ERROR_NOTICE =
 export const REVIEW_SURFACE_FALSE_POSITIVE_QUALITY_NOTICE =
   'False-positive candidates are ranked by likelihood. This ranking is advisory only and does not override recorded decisions or weaken enforcement.';
 
+// ARCXT-UX-CLARITY-001 — User-POV clarity for MISSING/INVALID status
+export const WORKSPACE_MAPPING_MISSING_CLARITY =
+  'Workspace mapping is optional. MISSING status means built-in safe defaults are applied (LOCAL_ONLY, no rules).';
+
+export const ROUTE_POLICY_MISSING_CLARITY =
+  'Route policy is optional. MISSING status means fail-closed RULE_ONLY mode with all lanes disabled.';
+
 function describeWorkspaceMappingStatus(status: string): string {
   switch (status) {
     case 'MISSING':
-      return '`MISSING` (not configured; using built-in defaults)';
+      return '`MISSING` (optional config not present; using safe built-in defaults)';
     case 'INVALID':
-      return '`INVALID` (invalid JSON; using built-in defaults)';
+      return '`INVALID` (config present but invalid; using safe built-in defaults)';
     case 'UNAUTHORIZED_MODE':
       return '`UNAUTHORIZED_MODE` (shared/team mapping not authorized; ignoring mapping)';
     case 'LOADED':
@@ -62,9 +69,9 @@ function describeWorkspaceMappingStatus(status: string): string {
 function describeRoutePolicyStatus(status: string): string {
   switch (status) {
     case 'MISSING':
-      return '`MISSING` (not configured; fail-closed to `RULE_ONLY`)';
+      return '`MISSING` (optional config not present; fail-closed to safe RULE_ONLY)';
     case 'INVALID':
-      return '`INVALID` (invalid config; fail-closed to `RULE_ONLY`)';
+      return '`INVALID` (config present but invalid; fail-closed to safe RULE_ONLY)';
     case 'LOADED':
       return '`LOADED` (configured)';
     default:
@@ -446,6 +453,17 @@ export class LocalReviewSurfaceService {
 
   private renderOperatorContext(notes: string[]): string[] {
     const routePolicy = this.routePolicy.load();
+    const mapping = this.workspaceMapping.load();
+
+    // ARCXT-UX-CLARITY-001: Add clarity notices for MISSING status
+    const clarityNotes: string[] = [];
+    if (routePolicy.status === 'MISSING') {
+      clarityNotes.push(ROUTE_POLICY_MISSING_CLARITY);
+    }
+    if (mapping.status === 'MISSING') {
+      clarityNotes.push(WORKSPACE_MAPPING_MISSING_CLARITY);
+    }
+
     return [
       '## Operator context',
       `- Governed root: \`${this.workspaceRoot}\``,
@@ -453,6 +471,7 @@ export class LocalReviewSurfaceService {
       `- Effective route mode: \`${routePolicy.config.mode}\``,
       `- Route note: ${routePolicy.reason}`,
       `- Review contract: ${REVIEW_SURFACE_LOCAL_ONLY_NOTICE}`,
+      ...clarityNotes.map((note) => `- ${note}`),
       ...notes.map((note) => `- ${note}`),
     ];
   }
