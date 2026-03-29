@@ -12,6 +12,7 @@ import { LocalReviewSurfaceService } from './extension/reviewSurfaces';
 import { renderRuntimeStatusMarkdown } from './extension/runtimeStatus';
 import { SaveLifecycleController } from './extension/saveLifecycleController';
 import { SaveOrchestrator } from './extension/saveOrchestrator';
+import { StatusBarItemService } from './extension/statusBarItem';
 import { WelcomeSurfaceService } from './extension/welcomeSurface';
 import { resolveWorkspaceTarget } from './extension/workspaceTargeting';
 // ARC-UI-001a — Internal Review Surface Upgrade (UI layer)
@@ -180,6 +181,8 @@ export function activate(context: vscode.ExtensionContext): void {
   const controllers = new Map<string, SaveLifecycleController>();
   const reviewSurfaces = new Map<string, LocalReviewSurfaceService>();
   const welcomeSurface = new WelcomeSurfaceService(context);
+  const statusBarItem = new StatusBarItemService();
+  context.subscriptions.push(statusBarItem);
 
   function targetFor(filePath?: string) {
     return resolveWorkspaceTarget(filePath, workspaceFolderRoots, fallbackRoot);
@@ -235,6 +238,7 @@ export function activate(context: vscode.ExtensionContext): void {
   }
 
   const mode = autoSaveMode();
+  statusBarItem.updateAutoSaveMode(mode);
   if (mode === 'afterDelay' || mode === 'onFocusChange') {
     void vscode.window.showInformationMessage(
       `[ARC XT] Reduced-guarantee auto-save mode detected (${mode}). Explicit save remains the preferred path.`,
@@ -514,11 +518,19 @@ export function activate(context: vscode.ExtensionContext): void {
             assessment.decision.lease_status === 'REUSED'
           ) {
             controller.finalizeSave(assessment, true);
+            statusBarItem.updateFromDecision(
+              assessment.decision.decision,
+              false,
+            );
             return [];
           }
 
           if (assessment.decision.decision === 'BLOCK') {
             controller.finalizeSave(assessment, false);
+            statusBarItem.updateFromDecision(
+              assessment.decision.decision,
+              true,
+            );
             void vscode.window.showErrorMessage(
               `[ARC XT] BLOCK: ${assessment.decision.reason}`,
               { modal: true },
@@ -539,6 +551,10 @@ export function activate(context: vscode.ExtensionContext): void {
               planFlow.acknowledged,
               planFlow.proof,
             );
+            statusBarItem.updateFromDecision(
+              assessment.decision.decision,
+              !planFlow.acknowledged,
+            );
             return [];
           }
 
@@ -551,10 +567,15 @@ export function activate(context: vscode.ExtensionContext): void {
             );
 
             controller.finalizeSave(assessment, choice === 'Continue');
+            statusBarItem.updateFromDecision(
+              assessment.decision.decision,
+              choice !== 'Continue',
+            );
             return [];
           }
 
           controller.finalizeSave(assessment, false);
+          statusBarItem.updateFromDecision(assessment.decision.decision, false);
           return [];
         })(),
       );

@@ -9,7 +9,13 @@ export const DEFAULT_OLLAMA_HOST = '127.0.0.1:11434';
 export const DEFAULT_OLLAMA_MODEL = 'llama3.2:3b';
 export const DEFAULT_OLLAMA_TIMEOUT_MS = 2_000;
 export const DEFAULT_OLLAMA_RETRIES = 1;
-export const ALLOWED_LOCAL_HOSTNAMES = ['127.0.0.1', 'localhost', '::1'] as const;
+export const DEFAULT_OLLAMA_BACKOFF_MS = 500;
+export const DEFAULT_OLLAMA_JITTER_MS = 200;
+export const ALLOWED_LOCAL_HOSTNAMES = [
+  '127.0.0.1',
+  'localhost',
+  '::1',
+] as const;
 
 type ModelAdapterCauseCode =
   | 'UNAVAILABLE'
@@ -18,7 +24,10 @@ type ModelAdapterCauseCode =
   | 'DISABLED';
 
 export class ModelAdapterError extends Error {
-  constructor(message: string, readonly causeCode: ModelAdapterCauseCode) {
+  constructor(
+    message: string,
+    readonly causeCode: ModelAdapterCauseCode,
+  ) {
     super(message);
   }
 }
@@ -31,7 +40,9 @@ export interface ModelAdapter {
 export class DisabledModelAdapter implements ModelAdapter {
   readonly enabledByDefault = false;
 
-  evaluate(_context: ContextPayload): Promise<ModelEvaluationResult | undefined> {
+  evaluate(
+    _context: ContextPayload,
+  ): Promise<ModelEvaluationResult | undefined> {
     void _context;
     return Promise.resolve(undefined);
   }
@@ -42,6 +53,8 @@ interface OllamaOptions {
   readonly model?: string;
   readonly timeoutMs?: number;
   readonly retries?: number;
+  readonly backoffMs?: number;
+  readonly jitterMs?: number;
   readonly enabledByDefault?: boolean;
 }
 
@@ -58,6 +71,8 @@ interface ResolvedOllamaOptions {
   model: string;
   timeoutMs: number;
   retries: number;
+  backoffMs: number;
+  jitterMs: number;
   configurationError?: string;
 }
 
@@ -67,7 +82,11 @@ export class OllamaModelAdapter implements ModelAdapter {
   private readonly model: string;
   private readonly timeoutMs: number;
   private readonly retries: number;
+  private readonly backoffMs: number;
+  private readonly jitterMs: number;
   private readonly configurationError?: string;
+  private warmupPromise: Promise<boolean> | null = null;
+  private warmupComplete: boolean = false;
 
   constructor(options: OllamaOptions = {}) {
     const resolved = resolveOllamaOptions(options);
@@ -75,14 +94,21 @@ export class OllamaModelAdapter implements ModelAdapter {
     this.model = resolved.model;
     this.timeoutMs = resolved.timeoutMs;
     this.retries = resolved.retries;
+    this.backoffMs = resolved.backoffMs;
+    this.jitterMs = resolved.jitterMs;
     this.configurationError = resolved.configurationError;
     this.enabledByDefault = options.enabledByDefault ?? false;
   }
 
-  async evaluate(context: ContextPayload): Promise<ModelEvaluationResult | undefined> {
+  async evaluate(
+    context: ContextPayload,
+  ): Promise<ModelEvaluationResult | undefined> {
     if (this.configurationError) {
       throw new ModelAdapterError(this.configurationError, 'UNAVAILABLE');
     }
+
+    // Ensure warmup is complete before first evaluation
+    await this.ensureWarmup();
 
     let lastError: unknown;
 
@@ -90,7 +116,10 @@ export class OllamaModelAdapter implements ModelAdapter {
       try {
         const payload = await this.postPrompt(context);
         if (!payload.response) {
-          throw new ModelAdapterError('Missing Ollama response body.', 'PARSE_FAILURE');
+          throw new ModelAdapterError(
+            'Missing Ollama response body.',
+            'PARSE_FAILURE',
+          );
         }
 
         return parseModelResponse(payload.response);
@@ -99,10 +128,76 @@ export class OllamaModelAdapter implements ModelAdapter {
         if (!isRetryableModelError(error) || attempt === this.retries) {
           throw mapToModelAdapterError(error);
         }
+
+        // Apply backoff with jitter before retry (ARC-ADAPT-001)
+        const delay =
+          this.backoffMs + Math.floor(Math.random() * this.jitterMs);
+        await this.sleep(delay);
       }
     }
 
     throw mapToModelAdapterError(lastError);
+  }
+
+  /**
+   * Warmup ping — ensures Ollama is ready before first save event.
+   * Local-only readiness check (ARC-ADAPT-001).
+   */
+  async warmup(): Promise<boolean> {
+    if (this.warmupComplete) {
+      return true;
+    }
+
+    if (this.configurationError) {
+      return false;
+    }
+
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
+
+      const response = await fetch(this.endpoint, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: this.model,
+          format: 'json',
+          stream: false,
+          prompt: 'Ready',
+        }),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeout);
+      this.warmupComplete = response.ok;
+      return response.ok;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Ensure warmup is complete, starting if necessary.
+   */
+  private async ensureWarmup(): Promise<void> {
+    if (this.warmupComplete) {
+      return;
+    }
+
+    if (!this.warmupPromise) {
+      this.warmupPromise = this.warmup();
+    }
+
+    await this.warmupPromise;
+  }
+
+  /**
+   * Sleep helper for backoff delays.
+   */
+  private sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   private async postPrompt(
@@ -161,9 +256,14 @@ export class CloudModelAdapter implements ModelAdapter {
     this.apiKey = options.apiKey;
   }
 
-  async evaluate(context: ContextPayload): Promise<ModelEvaluationResult | undefined> {
+  async evaluate(
+    context: ContextPayload,
+  ): Promise<ModelEvaluationResult | undefined> {
     if (!this.endpoint) {
-      throw new ModelAdapterError('Cloud endpoint not configured.', 'UNAVAILABLE');
+      throw new ModelAdapterError(
+        'Cloud endpoint not configured.',
+        'UNAVAILABLE',
+      );
     }
 
     const controller = new AbortController();
@@ -207,7 +307,10 @@ export class CloudModelAdapter implements ModelAdapter {
         return parseModelResponse(payload.response);
       }
 
-      throw new ModelAdapterError('Missing cloud response body.', 'PARSE_FAILURE');
+      throw new ModelAdapterError(
+        'Missing cloud response body.',
+        'PARSE_FAILURE',
+      );
     } catch (error) {
       if (error instanceof ModelAdapterError) {
         throw error;
@@ -224,18 +327,26 @@ export class CloudModelAdapter implements ModelAdapter {
   }
 }
 
-export function parseModelResponse(responseText: string): ModelEvaluationResult {
+export function parseModelResponse(
+  responseText: string,
+): ModelEvaluationResult {
   const normalized = normalizeModelResponse(responseText);
   let parsed: unknown;
 
   try {
     parsed = JSON.parse(normalized);
   } catch {
-    throw new ModelAdapterError('Model returned invalid JSON.', 'PARSE_FAILURE');
+    throw new ModelAdapterError(
+      'Model returned invalid JSON.',
+      'PARSE_FAILURE',
+    );
   }
 
   if (!isModelEvaluationResult(parsed)) {
-    throw new ModelAdapterError('Model response failed schema validation.', 'PARSE_FAILURE');
+    throw new ModelAdapterError(
+      'Model response failed schema validation.',
+      'PARSE_FAILURE',
+    );
   }
 
   if (
@@ -265,7 +376,9 @@ function stripMarkdownFence(value: string): string {
   return value.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
 }
 
-function isModelEvaluationResult(value: unknown): value is ModelEvaluationResult {
+function isModelEvaluationResult(
+  value: unknown,
+): value is ModelEvaluationResult {
   if (!value || typeof value !== 'object') {
     return false;
   }
@@ -284,11 +397,21 @@ function isModelEvaluationResult(value: unknown): value is ModelEvaluationResult
 }
 
 function isDecision(value: unknown): boolean {
-  return value === 'ALLOW' || value === 'WARN' || value === 'REQUIRE_PLAN' || value === 'BLOCK';
+  return (
+    value === 'ALLOW' ||
+    value === 'WARN' ||
+    value === 'REQUIRE_PLAN' ||
+    value === 'BLOCK'
+  );
 }
 
 function isRiskLevel(value: unknown): value is RiskLevel {
-  return value === 'LOW' || value === 'MEDIUM' || value === 'HIGH' || value === 'CRITICAL';
+  return (
+    value === 'LOW' ||
+    value === 'MEDIUM' ||
+    value === 'HIGH' ||
+    value === 'CRITICAL'
+  );
 }
 
 function resolveOllamaOptions(options: OllamaOptions): ResolvedOllamaOptions {
@@ -304,13 +427,24 @@ function resolveOllamaOptions(options: OllamaOptions): ResolvedOllamaOptions {
     options.retries ?? envInteger('OLLAMA_RETRIES'),
     DEFAULT_OLLAMA_RETRIES,
   );
-  const model = options.model ?? process.env.SWD_SUBAGENT_MODEL ?? DEFAULT_OLLAMA_MODEL;
+  const backoffMs = normalizePositiveInteger(
+    options.backoffMs ?? envInteger('OLLAMA_BACKOFF_MS'),
+    DEFAULT_OLLAMA_BACKOFF_MS,
+  );
+  const jitterMs = normalizePositiveInteger(
+    options.jitterMs ?? envInteger('OLLAMA_JITTER_MS'),
+    DEFAULT_OLLAMA_JITTER_MS,
+  );
+  const model =
+    options.model ?? process.env.SWD_SUBAGENT_MODEL ?? DEFAULT_OLLAMA_MODEL;
 
   return {
     endpoint: endpoint.endpoint,
     configurationError: endpoint.error,
     timeoutMs,
     retries,
+    backoffMs,
+    jitterMs,
     model,
   };
 }
@@ -375,14 +509,20 @@ function envInteger(name: string): number | undefined {
   return Number.isFinite(parsed) ? parsed : undefined;
 }
 
-function normalizePositiveInteger(value: number | undefined, fallback: number): number {
+function normalizePositiveInteger(
+  value: number | undefined,
+  fallback: number,
+): number {
   if (value === undefined || !Number.isFinite(value) || value <= 0) {
     return fallback;
   }
   return Math.floor(value);
 }
 
-function normalizeRetryCount(value: number | undefined, fallback: number): number {
+function normalizeRetryCount(
+  value: number | undefined,
+  fallback: number,
+): number {
   if (value === undefined || !Number.isFinite(value) || value < 0) {
     return fallback;
   }

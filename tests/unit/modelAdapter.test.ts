@@ -37,7 +37,10 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-function createJsonResponse(responseText: string): { ok: boolean; json: () => Promise<{ response: string }> } {
+function createJsonResponse(responseText: string): {
+  ok: boolean;
+  json: () => Promise<{ response: string }>;
+} {
   return {
     ok: true,
     json: async () => {
@@ -62,7 +65,9 @@ describe('model adapter parsing', () => {
   });
 
   it('rejects malformed payloads', () => {
-    expect(() => parseModelResponse('{"decision":"ALLOW"}')).toThrow(ModelAdapterError);
+    expect(() => parseModelResponse('{"decision":"ALLOW"}')).toThrow(
+      ModelAdapterError,
+    );
   });
 
   it('rejects contradictory allow responses with elevated risk', () => {
@@ -81,11 +86,13 @@ describe('ollama adapter configuration', () => {
     process.env.OLLAMA_TIMEOUT_MS = '4500';
     process.env.OLLAMA_RETRIES = '2';
 
-    const fetchMock = vi.fn().mockResolvedValue(
-      createJsonResponse(
-        '{"decision":"WARN","reason":"Check auth","risk_level":"HIGH","violated_rules":["AUTH_CHANGE"],"next_action":"Review"}',
-      ),
-    );
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(
+        createJsonResponse(
+          '{"decision":"WARN","reason":"Check auth","risk_level":"HIGH","violated_rules":["AUTH_CHANGE"],"next_action":"Review"}',
+        ),
+      );
     vi.stubGlobal('fetch', fetchMock);
 
     const adapter = new OllamaModelAdapter({ enabledByDefault: true });
@@ -97,9 +104,12 @@ describe('ollama adapter configuration', () => {
     });
 
     expect(result?.decision).toBe('WARN');
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(fetchMock.mock.calls[0]?.[0]).toBe('http://localhost:11434/api/generate');
-    const requestInit = fetchMock.mock.calls[0]?.[1] as RequestInit | undefined;
+    // Warmup ping + actual evaluation = 2 calls
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock.mock.calls[1]?.[0]).toBe(
+      'http://localhost:11434/api/generate',
+    );
+    const requestInit = fetchMock.mock.calls[1]?.[1] as RequestInit | undefined;
     expect(typeof requestInit?.body).toBe('string');
     const body = JSON.parse(requestInit?.body as string) as { model: string };
     expect(body.model).toBe('qwen3.5:9b');
@@ -166,14 +176,19 @@ describe('ollama adapter configuration', () => {
 
   it('keeps the default local endpoint when no config is provided', async () => {
     delete process.env.OLLAMA_HOST;
-    const fetchMock = vi.fn().mockResolvedValue(
-      createJsonResponse(
-        '{"decision":"WARN","reason":"Check auth","risk_level":"HIGH","violated_rules":["AUTH_CHANGE"],"next_action":"Review"}',
-      ),
-    );
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(
+        createJsonResponse(
+          '{"decision":"WARN","reason":"Check auth","risk_level":"HIGH","violated_rules":["AUTH_CHANGE"],"next_action":"Review"}',
+        ),
+      );
     vi.stubGlobal('fetch', fetchMock);
 
-    const adapter = new OllamaModelAdapter({ enabledByDefault: true, retries: 0 });
+    const adapter = new OllamaModelAdapter({
+      enabledByDefault: true,
+      retries: 0,
+    });
     await adapter.evaluate({
       file_path: 'src/auth/session.ts',
       risk_flags: ['AUTH_CHANGE'],
