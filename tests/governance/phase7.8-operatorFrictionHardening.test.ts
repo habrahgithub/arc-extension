@@ -204,6 +204,7 @@ describe('Phase 7.8 — Operator Friction Hardening Governance', () => {
         'contextPacket.ts',
         'decisionLease.ts',
         'decisionPolicy.ts',
+        'overrideLog.ts', // Phase 8 (ARC-PHASE-008) — not Phase 7.8
         'performance.ts',
         'risk.ts',
         'routerPolicy.ts',

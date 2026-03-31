@@ -34,7 +34,10 @@ describe('phase 2 pilot scenarios', () => {
       false,
     );
 
-    const controller = new SaveLifecycleController(new SaveOrchestrator(workspace));
+    // Auto-save test uses a fresh workspace with no pre-existing lease approvals
+    // to verify that unapproved auto-saves are always reverted.
+    const autoWorkspace = fs.mkdtempSync(path.join(os.tmpdir(), 'lintel-e2e-auto-'));
+    const controller = new SaveLifecycleController(new SaveOrchestrator(autoWorkspace));
     controller.primeCommittedSnapshot(
       fixtureInputs.autoAuth.filePath,
       fixtureInputs.autoAuth.previousText,
@@ -47,6 +50,7 @@ describe('phase 2 pilot scenarios', () => {
       autoSaveMode: fixtureInputs.autoAuth.autoSaveMode,
     });
     const autoOutcome = controller.finalizeSave(autoAssessed, false);
+    fs.rmSync(autoWorkspace, { recursive: true, force: true });
 
     expect(allow.decision.decision).toBe('ALLOW');
     expect(requirePlan.decision.decision).toBe('REQUIRE_PLAN');
