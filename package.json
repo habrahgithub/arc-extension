@@ -1,7 +1,7 @@
 {
   "name": "arc-audit-ready-core",
   "displayName": "ARC XT — Audit Ready Core",
-  "description": "Governed code enforcement for AI-assisted development in a local-first VS Code extension. Public beta candidate for ARC XT.",
+  "description": "ARC — Audit Layer for AI-Assisted Coding. Deterministic, tamper-evident accountability inside your IDE, before PR/CI.",
   "version": "0.1.10",
   "preview": true,
   "private": true,
@@ -16,24 +16,24 @@
     "Other"
   ],
   "keywords": [
-    "governance",
-    "code quality",
     "audit",
-    "compliance",
-    "enforcement",
-    "local-first",
-    "save governance",
-    "blueprint proof",
-    "audit trail"
+    "audit layer",
+    "accountability",
+    "traceability",
+    "tamper-evident",
+    "hash chain",
+    "decision log",
+    "ai-assisted coding",
+    "ide"
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/habrahgithub/arc-extension.git"
+    "url": "https://github.com/habrahgithub/lintel.git"
   },
   "bugs": {
-    "url": "https://github.com/habrahgithub/arc-extension/issues"
+    "url": "https://github.com/habrahgithub/lintel/issues"
   },
-  "homepage": "https://github.com/habrahgithub/arc-extension#readme",
+  "homepage": "https://github.com/habrahgithub/lintel#readme",
   "icon": "Public/Logo/ARC-ICON-1024.png",
   "galleryBanner": {
     "color": "#1e1e1e",
