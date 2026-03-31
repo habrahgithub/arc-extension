@@ -5,6 +5,7 @@ import {
   type ModelAdapter,
 } from '../adapters/modelAdapter';
 import type {
+  ActorIdentity,
   AssessedSave,
   AuditEntry,
   BlueprintArtifactLink,
@@ -161,6 +162,7 @@ export class SaveOrchestrator {
     assessment: AssessedSave,
     acknowledged: boolean,
     proof?: DirectiveProofInput,
+    actor?: ActorIdentity,
   ): SaveOutcome {
     return measureSync(
       (entry) => this.performanceRecorder.record(entry),
@@ -174,6 +176,7 @@ export class SaveOrchestrator {
         const auditEntry = this.auditLog.append(
           assessment.classification,
           finalizedDecision,
+          actor,
         );
 
         return {

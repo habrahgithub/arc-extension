@@ -41,6 +41,13 @@ export type AutoSaveMode =
   | 'onFocusChange'
   | 'onWindowChange';
 export type BlueprintMode = 'LOCAL_ONLY' | 'TEAM_SHARED';
+export type ActorType = 'human' | 'agent' | 'model';
+
+export interface ActorIdentity {
+  type: ActorType;
+  id: string;
+  session?: string;
+}
 
 export interface RuleMatcher {
   type: RuleScopeType;
@@ -219,6 +226,7 @@ export interface AuditEntry extends DecisionPayload {
   file_path: string;
   risk_flags: RiskFlag[];
   matched_rules: string[];
+  actor?: ActorIdentity;
   prev_hash: string;
   hash: string;
 }

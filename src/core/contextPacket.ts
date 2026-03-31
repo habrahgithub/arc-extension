@@ -16,6 +16,28 @@ import type {
 import { trimExcerpt } from './contextBuilder';
 
 export const DEFAULT_AUTHORITY_TAG: AuthorityTag = 'LINTEL_LOCAL_ENFORCEMENT';
+
+// Secret redaction patterns — applied to excerpt before packet is built.
+// Does not replace full-file text; only the bounded excerpt field.
+const SECRET_PATTERNS: Array<{ pattern: RegExp; replacement: string }> = [
+  // .env style: KEY=value or KEY="value"
+  { pattern: /([A-Z_][A-Z0-9_]*)=["']?[^\s"']{4,}["']?/g, replacement: '$1=<REDACTED>' },
+  // Bearer token
+  { pattern: /Bearer\s+[A-Za-z0-9\-._~+/]+=*/gi, replacement: 'Bearer <REDACTED>' },
+  // Private key block header
+  { pattern: /-----BEGIN[^-]*PRIVATE KEY-----[\s\S]*?-----END[^-]*PRIVATE KEY-----/gi, replacement: '<REDACTED PRIVATE KEY BLOCK>' },
+];
+
+export function redactSecrets(text: string | undefined): string | undefined {
+  if (!text) {
+    return text;
+  }
+  let redacted = text;
+  for (const { pattern, replacement } of SECRET_PATTERNS) {
+    redacted = redacted.replace(pattern, replacement);
+  }
+  return redacted;
+}
 export const DEFAULT_DATA_CLASS: DataClass = 'LOCAL_ONLY';
 export const DEFAULT_SENSITIVITY_MARKER: SensitivityMarker = 'UNASSESSED';
 export const CONTEXT_PACKET_ID_PREFIX = 'ctx_';
@@ -192,7 +214,7 @@ function buildContextPacketPayload(
     risk_flags: [...classification.riskFlags],
     matched_rule_ids: [...classification.matchedRuleIds],
     last_decision: input.lastDecision,
-    excerpt: trimExcerpt(input.selectionText),
+    excerpt: redactSecrets(trimExcerpt(input.selectionText)),
     heuristic_only: true,
     directive_id: proof?.directiveId,
     blueprint_id: proof?.blueprintId,

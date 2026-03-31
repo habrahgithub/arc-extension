@@ -1,7 +1,7 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import type { AuditEntry, Classification, DecisionPayload } from '../contracts/types';
+import type { ActorIdentity, AuditEntry, Classification, DecisionPayload } from '../contracts/types';
 
 interface AuditLogOptions {
   readonly maxBytes?: number;
@@ -48,7 +48,7 @@ export class AuditLogWriter {
     }
   }
 
-  append(classification: Classification, decision: DecisionPayload): AuditEntry {
+  append(classification: Classification, decision: DecisionPayload, actor?: ActorIdentity): AuditEntry {
     this.ensureReady();
 
     const baseEntry = {
@@ -57,6 +57,7 @@ export class AuditLogWriter {
       risk_flags: classification.riskFlags,
       matched_rules: classification.matchedRuleIds,
       ...decision,
+      ...(actor !== undefined ? { actor } : {}),
     };
 
     const prevHash = this.currentTailHash();
