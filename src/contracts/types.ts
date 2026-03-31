@@ -98,6 +98,10 @@ export interface DecisionPayload {
     | 'UNAVAILABLE_AT_RUNTIME'
     | 'AVAILABLE_AND_USED'
     | 'NOT_ATTEMPTED';
+  actor_id?: string;
+  actor_type?: 'USER' | 'SYSTEM' | 'AGENT';
+  fingerprint?: string;
+  fingerprint_version?: string;
 }
 
 export interface ContextPayload {
