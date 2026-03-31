@@ -97,6 +97,45 @@ describe('sqlite-backed audit log', () => {
     expect(exportedLines[1].prev_hash).toBe(exportedLines[0].hash);
   });
 
+  it('rolls back the full append when a transactional insert step fails', () => {
+    const workspace = makeWorkspace();
+    const writer = new AuditLogWriter(workspace);
+    const authClassification = classifyFile(fixtureInputs.auth, DEFAULT_RULES);
+    const baseDecision = evaluateRules(authClassification, fixtureInputs.auth);
+
+    const initial = writer.append(authClassification, baseDecision);
+
+    expect(() =>
+      writer.append(
+        {
+          ...authClassification,
+          matchedRuleIds: ['rule-auth-path', 'rule-auth-path'],
+        },
+        baseDecision,
+      ),
+    ).toThrowError();
+
+    const sqlitePath = path.join(workspace, '.arc', 'audit.sqlite3');
+    const eventCount = execFileSync(
+      'sqlite3',
+      [sqlitePath, 'SELECT COUNT(*) FROM audit_events;'],
+      { encoding: 'utf8' },
+    )
+      .toString()
+      .trim();
+    const ruleCount = execFileSync(
+      'sqlite3',
+      [sqlitePath, 'SELECT COUNT(*) FROM audit_event_rules;'],
+      { encoding: 'utf8' },
+    )
+      .toString()
+      .trim();
+
+    expect(eventCount).toBe('1');
+    expect(ruleCount).toBe('1');
+    expect(writer.currentTailHash()).toBe(initial.hash);
+    expect(writer.verifyChain()).toBe(true);
+  });
   it('writes SQLite as primary while keeping JSONL as derived export shape', () => {
     const workspace = makeWorkspace();
     const writer = new AuditLogWriter(workspace);
