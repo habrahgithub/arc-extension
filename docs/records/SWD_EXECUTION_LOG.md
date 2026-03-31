@@ -56,3 +56,28 @@
 
 - **Next action**
   - **Owner: Axis** — Validate atomicity guarantees and rollback test sufficiency against WO acceptance criteria.
+
+## 2026-03-31 15:01:05 GST — WO-ARC-XT-M2-002 — Append Atomicity Hardening (SQLite) (PR conflict remediation)
+
+- **What changed**
+  - Hardened SQLite execution behavior by enabling `sqlite3 -bail` for write scripts so transactional append aborts immediately on first SQL error.
+  - Preserved single write-path intent (`BEGIN IMMEDIATE ... COMMIT`) while removing silent continuation risk during mid-transaction failures.
+
+- **Commands run + results**
+  - `/check` — failed (`/check: No such file or directory` in this environment).
+  - `npm run lint` — passed.
+  - `npm run build` — passed.
+  - `npm run test -- tests/integration/auditLog.test.ts` — passed.
+  - `npm run test` — passed (47 files, 369 tests).
+
+- **Evidence links**
+  - Commit: pending (next Forge commit)
+  - PR: to be updated after push
+  - Artifacts:
+    - `src/core/auditLog.ts`
+
+- **Blockers + risks**
+  - Expected test stderr still includes an intentional UNIQUE constraint error from failure-simulation coverage; this is a test artifact, not runtime failure.
+
+- **Next action**
+  - **Owner: Axis** — Confirm rebase/conflict-resolution delta now preserves only atomicity-hardening intent.

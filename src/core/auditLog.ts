@@ -419,7 +419,7 @@ export class AuditLogWriter {
   }
 
   private execSql(sqlStatement: string): void {
-    execFileSync('sqlite3', [this.sqlitePath(), sqlStatement], {
+    execFileSync('sqlite3', ['-bail', this.sqlitePath(), sqlStatement], {
       encoding: 'utf8',
     });
   }
