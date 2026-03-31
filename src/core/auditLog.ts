@@ -166,9 +166,7 @@ export class AuditLogWriter {
       hash,
     };
 
-    const eventId = this.insertEvent(entry);
-    this.persistRuleAndFlags(eventId, entry);
-    this.updateTail(eventId, entry.hash);
+    this.persistAppendAtomically(entry);
 
     const serialized = `${JSON.stringify(entry)}\n`;
     this.rotateIfNeeded(Buffer.byteLength(serialized));
@@ -286,8 +284,23 @@ export class AuditLogWriter {
     fs.writeFileSync(this.auditPath(), payload.length > 0 ? `${payload}\n` : '', 'utf8');
   }
 
-  private insertEvent(entry: AuditEntry): number {
-    const rows = this.execSqlJson<{ event_id: number }>(`
+  private persistAppendAtomically(entry: AuditEntry): void {
+    const insertRulesSql = entry.matched_rules
+      .map(
+        (ruleId) =>
+          `INSERT INTO audit_event_rules (event_id, rule_id) VALUES ((SELECT event_id FROM audit_events WHERE hash = ${sql(entry.hash)}), ${sql(ruleId)});`,
+      )
+      .join('\n');
+
+    const insertFlagsSql = entry.risk_flags
+      .map(
+        (flag) =>
+          `INSERT INTO audit_event_flags (event_id, risk_flag) VALUES ((SELECT event_id FROM audit_events WHERE hash = ${sql(entry.hash)}), ${sql(flag)});`,
+      )
+      .join('\n');
+
+    this.execSql(`
+      BEGIN IMMEDIATE;
       INSERT INTO audit_events (
         ts, file_path, decision, reason, risk_level, source,
         violated_rules, next_action, fallback_cause, lease_status,
@@ -302,31 +315,18 @@ export class AuditLogWriter {
         ${sql(entry.route_clarity ?? null)}, ${sql(entry.route_fallback ?? null)}, ${sql(entry.route_policy_hash ?? null)},
         ${sql(entry.actor_id ?? null)}, ${sql(entry.actor_type ?? null)}, ${sql(entry.fingerprint ?? null)}, ${sql(entry.fingerprint_version ?? null)},
         ${sql(entry.prev_hash)}, ${sql(entry.hash)}
-      ) RETURNING event_id;
-    `);
-    return rows[0].event_id;
-  }
-
-  private persistRuleAndFlags(eventId: number, entry: AuditEntry): void {
-    for (const ruleId of entry.matched_rules) {
-      this.execSql(
-        `INSERT INTO audit_event_rules (event_id, rule_id) VALUES (${eventId}, ${sql(ruleId)});`,
       );
-    }
-    for (const flag of entry.risk_flags) {
-      this.execSql(
-        `INSERT INTO audit_event_flags (event_id, risk_flag) VALUES (${eventId}, ${sql(flag)});`,
-      );
-    }
-  }
 
-  private updateTail(eventId: number, hash: string): void {
-    this.execSql(`
+      ${insertRulesSql}
+      ${insertFlagsSql}
+
       UPDATE audit_chain_state
-      SET tail_event_id = ${eventId},
-          tail_hash = ${sql(hash)},
+      SET tail_event_id = (SELECT event_id FROM audit_events WHERE hash = ${sql(entry.hash)}),
+          tail_hash = ${sql(entry.hash)},
           updated_at = ${sql(new Date().toISOString())}
       WHERE singleton_id = 1;
+
+      COMMIT;
     `);
   }
 

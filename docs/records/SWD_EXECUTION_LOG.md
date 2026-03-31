@@ -29,3 +29,30 @@
 
 - **Next action**
   - **Owner: Axis** — Review schema durability, chain semantics, and governance boundary correctness.
+
+## 2026-03-31 14:24:22 GST — WO-ARC-XT-M2-002 — Append Atomicity Hardening (SQLite)
+
+- **What changed**
+  - Hardened SQLite append path to execute event insert, rule/flag inserts, and chain-tail update inside a single `BEGIN IMMEDIATE ... COMMIT` transaction script.
+  - Removed multi-call append sequence that could previously leave partial writes if a mid-append step failed.
+  - Added failure simulation integration test proving rollback behavior: duplicate rule insertion failure does not create partial event rows or tail drift.
+
+- **Commands run + results**
+  - `/check` — failed (`/check: No such file or directory` in this environment).
+  - `npm run lint` — passed.
+  - `npm run build` — passed.
+  - `npm run test -- tests/integration/auditLog.test.ts` — passed (includes rollback failure simulation).
+  - `npm run test` — passed (47 files, 369 tests).
+
+- **Evidence links**
+  - Commit: HEAD (this execution commit)
+  - PR: pending (to be created by Forge make_pr tool)
+  - Artifacts:
+    - `src/core/auditLog.ts`
+    - `tests/integration/auditLog.test.ts`
+
+- **Blockers + risks**
+  - JSONL write remains downstream of committed SQLite transaction; SQLite authority is preserved, and JSONL remains derived output.
+
+- **Next action**
+  - **Owner: Axis** — Validate atomicity guarantees and rollback test sufficiency against WO acceptance criteria.
