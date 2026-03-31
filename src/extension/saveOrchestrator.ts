@@ -33,6 +33,7 @@ import {
   measureAsync,
   measureSync,
 } from '../core/performance';
+import { AnalysisEngine } from '../core/analysis/AnalysisEngine';
 import {
   buildRouteMetadata,
   RoutePolicyStore,
@@ -91,6 +92,9 @@ export class SaveOrchestrator {
         );
         const routePolicy = this.routePolicy.load();
         const context = buildContext(classification, input);
+        const analysisEngine = new AnalysisEngine({
+          astFingerprintingEnabled: routePolicy.config.astFingerprintingEnabled,
+        });
         const contextPacket = buildContextPacket(
           classification,
           input,
@@ -102,6 +106,7 @@ export class SaveOrchestrator {
           contextPacket,
           input,
         );
+        const analysis = analysisEngine.runAnalysis(classification, input);
         const ruleDecision = this.withRouteMetadata(
           measureSync(
             (entry) => this.performanceRecorder.record(entry),
@@ -129,6 +134,7 @@ export class SaveOrchestrator {
             classification,
             context,
             contextPacket,
+            analysis,
             decision: observeDecision,
             input,
             routePolicy,
@@ -147,6 +153,7 @@ export class SaveOrchestrator {
             classification,
             context,
             contextPacket,
+            analysis,
             decision: this.withRouteMetadata(reusedLease, routerShell),
             input,
             routePolicy,
@@ -167,6 +174,7 @@ export class SaveOrchestrator {
           classification,
           context,
           contextPacket,
+          analysis,
           decision: evaluatedDecision,
           input,
           routePolicy,
@@ -201,6 +209,7 @@ export class SaveOrchestrator {
           assessment.classification,
           finalizedDecision,
           actor,
+          assessment.analysis.fingerprints?.file,
         );
 
         // Phase 8 — Write override record on fresh acknowledged save

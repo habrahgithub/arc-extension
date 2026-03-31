@@ -165,6 +165,36 @@ describe('save orchestrator', () => {
     expect(perfEntries.some((entry) => entry.operation === 'evaluate_rules')).toBe(true);
   });
 
+  it('records AST fingerprint hash in audit entries when ast fingerprinting is enabled', async () => {
+    const workspace = makeWorkspace();
+    fs.mkdirSync(path.join(workspace, '.arc'), { recursive: true });
+    fs.writeFileSync(
+      path.join(workspace, '.arc', 'router.json'),
+      JSON.stringify({
+        mode: 'RULE_ONLY',
+        local_lane_enabled: false,
+        cloud_lane_enabled: false,
+        ast_fingerprinting_enabled: true,
+      }),
+      'utf8',
+    );
+
+    const orchestrator = new SaveOrchestrator(workspace, new DisabledModelAdapter());
+    const assessed = await orchestrator.assessSave({
+      ...fixtureInputs.auth,
+      filePath: 'src/example.ts',
+      fileName: 'example.ts',
+      text: 'export function save(){ return true; }',
+    });
+    const outcome = orchestrator.commitAssessment(assessed, true);
+    const auditPath = path.join(workspace, '.arc', 'audit.jsonl');
+    const entries = fs.readFileSync(auditPath, 'utf8').trim().split('\n');
+    const parsed = JSON.parse(entries[0]) as { fingerprint?: string };
+
+    expect(outcome.analysis.fingerprints?.file).toBeDefined();
+    expect(parsed.fingerprint).toBe(outcome.analysis.fingerprints?.file);
+  });
+
   it('fails closed to RULE_ONLY and keeps decisions unchanged when cloud-assisted config violates local-first prerequisites', async () => {
     const workspace = makeWorkspace();
     fs.mkdirSync(path.join(workspace, '.arc'), { recursive: true });

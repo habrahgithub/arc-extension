@@ -48,7 +48,12 @@ export class AuditLogWriter {
     }
   }
 
-  append(classification: Classification, decision: DecisionPayload, actor?: ActorIdentity): AuditEntry {
+  append(
+    classification: Classification,
+    decision: DecisionPayload,
+    actor?: ActorIdentity,
+    fingerprint?: string,
+  ): AuditEntry {
     this.ensureReady();
 
     const baseEntry = {
@@ -58,6 +63,7 @@ export class AuditLogWriter {
       matched_rules: classification.matchedRuleIds,
       ...decision,
       ...(actor !== undefined ? { actor } : {}),
+      ...(fingerprint !== undefined ? { fingerprint } : {}),
     };
 
     const prevHash = this.currentTailHash();
@@ -136,6 +142,9 @@ export class AuditLogWriter {
             route_clarity: entry.route_clarity,
             route_fallback: entry.route_fallback,
             route_policy_hash: entry.route_policy_hash,
+            ...(entry.fingerprint !== undefined
+              ? { fingerprint: entry.fingerprint }
+              : {}),
           },
           entry.prev_hash,
         );
@@ -232,6 +241,9 @@ export class AuditLogWriter {
           route_clarity: entry.route_clarity ?? null,
           route_fallback: entry.route_fallback ?? null,
           route_policy_hash: entry.route_policy_hash ?? null,
+          ...(entry.fingerprint !== undefined
+            ? { fingerprint: entry.fingerprint }
+            : {}),
         })
       : JSON.stringify({
           prev_hash: prevHash,
@@ -249,6 +261,9 @@ export class AuditLogWriter {
           lease_status: entry.lease_status,
           directive_id: entry.directive_id ?? null,
           blueprint_id: entry.blueprint_id ?? null,
+          ...(entry.fingerprint !== undefined
+            ? { fingerprint: entry.fingerprint }
+            : {}),
         });
 
     return crypto.createHash('sha256').update(serialized).digest('hex');

@@ -24,6 +24,7 @@ const validateRoutePolicyConfig = ajv.compile({
     cloud_lane_enabled: { type: 'boolean' },
     cloud_data_class: { type: 'string', enum: ['LOCAL_ONLY', 'CLOUD_ELIGIBLE', 'RESTRICTED'] },
     governance_mode: { type: 'string', enum: ['OBSERVE', 'ENFORCE'] },
+    ast_fingerprinting_enabled: { type: 'boolean' },
   },
   additionalProperties: false,
 });
@@ -34,6 +35,7 @@ const DEFAULT_ROUTE_POLICY: NormalizedRoutePolicy = {
   cloudLaneEnabled: false,
   cloudDataClass: 'LOCAL_ONLY',
   governanceMode: 'ENFORCE',
+  astFingerprintingEnabled: false,
 };
 
 const INVALID_PACKET_REASON =
@@ -486,6 +488,7 @@ function normalizeRoutePolicy(
   const cloudLaneEnabled = config.cloud_lane_enabled ?? false;
   const cloudDataClass = normalizeCloudDataClass(config.cloud_data_class);
   const governanceMode = config.governance_mode ?? 'ENFORCE';
+  const astFingerprintingEnabled = config.ast_fingerprinting_enabled ?? false;
 
   if (mode === 'RULE_ONLY') {
     if (localLaneEnabled || cloudLaneEnabled || cloudDataClass !== 'LOCAL_ONLY') {
@@ -498,6 +501,7 @@ function normalizeRoutePolicy(
       cloudLaneEnabled: false,
       cloudDataClass: 'LOCAL_ONLY',
       governanceMode,
+      astFingerprintingEnabled,
     };
   }
 
@@ -512,6 +516,7 @@ function normalizeRoutePolicy(
       cloudLaneEnabled: false,
       cloudDataClass: 'LOCAL_ONLY',
       governanceMode,
+      astFingerprintingEnabled,
     };
   }
 
@@ -526,6 +531,7 @@ function normalizeRoutePolicy(
       cloudLaneEnabled: true,
       cloudDataClass,
       governanceMode,
+      astFingerprintingEnabled,
     };
   }
 
@@ -561,6 +567,7 @@ function hashPolicy(config: NormalizedRoutePolicy): string {
       cloudLaneEnabled: config.cloudLaneEnabled,
       cloudDataClass: config.cloudDataClass,
       governanceMode: config.governanceMode,
+      astFingerprintingEnabled: config.astFingerprintingEnabled,
     }))
     .digest('hex');
 }
