@@ -1,4 +1,4 @@
-import crypto from 'node:crypto';
+import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -26,66 +26,100 @@ afterEach(() => {
   }
 });
 
-describe('audit log rotation', () => {
-  it('preserves chain continuity across rotation', () => {
+describe('sqlite-backed audit log', () => {
+  it('preserves append continuity and hash-chain integrity', () => {
     const workspace = makeWorkspace();
-    const writer = new AuditLogWriter(workspace, { maxBytes: 400 });
+    const writer = new AuditLogWriter(workspace);
     const authClassification = classifyFile(fixtureInputs.auth, DEFAULT_RULES);
     const schemaClassification = classifyFile(fixtureInputs.schema, DEFAULT_RULES);
 
-    writer.append(authClassification, evaluateRules(authClassification, fixtureInputs.auth));
-    writer.append(schemaClassification, evaluateRules(schemaClassification, fixtureInputs.schema));
-    writer.append(authClassification, evaluateRules(authClassification, fixtureInputs.auth));
+    const first = writer.append(
+      authClassification,
+      evaluateRules(authClassification, fixtureInputs.auth),
+    );
+    const second = writer.append(
+      schemaClassification,
+      evaluateRules(schemaClassification, fixtureInputs.schema),
+    );
 
-    const archiveDir = path.join(workspace, '.arc', 'archive');
-    expect(fs.readdirSync(archiveDir).length).toBeGreaterThan(0);
+    expect(first.prev_hash).toBe('ROOT');
+    expect(second.prev_hash).toBe(first.hash);
     expect(writer.verifyChain()).toBe(true);
   });
 
-  it('continues to verify legacy Phase 5 entries that do not contain route metadata', () => {
+  it('detects tamper/hash mismatch during verification', () => {
     const workspace = makeWorkspace();
     const writer = new AuditLogWriter(workspace);
-    const arcDir = path.join(workspace, '.arc');
-    fs.mkdirSync(arcDir, { recursive: true });
-    const baseEntry = {
-      ts: '2026-03-20T00:00:00.000Z',
-      file_path: 'src/auth/session.ts',
-      risk_flags: ['AUTH_CHANGE'],
-      matched_rules: ['rule-auth-path'],
-      decision: 'REQUIRE_PLAN',
-      reason: 'Authentication-sensitive paths require an explicit plan acknowledgment.',
-      risk_level: 'HIGH',
-      violated_rules: ['rule-auth-path'],
-      next_action: 'Capture intent before proceeding with this save.',
-      source: 'RULE',
-      fallback_cause: 'NONE',
-      lease_status: 'NEW',
-      directive_id: 'LINTEL-PH5-001',
-      blueprint_id: '.arc/blueprints/LINTEL-PH5-001.md',
-    };
-    const hash = crypto
-      .createHash('sha256')
-      .update(
-        JSON.stringify({
-          prev_hash: 'ROOT',
-          ...baseEntry,
-          directive_id: baseEntry.directive_id,
-          blueprint_id: baseEntry.blueprint_id,
-        }),
-      )
-      .digest('hex');
-    fs.writeFileSync(
-      path.join(arcDir, 'audit.jsonl'),
-      [
-        JSON.stringify({
-          ...baseEntry,
-          prev_hash: 'ROOT',
-          hash,
-        }),
-      ].join('\n'),
-      'utf8',
-    );
+    const authClassification = classifyFile(fixtureInputs.auth, DEFAULT_RULES);
+    writer.append(authClassification, evaluateRules(authClassification, fixtureInputs.auth));
 
-    expect(writer.verifyChain()).toBe(true);
+    const sqlitePath = path.join(workspace, '.arc', 'audit.sqlite3');
+    const tamperSql = "UPDATE audit_events SET hash = 'tampered' WHERE event_id = 1;";
+    execFileSync('sqlite3', [sqlitePath, tamperSql], { encoding: 'utf8' });
+
+    expect(writer.verifyChain()).toBe(false);
+  });
+
+  it('persists and exports optional fingerprint metadata while allowing null fingerprint', () => {
+    const workspace = makeWorkspace();
+    const writer = new AuditLogWriter(workspace);
+    const authClassification = classifyFile(fixtureInputs.auth, DEFAULT_RULES);
+    const baseDecision = evaluateRules(authClassification, fixtureInputs.auth);
+
+    const withoutFingerprint = writer.append(authClassification, {
+      ...baseDecision,
+      fingerprint: undefined,
+      fingerprint_version: undefined,
+    });
+
+    const withFingerprint = writer.append(authClassification, {
+      ...baseDecision,
+      fingerprint: 'sha256:abcdef123456',
+      fingerprint_version: 'fp.v1',
+      actor_id: 'forge-agent',
+      actor_type: 'AGENT',
+    });
+
+    expect(withoutFingerprint.fingerprint).toBeUndefined();
+    expect(withFingerprint.fingerprint_version).toBe('fp.v1');
+
+    writer.exportJsonlFromSqlite();
+    const exportedLines = fs
+      .readFileSync(path.join(workspace, '.arc', 'audit.jsonl'), 'utf8')
+      .trim()
+      .split('\n')
+      .filter(Boolean)
+      .map((line) => JSON.parse(line) as Record<string, unknown>);
+
+    expect(exportedLines).toHaveLength(2);
+    expect(exportedLines[1].fingerprint).toBe('sha256:abcdef123456');
+    expect(exportedLines[1].fingerprint_version).toBe('fp.v1');
+    expect(exportedLines[1].prev_hash).toBe(exportedLines[0].hash);
+  });
+
+  it('writes SQLite as primary while keeping JSONL as derived export shape', () => {
+    const workspace = makeWorkspace();
+    const writer = new AuditLogWriter(workspace);
+    const schemaClassification = classifyFile(fixtureInputs.schema, DEFAULT_RULES);
+
+    writer.append(schemaClassification, evaluateRules(schemaClassification, fixtureInputs.schema));
+
+    const sqlitePath = path.join(workspace, '.arc', 'audit.sqlite3');
+    const sqliteCount = execFileSync(
+      'sqlite3',
+      [sqlitePath, 'SELECT COUNT(*) AS total FROM audit_events;'],
+      { encoding: 'utf8' },
+    )
+      .toString()
+      .trim();
+
+    expect(sqliteCount).toBe('1');
+
+    writer.exportJsonlFromSqlite();
+    const jsonl = fs.readFileSync(path.join(workspace, '.arc', 'audit.jsonl'), 'utf8');
+    const exported = JSON.parse(jsonl.trim()) as Record<string, unknown>;
+    expect(exported.file_path).toBe(schemaClassification.filePath);
+    expect(Array.isArray(exported.matched_rules)).toBe(true);
+    expect(Array.isArray(exported.risk_flags)).toBe(true);
   });
 });
