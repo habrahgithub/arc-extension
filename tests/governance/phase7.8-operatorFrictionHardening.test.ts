@@ -205,6 +205,9 @@ describe('Phase 7.8 — Operator Friction Hardening Governance', () => {
         'decisionLease.ts',
         'decisionPolicy.ts',
         'overrideLog.ts', // Phase 8 (ARC-PHASE-008) — not Phase 7.8
+        'deviationDetector.ts', // added via main (Codex PRs)
+        'explanationSynthesizer.ts', // added via main (Codex PRs)
+        'governanceFeedbackEvaluator.ts', // added via main (Codex PRs)
         'performance.ts',
         'risk.ts',
         'routerPolicy.ts',

@@ -1,8 +1,20 @@
-# ARC XT — Audit Ready Core
+# ARC — Audit Layer for AI-Assisted Coding
 
-**Governed code enforcement for AI-assisted development in a local-first VS Code extension.**
+ARC XT — Audit Ready Core is the first live product: a local-first VS Code extension that brings the ARC audit layer into the moment of change.
 
-ARC XT helps development teams maintain code quality and governance standards by intercepting saves and requiring explicit justification for high-risk changes. It is built for teams that need audit trails, proof-backed decisions, and fail-closed enforcement inside VS Code.
+ARC introduces a deterministic, tamper-evident audit layer inside your IDE.
+
+It records and verifies every critical code decision at the moment it’s made — before it reaches PR, CI, or production.
+
+In an AI-assisted workflow where code is generated faster than it can be reviewed, ARC ensures every change is accountable, traceable, and verifiable.
+
+```text
+AI (Copilot / Cursor / Claude)
+        ↓
+ARC (Audit Layer)
+        ↓
+Git / PR / CI
+```
 
 ## Beta Status
 

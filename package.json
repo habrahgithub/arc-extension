@@ -1,6 +1,6 @@
 {
   "name": "arc-audit-ready-core",
-  "displayName": "ARC XT — Audit Ready Core",
+  "displayName": "ARC XT \u2014 Audit Ready Core",
   "description": "Governed code enforcement for AI-assisted development in a local-first VS Code extension. Public beta candidate for ARC XT.",
   "version": "0.1.10",
   "preview": true,
@@ -16,24 +16,24 @@
     "Other"
   ],
   "keywords": [
-    "governance",
-    "code quality",
     "audit",
-    "compliance",
-    "enforcement",
-    "local-first",
-    "save governance",
-    "blueprint proof",
-    "audit trail"
+    "audit layer",
+    "accountability",
+    "traceability",
+    "tamper-evident",
+    "hash chain",
+    "decision log",
+    "ai-assisted coding",
+    "ide"
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/habrahgithub/arc-extension.git"
+    "url": "https://github.com/habrahgithub/lintel.git"
   },
   "bugs": {
-    "url": "https://github.com/habrahgithub/arc-extension/issues"
+    "url": "https://github.com/habrahgithub/lintel/issues"
   },
-  "homepage": "https://github.com/habrahgithub/arc-extension#readme",
+  "homepage": "https://github.com/habrahgithub/lintel#readme",
   "icon": "Public/Logo/ARC-ICON-1024.png",
   "galleryBanner": {
     "color": "#1e1e1e",
@@ -60,13 +60,18 @@
     "onCommand:arc.ui.decisionFeed",
     "onCommand:arc.ui.auditTimeline",
     "onCommand:arc.ui.whyPanel",
-    "onCommand:arc.ui.taskBoard"
+    "onCommand:arc.ui.taskBoard",
+    "onCommand:arc.showDecisionTimeline"
   ],
   "contributes": {
     "commands": [
       {
         "command": "arc.showWelcome",
         "title": "ARC XT: Show Welcome Guide"
+      },
+      {
+        "command": "arc.showDecisionTimeline",
+        "title": "ARC: Show Decision Timeline"
       },
       {
         "command": "arc.reviewAudit",

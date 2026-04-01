@@ -50,6 +50,86 @@ export interface ActorIdentity {
   session?: string;
 }
 
+export type AuditEventType = 'SAVE' | 'RUN' | 'COMMIT';
+export type DriftStatus =
+  | 'NO_DRIFT'
+  | 'DRIFT_DETECTED'
+  | 'NO_LINKED_DECISION'
+  | 'FINGERPRINT_UNAVAILABLE';
+export type DeviationType = 'SEQUENCE' | 'POLICY' | 'SHAPE' | 'NONE';
+export type ExplanationCode =
+  | 'NO_DEVIATION'
+  | 'TOOL_SEQUENCE_MISMATCH'
+  | 'REQUIRED_POLICY_MISSING'
+  | 'OUTPUT_SHAPE_MISMATCH';
+
+export type BehaviorContract = {
+  allowedToolSequence?: string[];
+  requiredPolicies?: string[];
+  expectedOutputShape?: string;
+};
+
+export interface ExecutionEvent {
+  eventType: AuditEventType;
+  toolSequence: string[];
+  activePolicies: string[];
+  outputShape?: string;
+}
+
+export interface DeviationResult {
+  isDeviation: boolean;
+  type: DeviationType;
+  reason?: string;
+}
+
+export interface DeviationAuditRecord {
+  isDeviation: boolean;
+  type: DeviationType;
+  reason?: string;
+}
+
+export interface ExplanationInput {
+  event: ExecutionEvent;
+  contract?: BehaviorContract;
+  deviation: DeviationResult;
+  failureType?: 'TYPE-B';
+}
+
+export interface ExplanationResult {
+  code: ExplanationCode;
+  summary: string;
+  cause: string;
+  evidence: string[];
+}
+
+export interface PatternSnapshot {
+  occurrenceCount: number;
+  firstSeenAt?: string;
+  lastSeenAt?: string;
+}
+
+export interface GovernanceFeedbackInput {
+  event: ExecutionEvent;
+  deviation: DeviationResult;
+  explanation: ExplanationResult;
+  failureType?: 'TYPE-B';
+  recentPattern?: PatternSnapshot;
+}
+
+export type GovernanceProposalType =
+  | 'REVIEW_CONTRACT'
+  | 'REVIEW_POLICY_REQUIREMENT'
+  | 'REVIEW_OUTPUT_CONTRACT';
+
+export interface GovernanceProposal {
+  proposalType: GovernanceProposalType;
+  triggerCode: ExplanationCode;
+  summary: string;
+  rationale: string;
+  evidence: string[];
+  reviewStatus: 'PENDING_REVIEW';
+}
+
 export interface RuleMatcher {
   type: RuleScopeType;
   value: string;
@@ -108,6 +188,14 @@ export interface DecisionPayload {
     | 'NOT_ATTEMPTED';
   // Phase 8 — Governance mode marker
   governance_mode?: GovernanceMode;
+  actor_id?: string;
+  actor_type?: 'USER' | 'SYSTEM' | 'AGENT';
+  fingerprint?: string;
+  fingerprint_version?: string;
+  deviation?: DeviationAuditRecord;
+  failure_type?: 'TYPE-B';
+  explanation?: ExplanationResult;
+  governance_proposal?: GovernanceProposal;
 }
 
 export interface ContextPayload {
@@ -239,6 +327,10 @@ export interface RouterShellResolution {
 }
 
 export interface AuditEntry extends DecisionPayload {
+  event_type: AuditEventType;
+  decision_id: string;
+  linked_decision_id?: string;
+  drift_status?: DriftStatus;
   ts: string;
   file_path: string;
   risk_flags: RiskFlag[];

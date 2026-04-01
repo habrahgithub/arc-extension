@@ -452,9 +452,31 @@ function computeAuditHash(
   entry: AuditEntry,
   prevHash: string,
 ): string {
-  const serialized = hasRouteMetadata(entry)
-    ? JSON.stringify({
+  const legacyPayload = {
+    prev_hash: prevHash,
+    ts: entry.ts,
+    file_path: entry.file_path,
+    risk_flags: entry.risk_flags,
+    matched_rules: entry.matched_rules,
+    decision: entry.decision,
+    reason: entry.reason,
+    risk_level: entry.risk_level,
+    violated_rules: entry.violated_rules,
+    next_action: entry.next_action,
+    source: entry.source,
+    fallback_cause: entry.fallback_cause,
+    lease_status: entry.lease_status,
+    directive_id: entry.directive_id ?? null,
+    blueprint_id: entry.blueprint_id ?? null,
+  };
+
+  const basePayload = hasLifecycleMetadata(entry)
+    ? {
         prev_hash: prevHash,
+        event_type: entry.event_type ?? 'SAVE',
+        decision_id: entry.decision_id ?? null,
+        linked_decision_id: entry.linked_decision_id ?? null,
+        drift_status: entry.drift_status ?? null,
         ts: entry.ts,
         file_path: entry.file_path,
         risk_flags: entry.risk_flags,
@@ -469,32 +491,36 @@ function computeAuditHash(
         lease_status: entry.lease_status,
         directive_id: entry.directive_id ?? null,
         blueprint_id: entry.blueprint_id ?? null,
+      }
+    : legacyPayload;
+
+  const withRoute = hasRouteMetadata(entry)
+    ? {
+        ...basePayload,
         route_mode: entry.route_mode ?? null,
         route_lane: entry.route_lane ?? null,
         route_reason: entry.route_reason ?? null,
         route_clarity: entry.route_clarity ?? null,
         route_fallback: entry.route_fallback ?? null,
         route_policy_hash: entry.route_policy_hash ?? null,
+      }
+    : basePayload;
+
+  const serialized = hasFingerprintMetadata(entry)
+    ? JSON.stringify({
+        ...withRoute,
+        actor_id: entry.actor_id ?? null,
+        actor_type: entry.actor_type ?? null,
+        fingerprint: entry.fingerprint ?? null,
+        fingerprint_version: entry.fingerprint_version ?? null,
       })
-    : JSON.stringify({
-        prev_hash: prevHash,
-        ts: entry.ts,
-        file_path: entry.file_path,
-        risk_flags: entry.risk_flags,
-        matched_rules: entry.matched_rules,
-        decision: entry.decision,
-        reason: entry.reason,
-        risk_level: entry.risk_level,
-        violated_rules: entry.violated_rules,
-        next_action: entry.next_action,
-        source: entry.source,
-        fallback_cause: entry.fallback_cause,
-        lease_status: entry.lease_status,
-        directive_id: entry.directive_id ?? null,
-        blueprint_id: entry.blueprint_id ?? null,
-      });
+    : JSON.stringify(withRoute);
 
   return crypto.createHash('sha256').update(serialized).digest('hex');
+}
+
+function hasLifecycleMetadata(entry: Partial<AuditEntry>): boolean {
+  return entry.decision_id !== undefined || entry.linked_decision_id !== undefined;
 }
 
 function hasRouteMetadata(entry: Partial<AuditEntry>): boolean {
@@ -505,6 +531,15 @@ function hasRouteMetadata(entry: Partial<AuditEntry>): boolean {
     entry.route_clarity !== undefined ||
     entry.route_fallback !== undefined ||
     entry.route_policy_hash !== undefined
+  );
+}
+
+function hasFingerprintMetadata(entry: Partial<AuditEntry>): boolean {
+  return (
+    entry.actor_id !== undefined ||
+    entry.actor_type !== undefined ||
+    entry.fingerprint !== undefined ||
+    entry.fingerprint_version !== undefined
   );
 }
 

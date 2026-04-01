@@ -12,7 +12,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import type { ActorIdentity, DecisionPayload } from '../../src/contracts/types';
+import type { DecisionPayload } from '../../src/contracts/types';
 import { AuditLogWriter } from '../../src/core/auditLog';
 import { classifyFile } from '../../src/core/classifier';
 import { redactSecrets } from '../../src/core/contextPacket';
@@ -50,23 +50,20 @@ afterEach(() => {
 // ---------------------------------------------------------------------------
 
 describe('ActorIdentity — audit entry attribution', () => {
-  it('stores actor when provided to append()', () => {
+  it('stores actor when provided via decision fields', () => {
     const workspace = makeWorkspace();
     const writer = new AuditLogWriter(workspace);
     const input = fixtureInputs.button;
     const classification = classifyFile(input, DEFAULT_RULES);
-    const decision = evaluateRules(classification, input);
-    const actor: ActorIdentity = { type: 'human', id: 'test-machine-id', session: 'sess-001' };
+    const decision = { ...evaluateRules(classification, input), actor_id: 'test-machine-id', actor_type: 'USER' as const };
 
-    const entry = writer.append(classification, decision, actor);
+    const entry = writer.append(classification, decision);
 
-    expect(entry.actor).toBeDefined();
-    expect(entry.actor?.type).toBe('human');
-    expect(entry.actor?.id).toBe('test-machine-id');
-    expect(entry.actor?.session).toBe('sess-001');
+    expect(entry.actor_id).toBe('test-machine-id');
+    expect(entry.actor_type).toBe('USER');
   });
 
-  it('omits actor field when not provided', () => {
+  it('omits actor fields when not provided', () => {
     const workspace = makeWorkspace();
     const writer = new AuditLogWriter(workspace);
     const input = fixtureInputs.button;
@@ -75,7 +72,8 @@ describe('ActorIdentity — audit entry attribution', () => {
 
     const entry = writer.append(classification, decision);
 
-    expect(entry.actor).toBeUndefined();
+    expect(entry.actor_id).toBeUndefined();
+    expect(entry.actor_type).toBeUndefined();
   });
 
   it('persists actor to audit.jsonl and reads it back', () => {
@@ -83,29 +81,27 @@ describe('ActorIdentity — audit entry attribution', () => {
     const writer = new AuditLogWriter(workspace);
     const input = fixtureInputs.button;
     const classification = classifyFile(input, DEFAULT_RULES);
-    const decision = evaluateRules(classification, input);
-    const actor: ActorIdentity = { type: 'human', id: 'machine-xyz' };
+    const decision = { ...evaluateRules(classification, input), actor_id: 'machine-xyz', actor_type: 'USER' as const };
 
-    writer.append(classification, decision, actor);
+    writer.append(classification, decision);
 
     const auditPath = path.join(workspace, '.arc', 'audit.jsonl');
     const line = fs.readFileSync(auditPath, 'utf8').trim();
-    const parsed = JSON.parse(line) as { actor?: ActorIdentity };
+    const parsed = JSON.parse(line) as { actor_id?: string; actor_type?: string };
 
-    expect(parsed.actor?.type).toBe('human');
-    expect(parsed.actor?.id).toBe('machine-xyz');
+    expect(parsed.actor_type).toBe('USER');
+    expect(parsed.actor_id).toBe('machine-xyz');
   });
 
-  it('preserves hash-chain integrity when actor is present', () => {
+  it('preserves hash-chain integrity when actor fields are present', () => {
     const workspace = makeWorkspace();
     const writer = new AuditLogWriter(workspace);
     const input = fixtureInputs.button;
     const classification = classifyFile(input, DEFAULT_RULES);
-    const decision = evaluateRules(classification, input);
-    const actor: ActorIdentity = { type: 'human', id: 'machine-abc' };
+    const decision = { ...evaluateRules(classification, input), actor_id: 'machine-abc', actor_type: 'USER' as const };
 
-    writer.append(classification, decision, actor);
-    writer.append(classification, decision, actor);
+    writer.append(classification, decision);
+    writer.append(classification, decision);
 
     expect(writer.verifyChain()).toBe(true);
   });
@@ -115,13 +111,12 @@ describe('ActorIdentity — audit entry attribution', () => {
     const writer = new AuditLogWriter(workspace);
     const input = fixtureInputs.button;
     const classification = classifyFile(input, DEFAULT_RULES);
-    const decision = evaluateRules(classification, input);
-    const actor: ActorIdentity = { type: 'agent', id: 'forge_v1' };
+    const decision = { ...evaluateRules(classification, input), actor_id: 'forge_v1', actor_type: 'AGENT' as const };
 
-    const entry = writer.append(classification, decision, actor);
+    const entry = writer.append(classification, decision);
 
-    expect(entry.actor?.type).toBe('agent');
-    expect(entry.actor?.id).toBe('forge_v1');
+    expect(entry.actor_type).toBe('AGENT');
+    expect(entry.actor_id).toBe('forge_v1');
   });
 
   it('chain verifies correctly when mixing entries with and without actor', () => {
@@ -130,10 +125,10 @@ describe('ActorIdentity — audit entry attribution', () => {
     const input = fixtureInputs.button;
     const classification = classifyFile(input, DEFAULT_RULES);
     const decision = evaluateRules(classification, input);
-    const actor: ActorIdentity = { type: 'human', id: 'human-1' };
+    const decisionWithActor = { ...decision, actor_id: 'human-1', actor_type: 'USER' as const };
 
     writer.append(classification, decision);
-    writer.append(classification, decision, actor);
+    writer.append(classification, decisionWithActor);
     writer.append(classification, decision);
 
     expect(writer.verifyChain()).toBe(true);

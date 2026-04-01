@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import {
   DisabledModelAdapter,
   ModelAdapterError,
@@ -8,10 +10,13 @@ import type {
   ActorIdentity,
   AssessedSave,
   AuditEntry,
+  AuditEventType,
+  BehaviorContract,
   BlueprintArtifactLink,
   Classification,
   ContextPayload,
   DecisionPayload,
+  ExecutionEvent,
   DirectiveProofInput,
   FallbackCause,
   SaveInput,
@@ -33,6 +38,9 @@ import {
   measureAsync,
   measureSync,
 } from '../core/performance';
+import { DeviationDetector } from '../core/deviationDetector';
+import { ExplanationSynthesizer } from '../core/explanationSynthesizer';
+import { GovernanceFeedbackEvaluator } from '../core/governanceFeedbackEvaluator';
 import {
   buildRouteMetadata,
   RoutePolicyStore,
@@ -50,6 +58,9 @@ export class SaveOrchestrator {
   private readonly routerShell: RouterShell;
   private readonly disabledModelAdapter: ModelAdapter;
   private readonly overrideLog: OverrideLogWriter;
+  private readonly deviationDetector = new DeviationDetector();
+  private readonly explanationSynthesizer = new ExplanationSynthesizer();
+  private readonly governanceFeedbackEvaluator = new GovernanceFeedbackEvaluator();
 
   constructor(
     private readonly workspaceRoot: string,
@@ -197,10 +208,19 @@ export class SaveOrchestrator {
           acknowledged,
           proof,
         );
+        const decisionWithFingerprint: DecisionPayload = {
+          ...finalizedDecision,
+          fingerprint: this.leaseStore.fingerprint(
+            assessment.input,
+            assessment.classification,
+            finalizedDecision,
+          ),
+          fingerprint_version: 'lease.v1',
+        };
+
         const auditEntry = this.auditLog.append(
           assessment.classification,
-          finalizedDecision,
-          actor,
+          decisionWithFingerprint,
         );
 
         // Phase 8 — Write override record on fresh acknowledged save
@@ -210,7 +230,7 @@ export class SaveOrchestrator {
 
         return {
           ...assessment,
-          decision: finalizedDecision,
+          decision: decisionWithFingerprint,
           auditEntry,
           shouldRevertAfterSave: shouldRevertAfterSave(finalizedDecision),
         };
@@ -225,6 +245,19 @@ export class SaveOrchestrator {
 
   verifyAuditChain(): boolean {
     return this.auditLog.verifyChain();
+  }
+
+  async observeExecution(commandId: string, filePath?: string): Promise<AuditEntry> {
+    return this.observeEvent('RUN', commandId, filePath, readObservedText(filePath));
+  }
+
+  async observeCommit(repositoryRoot?: string, observedText?: string): Promise<AuditEntry> {
+    return this.observeEvent(
+      'COMMIT',
+      'git.commit',
+      repositoryRoot,
+      observedText ?? readObservedText(repositoryRoot),
+    );
   }
 
   ensureBlueprintTemplate(directiveId: string): BlueprintArtifactLink {
@@ -264,6 +297,101 @@ export class SaveOrchestrator {
     });
 
     return resolution.ok ? reusedLease : undefined;
+  }
+
+  private async observeEvent(
+    eventType: AuditEventType,
+    identifier: string,
+    filePath?: string,
+    observedText = '',
+  ): Promise<AuditEntry> {
+    const observedPath = filePath
+      ? filePath
+      : path.join(
+          this.workspaceRoot,
+          '.arc',
+          'observation',
+          eventType.toLowerCase(),
+          identifier,
+        );
+
+    const assessment = await this.assessSave({
+      filePath: observedPath,
+      fileName: path.basename(observedPath),
+      text: observedText,
+      previousText: observedText,
+      saveMode: 'EXPLICIT',
+      autoSaveMode: 'off',
+    });
+
+    const decision: DecisionPayload = {
+      ...assessment.decision,
+      lease_status: 'BYPASSED',
+      reason: `[OBSERVATION] ${eventType} event captured for ${identifier}`,
+      next_action: 'Observation captured. No runtime mutation applied.',
+      actor_type: 'SYSTEM',
+      actor_id: identifier,
+      fingerprint: this.leaseStore.fingerprint(
+        assessment.input,
+        assessment.classification,
+        assessment.decision,
+      ),
+      fingerprint_version: 'lease.v1',
+    };
+
+    const executionEvent: ExecutionEvent = {
+      eventType,
+      toolSequence: [identifier],
+      activePolicies: activeRuntimePolicies(),
+      outputShape: observedText.length > 0 ? 'NON_EMPTY_TEXT' : 'EMPTY_TEXT',
+    };
+    const contract = contractForObservedEvent(eventType, identifier);
+    const deviation = this.deviationDetector.evaluate(executionEvent, contract);
+    const explanation = deviation.isDeviation
+      ? this.explanationSynthesizer.synthesize({
+          event: executionEvent,
+          contract,
+          deviation,
+          failureType: 'TYPE-B',
+        })
+      : undefined;
+    const recentPatternHistory = explanation
+      ? this.auditLog.explanationPatternSnapshot(explanation.code, {
+          eventType,
+          filePath: assessment.classification.filePath,
+        })
+      : undefined;
+    const recentPattern = recentPatternHistory
+      ? {
+          occurrenceCount: recentPatternHistory.occurrenceCount + 1,
+          firstSeenAt: recentPatternHistory.firstSeenAt,
+          lastSeenAt: new Date().toISOString(),
+        }
+      : undefined;
+    const governanceProposal = explanation
+      ? this.governanceFeedbackEvaluator.evaluate({
+          event: executionEvent,
+          deviation,
+          explanation,
+          failureType: 'TYPE-B',
+          recentPattern,
+        })
+      : undefined;
+    const decisionWithDeviation: DecisionPayload = deviation.isDeviation
+      ? {
+          ...decision,
+          deviation,
+          failure_type: 'TYPE-B',
+          explanation,
+          governance_proposal: governanceProposal,
+        }
+      : decision;
+
+    return this.auditLog.append(
+      assessment.classification,
+      decisionWithDeviation,
+      eventType,
+    );
   }
 
   private async evaluateModelDecision(
@@ -477,6 +605,45 @@ export class SaveOrchestrator {
         model_availability_status: 'UNAVAILABLE_AT_RUNTIME',
       };
     }
+  }
+}
+
+function contractForObservedEvent(
+  eventType: AuditEventType,
+  identifier: string,
+): BehaviorContract | undefined {
+  if (eventType !== 'RUN') {
+    return undefined;
+  }
+
+  if (identifier === 'workbench.action.files.save') {
+    return {
+      allowedToolSequence: ['workbench.action.files.save'],
+      requiredPolicies: ['AUDIT_MODE'],
+      expectedOutputShape: 'NON_EMPTY_TEXT',
+    };
+  }
+
+  return undefined;
+}
+
+function activeRuntimePolicies(): string[] {
+  const active: string[] = [];
+  if (process.env.AUDIT_MODE === 'true') {
+    active.push('AUDIT_MODE');
+  }
+  return active;
+}
+
+function readObservedText(filePath?: string): string {
+  if (!filePath || !fs.existsSync(filePath)) {
+    return '';
+  }
+
+  try {
+    return fs.readFileSync(filePath, 'utf8');
+  } catch {
+    return '';
   }
 }
 
