@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import {
   DisabledModelAdapter,
   ModelAdapterError,
@@ -7,6 +9,7 @@ import {
 import type {
   AssessedSave,
   AuditEntry,
+  AuditEventType,
   BlueprintArtifactLink,
   Classification,
   ContextPayload,
@@ -171,14 +174,24 @@ export class SaveOrchestrator {
           acknowledged,
           proof,
         );
+        const decisionWithFingerprint: DecisionPayload = {
+          ...finalizedDecision,
+          fingerprint: this.leaseStore.fingerprint(
+            assessment.input,
+            assessment.classification,
+            finalizedDecision,
+          ),
+          fingerprint_version: 'lease.v1',
+        };
+
         const auditEntry = this.auditLog.append(
           assessment.classification,
-          finalizedDecision,
+          decisionWithFingerprint,
         );
 
         return {
           ...assessment,
-          decision: finalizedDecision,
+          decision: decisionWithFingerprint,
           auditEntry,
           shouldRevertAfterSave: shouldRevertAfterSave(finalizedDecision),
         };
@@ -193,6 +206,19 @@ export class SaveOrchestrator {
 
   verifyAuditChain(): boolean {
     return this.auditLog.verifyChain();
+  }
+
+  async observeExecution(commandId: string, filePath?: string): Promise<AuditEntry> {
+    return this.observeEvent('RUN', commandId, filePath, readObservedText(filePath));
+  }
+
+  async observeCommit(repositoryRoot?: string, observedText?: string): Promise<AuditEntry> {
+    return this.observeEvent(
+      'COMMIT',
+      'git.commit',
+      repositoryRoot,
+      observedText ?? readObservedText(repositoryRoot),
+    );
   }
 
   ensureBlueprintTemplate(directiveId: string): BlueprintArtifactLink {
@@ -232,6 +258,49 @@ export class SaveOrchestrator {
     });
 
     return resolution.ok ? reusedLease : undefined;
+  }
+
+  private async observeEvent(
+    eventType: AuditEventType,
+    identifier: string,
+    filePath?: string,
+    observedText = '',
+  ): Promise<AuditEntry> {
+    const observedPath = filePath
+      ? filePath
+      : path.join(
+          this.workspaceRoot,
+          '.arc',
+          'observation',
+          eventType.toLowerCase(),
+          identifier,
+        );
+
+    const assessment = await this.assessSave({
+      filePath: observedPath,
+      fileName: path.basename(observedPath),
+      text: observedText,
+      previousText: observedText,
+      saveMode: 'EXPLICIT',
+      autoSaveMode: 'off',
+    });
+
+    const decision: DecisionPayload = {
+      ...assessment.decision,
+      lease_status: 'BYPASSED',
+      reason: `[OBSERVATION] ${eventType} event captured for ${identifier}`,
+      next_action: 'Observation captured. No runtime mutation applied.',
+      actor_type: 'SYSTEM',
+      actor_id: identifier,
+      fingerprint: this.leaseStore.fingerprint(
+        assessment.input,
+        assessment.classification,
+        assessment.decision,
+      ),
+      fingerprint_version: 'lease.v1',
+    };
+
+    return this.auditLog.append(assessment.classification, decision, eventType);
   }
 
   private async evaluateModelDecision(
@@ -445,6 +514,18 @@ export class SaveOrchestrator {
         model_availability_status: 'UNAVAILABLE_AT_RUNTIME',
       };
     }
+  }
+}
+
+function readObservedText(filePath?: string): string {
+  if (!filePath || !fs.existsSync(filePath)) {
+    return '';
+  }
+
+  try {
+    return fs.readFileSync(filePath, 'utf8');
+  } catch {
+    return '';
   }
 }
 

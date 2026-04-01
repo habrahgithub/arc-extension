@@ -41,6 +41,12 @@ export type AutoSaveMode =
   | 'onFocusChange'
   | 'onWindowChange';
 export type BlueprintMode = 'LOCAL_ONLY' | 'TEAM_SHARED';
+export type AuditEventType = 'SAVE' | 'RUN' | 'COMMIT';
+export type DriftStatus =
+  | 'NO_DRIFT'
+  | 'DRIFT_DETECTED'
+  | 'NO_LINKED_DECISION'
+  | 'FINGERPRINT_UNAVAILABLE';
 
 export interface RuleMatcher {
   type: RuleScopeType;
@@ -219,6 +225,10 @@ export interface RouterShellResolution {
 }
 
 export interface AuditEntry extends DecisionPayload {
+  event_type: AuditEventType;
+  decision_id: string;
+  linked_decision_id?: string;
+  drift_status?: DriftStatus;
   ts: string;
   file_path: string;
   risk_flags: RiskFlag[];

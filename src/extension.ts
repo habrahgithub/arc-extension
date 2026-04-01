@@ -16,6 +16,9 @@ import { StatusBarItemService } from './extension/statusBarItem';
 import { TaskBoardViewProvider } from './extension/taskBoardView';
 import { WelcomeSurfaceService } from './extension/welcomeSurface';
 import { resolveWorkspaceTarget } from './extension/workspaceTargeting';
+import { CommitInterceptor } from './extension/interceptors/commitInterceptor';
+import { RunCommandInterceptor } from './extension/interceptors/runCommandInterceptor';
+import { renderDecisionTimeline } from './extension/decisionTimeline';
 // ARC-UI-001a — Internal Review Surface Upgrade (UI layer)
 import { registerUiCommands } from './ui';
 // ARCXT-UX-CLARITY-001 — Minimal config template creation commands
@@ -189,7 +192,11 @@ export function activate(context: vscode.ExtensionContext): void {
   const reviewSurfaces = new Map<string, LocalReviewSurfaceService>();
   const welcomeSurface = new WelcomeSurfaceService(context);
   const statusBarItem = new StatusBarItemService();
+  const timelineOutput = vscode.window.createOutputChannel('ARC Output Channel');
   context.subscriptions.push(statusBarItem);
+  context.subscriptions.push(timelineOutput);
+  context.subscriptions.push(new RunCommandInterceptor(orchestratorFor));
+  context.subscriptions.push(new CommitInterceptor(orchestratorFor));
 
   // ARC-UX-002 — Register Task Board View Provider (left sidebar)
   const targetForFirstFile = targetFor(
@@ -271,6 +278,24 @@ export function activate(context: vscode.ExtensionContext): void {
     // ARC-CMD-001: Primary arc.* namespace (canonical)
     vscode.commands.registerCommand('arc.showWelcome', async () => {
       await welcomeSurface.showWelcome();
+    }),
+    vscode.commands.registerCommand('arc.showDecisionTimeline', () => {
+      const activeFile = vscode.window.activeTextEditor?.document.uri.fsPath;
+      if (!activeFile) {
+        void vscode.window.showWarningMessage(
+          'ARC: No decision timeline available for this file',
+        );
+        return;
+      }
+
+      const target = targetFor(activeFile);
+      const timeline = renderDecisionTimeline(target.effectiveRoot, activeFile);
+      timelineOutput.appendLine(timeline.message);
+      timelineOutput.show(true);
+
+      if (!timeline.available) {
+        void vscode.window.showWarningMessage(timeline.message);
+      }
     }),
     vscode.commands.registerCommand('arc.reviewAudit', async () => {
       const filePath = vscode.window.activeTextEditor?.document.uri.fsPath;

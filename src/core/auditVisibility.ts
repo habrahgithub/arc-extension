@@ -452,7 +452,7 @@ function computeAuditHash(
   entry: AuditEntry,
   prevHash: string,
 ): string {
-  const basePayload = {
+  const legacyPayload = {
     prev_hash: prevHash,
     ts: entry.ts,
     file_path: entry.file_path,
@@ -469,6 +469,30 @@ function computeAuditHash(
     directive_id: entry.directive_id ?? null,
     blueprint_id: entry.blueprint_id ?? null,
   };
+
+  const basePayload = hasLifecycleMetadata(entry)
+    ? {
+        prev_hash: prevHash,
+        event_type: entry.event_type ?? 'SAVE',
+        decision_id: entry.decision_id ?? null,
+        linked_decision_id: entry.linked_decision_id ?? null,
+        drift_status: entry.drift_status ?? null,
+        ts: entry.ts,
+        file_path: entry.file_path,
+        risk_flags: entry.risk_flags,
+        matched_rules: entry.matched_rules,
+        decision: entry.decision,
+        reason: entry.reason,
+        risk_level: entry.risk_level,
+        violated_rules: entry.violated_rules,
+        next_action: entry.next_action,
+        source: entry.source,
+        fallback_cause: entry.fallback_cause,
+        lease_status: entry.lease_status,
+        directive_id: entry.directive_id ?? null,
+        blueprint_id: entry.blueprint_id ?? null,
+      }
+    : legacyPayload;
 
   const withRoute = hasRouteMetadata(entry)
     ? {
@@ -493,6 +517,10 @@ function computeAuditHash(
     : JSON.stringify(withRoute);
 
   return crypto.createHash('sha256').update(serialized).digest('hex');
+}
+
+function hasLifecycleMetadata(entry: Partial<AuditEntry>): boolean {
+  return entry.decision_id !== undefined || entry.linked_decision_id !== undefined;
 }
 
 function hasRouteMetadata(entry: Partial<AuditEntry>): boolean {
