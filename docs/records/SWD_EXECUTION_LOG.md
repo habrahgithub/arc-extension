@@ -340,3 +340,39 @@
 
 - **Next action**
   - **Owner: Axis** — Validate threshold semantics, proposal evidence format, and additive audit compatibility for M3 sign-off.
+
+## 2026-04-01 — WO-ARC-XT-M4-001 — Commit Context Awareness (Behavioral Signal)
+
+- **What changed**
+  - Added `AuditLogWriter.queryCommitContext(repoRoot)`: SQL CTE query that returns the latest SAVE entry per file within a repository root, cross-referenced against any linked COMMIT entries to surface per-file drift status. Files with no COMMIT entry are returned with `driftStatus: null` (no-decision).
+  - Created `src/extension/interceptors/commitContextAggregator.ts`: stateless aggregation + formatting layer. `aggregateCommitContext()` classifies rows into `driftCount`, `noDecisionCount`, `verifiedCount`. `formatCommitContextMessage()` returns `undefined` on clean commits (no drift, no unlinked files) to prevent noise.
+  - Updated `CommitInterceptor`: after per-file drift signal, calls `orchestrator.queryCommitContext(repoRoot)` and emits the structured commit summary to the ARC Output Channel only when actionable.
+  - Exposed `queryCommitContext` on `SaveOrchestrator` as a thin delegation method.
+
+- **Commands run + results**
+  - `npm run typecheck` — passed.
+  - `npm run test -- tests/unit/commitContextAggregator.test.ts tests/integration/commitInterceptor.test.ts` — passed (18 tests).
+  - `npm run test` — passed (55 files, 454 tests).
+
+- **Evidence links**
+  - Commit: HEAD (this execution commit)
+  - Artifacts:
+    - `src/core/auditLog.ts` (queryCommitContext method)
+    - `src/extension/interceptors/commitContextAggregator.ts`
+    - `src/extension/interceptors/commitInterceptor.ts`
+    - `src/extension/saveOrchestrator.ts`
+    - `tests/unit/commitContextAggregator.test.ts`
+    - `tests/integration/commitInterceptor.test.ts`
+
+- **Constraints preserved**
+  - No schema changes — query reads existing `audit_events` columns only.
+  - No enforcement — output channel append only, no blocking, no UI panels.
+  - No modal — summary is NOT emitted as `showWarningMessage`; it goes to the output channel only.
+  - Deterministic — all logic is pure functions over audit log state.
+  - Silent on clean commits — `formatCommitContextMessage` returns `undefined` when `driftCount === 0 && noDecisionCount === 0`.
+
+- **Blockers + risks**
+  - Commit context is scoped to files with SAVE entries in the local audit log; files committed without a prior ARC-governed save appear as `noDecisionCount` rather than silently passing.
+
+- **Next action**
+  - **Owner: Axis** — Validate behavioral signal output, confirm output-channel-only constraint, and assess M4 sign-off.

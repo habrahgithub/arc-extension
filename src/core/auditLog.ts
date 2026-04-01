@@ -350,6 +350,48 @@ export class AuditLogWriter {
     };
   }
 
+  /**
+   * M4-001 — Commit Context Awareness
+   *
+   * Queries the latest SAVE entry per file within the repository root, then
+   * cross-references against any existing COMMIT entries to determine drift
+   * status.  Files with no matching COMMIT entry are classified as
+   * NO_LINKED_DECISION (the commit observation for them hasn't been written
+   * yet, or they were never committed through the interceptor).
+   */
+  queryCommitContext(
+    repoRoot: string,
+  ): { filePath: string; driftStatus: string | null }[] {
+    this.ensureReady();
+    const prefix = repoRoot.endsWith('/') ? repoRoot : `${repoRoot}/`;
+    const rows = this.execSqlJson<{ file_path: string; drift_status: string | null }>(`
+      WITH latest_saves AS (
+        SELECT file_path, MAX(event_id) AS max_id
+        FROM audit_events
+        WHERE event_type = 'SAVE'
+          AND (file_path = ${sql(repoRoot)} OR file_path LIKE ${sql(`${prefix}%`)})
+        GROUP BY file_path
+      ),
+      commit_status AS (
+        SELECT
+          s.file_path,
+          s.decision_id,
+          (
+            SELECT c.drift_status
+            FROM audit_events c
+            WHERE c.event_type = 'COMMIT'
+              AND c.linked_decision_id = s.decision_id
+            ORDER BY c.event_id DESC
+            LIMIT 1
+          ) AS drift_status
+        FROM latest_saves ls
+        JOIN audit_events s ON s.event_id = ls.max_id
+      )
+      SELECT file_path, drift_status FROM commit_status;
+    `);
+    return rows.map((r) => ({ filePath: r.file_path, driftStatus: r.drift_status }));
+  }
+
   verifyChain(): boolean {
     const rows = this.execSqlJson<PersistedEventRow>(`
       SELECT

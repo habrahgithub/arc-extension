@@ -1,6 +1,10 @@
 import * as vscode from 'vscode';
 import { SaveOrchestrator } from '../saveOrchestrator';
 import { emitDriftAwarenessSignal } from './driftAwareness';
+import {
+  aggregateCommitContext,
+  formatCommitContextMessage,
+} from './commitContextAggregator';
 
 interface GitApiV1 {
   repositories: GitRepository[];
@@ -70,9 +74,12 @@ export class CommitInterceptor implements vscode.Disposable {
                 ? vscode.window.activeTextEditor.document.getText()
                 : undefined;
 
-            void this.orchestratorFor(observedPath)
+            const orchestrator = this.orchestratorFor(observedPath);
+
+            void orchestrator
               .observeCommit(observedPath, observedText)
               .then((entry) => {
+                // Per-file drift signal (existing behavior)
                 emitDriftAwarenessSignal(entry.drift_status, {
                   warn: (message) => {
                     void vscode.window.showWarningMessage(message);
@@ -81,6 +88,14 @@ export class CommitInterceptor implements vscode.Disposable {
                     this.outputChannel.appendLine(message);
                   },
                 });
+
+                // M4-001 — Commit context awareness (aggregate summary)
+                const contextRows = orchestrator.queryCommitContext(repoRoot);
+                const summary = aggregateCommitContext(contextRows);
+                const message = formatCommitContextMessage(summary);
+                if (message) {
+                  this.outputChannel.appendLine(message);
+                }
               })
               .catch(() => undefined);
           });

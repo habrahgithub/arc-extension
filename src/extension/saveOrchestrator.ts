@@ -260,6 +260,11 @@ export class SaveOrchestrator {
     );
   }
 
+  // M4-001 — Commit Context Awareness
+  queryCommitContext(repoRoot: string): { filePath: string; driftStatus: string | null }[] {
+    return this.auditLog.queryCommitContext(repoRoot);
+  }
+
   ensureBlueprintTemplate(directiveId: string): BlueprintArtifactLink {
     return this.blueprintArtifacts.ensureBlueprintTemplate(directiveId);
   }
