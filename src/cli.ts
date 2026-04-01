@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import type { AuditFilterInput, PerfFilterInput } from './contracts/types';
 import { AuditVisibilityService, formatCliText } from './core/auditVisibility';
+import { ExecutionService } from './core/executionService';
 
 interface CliIo {
   stdout(message: string): void;
@@ -15,6 +16,11 @@ interface ParsedArgs {
   auditFilters: AuditFilterInput;
   perfFilters: PerfFilterInput;
   directiveId?: string;
+  protocolId?: string;
+  packageHash?: string;
+  tokenId?: string;
+  passedChecks: string[];
+  approvals: string[];
 }
 
 const HELP_TEXT = [
@@ -28,10 +34,21 @@ const HELP_TEXT = [
   '  verify           Verify the local audit hash chain',
   '  export           Export a versioned local Vault-ready evidence bundle to stdout or --out',
   '',
+  'Execution governance commands (Phase 7.11):',
+  '  protocol-define   Define an execution protocol',
+  '  readiness-verify  Verify execution readiness for a directive/package',
+  '  token-issue       Issue a time-bounded execution token',
+  '  token-verify      Validate an execution token status',
+  '',
   'Common options:',
   '  --workspace <path>         Workspace root (defaults to current working directory)',
   '  --decision <value>         Filter audit entries by decision',
   '  --directive-id <value>     Filter or trace a directive id',
+  '  --protocol-id <value>      Execution protocol identifier',
+  '  --package-hash <value>     Hash of the execution package',
+  '  --token-id <value>         Execution token identifier',
+  '  --passed-checks <v1,v2>    Comma-separated list of passed checks',
+  '  --approvals <v1,v2>        Comma-separated list of confirmed approvals',
   '  --file-path <value>        Filter audit entries by file path substring',
   '  --route-mode <value>       Filter by observed route_mode string',
   '  --route-lane <value>       Filter by observed route_lane string',
@@ -98,6 +115,52 @@ export function runCli(
         io.stdout(`${rendered}\n`);
         return 0;
       }
+      case 'protocol-define': {
+        const execService = new ExecutionService(parsed.workspaceRoot);
+        if (!parsed.protocolId) throw new Error('protocol-define requires --protocol-id');
+        execService.defineProtocol({
+          protocolId: parsed.protocolId,
+          requiredChecks: parsed.passedChecks,
+          requiredApprovals: parsed.approvals,
+          constraints: [],
+          allowedMode: 'CONTROLLED',
+        });
+        result = { status: 'OK', protocolId: parsed.protocolId };
+        break;
+      }
+      case 'readiness-verify': {
+        const execService = new ExecutionService(parsed.workspaceRoot);
+        if (!parsed.protocolId) throw new Error('readiness-verify requires --protocol-id');
+        if (!parsed.packageHash) throw new Error('readiness-verify requires --package-hash');
+        result = execService.verifyReadiness(parsed.packageHash, parsed.protocolId, {
+          passedChecks: parsed.passedChecks,
+          confirmedApprovals: parsed.approvals,
+          constraintsAcknowledged: true,
+          packageValid: true,
+        });
+        break;
+      }
+      case 'token-issue': {
+        const execService = new ExecutionService(parsed.workspaceRoot);
+        if (!parsed.protocolId) throw new Error('token-issue requires --protocol-id');
+        if (!parsed.packageHash) throw new Error('token-issue requires --package-hash');
+        
+        const verdict = execService.verifyReadiness(parsed.packageHash, parsed.protocolId, {
+          passedChecks: parsed.passedChecks,
+          confirmedApprovals: parsed.approvals,
+          constraintsAcknowledged: true,
+          packageValid: true,
+        });
+        
+        result = execService.issueToken(parsed.packageHash, parsed.protocolId, verdict);
+        break;
+      }
+      case 'token-verify': {
+        const execService = new ExecutionService(parsed.workspaceRoot);
+        if (!parsed.tokenId) throw new Error('token-verify requires --token-id');
+        result = execService.verifyToken(parsed.tokenId);
+        break;
+      }
       default:
         throw new Error(`Unknown command: ${parsed.command}`);
     }
@@ -118,6 +181,8 @@ function parseArgs(argv: string[]): ParsedArgs {
     workspaceRoot: process.cwd(),
     auditFilters: {},
     perfFilters: {},
+    passedChecks: [],
+    approvals: [],
   };
 
   for (let index = 0; index < rest.length; index += 1) {
@@ -200,6 +265,31 @@ function parseArgs(argv: string[]): ParsedArgs {
         parsed.outputPath = resolveRequiredValue(token, value, () => {
           index += 1;
         });
+        break;
+      case '--protocol-id':
+        parsed.protocolId = resolveRequiredValue(token, value, () => {
+          index += 1;
+        });
+        break;
+      case '--package-hash':
+        parsed.packageHash = resolveRequiredValue(token, value, () => {
+          index += 1;
+        });
+        break;
+      case '--token-id':
+        parsed.tokenId = resolveRequiredValue(token, value, () => {
+          index += 1;
+        });
+        break;
+      case '--passed-checks':
+        parsed.passedChecks = resolveRequiredValue(token, value, () => {
+          index += 1;
+        }).split(',').filter(Boolean);
+        break;
+      case '--approvals':
+        parsed.approvals = resolveRequiredValue(token, value, () => {
+          index += 1;
+        }).split(',').filter(Boolean);
         break;
       default:
         throw new Error(`Unknown option: ${token}`);

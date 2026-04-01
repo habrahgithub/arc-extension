@@ -608,6 +608,45 @@ export interface AuditVerificationResult {
   };
 }
 
+// Phase 7.10 — Execution Governance Chain (M11–M14)
+
+export interface ExecutionProtocol {
+  protocolId: string;
+  requiredChecks: string[];
+  requiredApprovals: string[];
+  constraints: string[];
+  allowedMode: 'CONTROLLED' | 'MANUAL';
+}
+
+export interface ReadinessVerdict {
+  ok: boolean;
+  timestamp: string;
+  checksPassed: string[];
+  checksFailed: string[];
+  approvalsPresent: string[];
+  approvalsMissing: string[];
+  constraintsAcknowledged: boolean;
+  packageValid: boolean;
+  reason?: string;
+}
+
+export interface ExecutionToken {
+  tokenId: string;
+  packageHash: string;
+  protocolId: string;
+  verdictTimestamp: string;
+  expiresAt: string;
+  reused: boolean;
+}
+
+export interface ExecutionEnvelope {
+  allowedPaths: string[];
+  blockedPaths: string[];
+  evidenceLoggingRequired: boolean;
+  rollbackRequirement: 'MANDATORY' | 'OPTIONAL';
+  stopConditions: string[];
+}
+
 export type ExportEvidenceClass =
   | 'EXPORT_METADATA'
   | 'DIRECT_EVIDENCE'

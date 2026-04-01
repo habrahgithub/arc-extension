@@ -231,6 +231,24 @@ Local-model activation in Phase 6.8 is bounded to the local lane only unless a s
 - governance tests verifying UAT truthfulness and runbook alignment
 - evidence bundle referencing artifacts (not self-certifying)
 
+## Phase 7.11 — Execution Governance Chain (M11–M14)
+
+Phase 7.11 introduces the **execution-side governance chain**, defining the transition from an authorized change package (M10) to a state of execution readiness.
+
+- **M11 — Execution Protocol Definition**: Defines the rules (checks, approvals, constraints) required for execution.
+- **M12 — Execution Readiness Verification**: Verifies an authorized package against the defined protocol, producing a `ReadinessVerdict`.
+- **M13 — Execution Token / Release Permit**: Issues a specific, time-bounded, non-reusable `ExecutionToken` upon successful verification.
+- **M14 — Controlled Execution Envelope**: Defines the safety boundaries (allowed paths, stop conditions) for the execution act.
+
+**Important:** Phase 7.11 is **definition-only**. It establishes the governance structures and verification logic but does not perform or authorize actual code execution.
+
+### Execution Readiness Boundary
+
+- Readiness verification must be evidence-backed (checks passed, approvals confirmed).
+- Execution tokens are strictly time-bounded (default 15 minutes).
+- The execution envelope must not exceed the scope of the authorized package.
+- All readiness verdicts and token issuances are recorded for auditability.
+
 ## Phase 7.10 — Internal Pilot Readiness
 
 Phase 7.10 certifies **INTERNAL PILOT READINESS** only through evidence-backed validation artifacts.
