@@ -376,3 +376,47 @@
 
 - **Next action**
   - **Owner: Axis** — Validate behavioral signal output, confirm output-channel-only constraint, and assess M4 sign-off.
+
+## 2026-04-01 — WO-ARC-XT-P9-001 — File-Level Audit Indicator (Minimal UI Surface)
+
+- **What changed**
+  - Added `AuditLogWriter.queryFileAuditState(filePath)`: SQL query returning the latest SAVE row for a file plus the drift_status from its most recent linked COMMIT entry. Returns null when no SAVE exists.
+  - Created `src/extension/fileAuditState.ts`: pure, vscode-free state resolution. `FileAuditState` type (VERIFIED | DRIFT | NO_DECISION | UNKNOWN). `resolveFileAuditState(row)` maps DB row → state deterministically.
+  - Created `src/extension/fileAuditIndicator.ts`: VS Code status bar item at priority 99 (right of enforcement indicator). `updateForFile(filePath, queryFn)` — resolves state and updates label/color. Falls back to UNKNOWN on error or no active file.
+  - Exposed `queryFileAuditState` on `SaveOrchestrator` (thin delegation).
+  - Wired 4 update triggers in `extension.ts`: activation (prime), active editor change, post-save, post-commit (via `CommitInterceptor` callback).
+  - Updated `CommitInterceptor` to accept optional `onCommitObserved` callback — avoids coupling to indicator directly.
+
+- **State mapping**
+  - `null` row → NO_DECISION (no SAVE entry for file)
+  - `driftStatus = DRIFT_DETECTED` → DRIFT (amber `#e8a000`)
+  - `driftStatus = NO_DRIFT | FINGERPRINT_UNAVAILABLE | null` → VERIFIED (neutral)
+  - error / no active file → UNKNOWN (muted gray)
+
+- **Commands run + results**
+  - `npm run typecheck` — passed.
+  - `npm run test -- tests/unit/fileAuditIndicator.test.ts tests/integration/fileAuditIndicator.test.ts` — passed (11 tests).
+  - `npm run test` — passed (57 files, 465 tests).
+
+- **Evidence links**
+  - Commit: HEAD (this execution commit)
+  - Artifacts:
+    - `src/core/auditLog.ts` (queryFileAuditState method)
+    - `src/extension/fileAuditState.ts`
+    - `src/extension/fileAuditIndicator.ts`
+    - `src/extension/saveOrchestrator.ts`
+    - `src/extension/interceptors/commitInterceptor.ts`
+    - `src/extension.ts`
+    - `tests/unit/fileAuditIndicator.test.ts`
+    - `tests/integration/fileAuditIndicator.test.ts`
+
+- **Constraints preserved**
+  - No schema changes — reads existing columns only.
+  - No enforcement — display only.
+  - No interaction — no click command, no tooltip action, no panel.
+  - No webview, no React, no panel system.
+  - Silent fallback — UNKNOWN on error, never crashes save path.
+  - Pure state logic in `fileAuditState.ts` with no vscode dependency.
+
+- **Next action**
+  - **Owner: Axis** — Validate state correctness, visual subtlety, and no-performance-degradation criteria for P9-001 sign-off.

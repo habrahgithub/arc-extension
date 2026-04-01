@@ -265,6 +265,11 @@ export class SaveOrchestrator {
     return this.auditLog.queryCommitContext(repoRoot);
   }
 
+  // P9-001 — File-Level Audit Indicator
+  queryFileAuditState(filePath: string): { decisionId: string; driftStatus: string | null } | null {
+    return this.auditLog.queryFileAuditState(filePath);
+  }
+
   ensureBlueprintTemplate(directiveId: string): BlueprintArtifactLink {
     return this.blueprintArtifacts.ensureBlueprintTemplate(directiveId);
   }

@@ -31,6 +31,9 @@ export class CommitInterceptor implements vscode.Disposable {
 
   constructor(
     private readonly orchestratorFor: (filePath?: string) => SaveOrchestrator,
+    // P9-001 — optional callback invoked after each commit observation so the
+    // file audit indicator can refresh without coupling to the indicator directly
+    private readonly onCommitObserved?: () => void,
   ) {
     this.initialize();
   }
@@ -96,6 +99,9 @@ export class CommitInterceptor implements vscode.Disposable {
                 if (message) {
                   this.outputChannel.appendLine(message);
                 }
+
+                // P9-001 — notify file audit indicator
+                this.onCommitObserved?.();
               })
               .catch(() => undefined);
           });

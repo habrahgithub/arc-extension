@@ -392,6 +392,41 @@ export class AuditLogWriter {
     return rows.map((r) => ({ filePath: r.file_path, driftStatus: r.drift_status }));
   }
 
+  /**
+   * P9-001 — File-Level Audit Indicator
+   *
+   * Returns the latest SAVE entry for a file and the drift_status from its
+   * most recent linked COMMIT, if any.  Returns null when no SAVE exists.
+   */
+  queryFileAuditState(
+    filePath: string,
+  ): { decisionId: string; driftStatus: string | null } | null {
+    this.ensureReady();
+    const rows = this.execSqlJson<{
+      decision_id: string;
+      drift_status: string | null;
+    }>(`
+      SELECT
+        s.decision_id,
+        (
+          SELECT c.drift_status
+          FROM audit_events c
+          WHERE c.event_type = 'COMMIT'
+            AND c.linked_decision_id = s.decision_id
+          ORDER BY c.event_id DESC
+          LIMIT 1
+        ) AS drift_status
+      FROM audit_events s
+      WHERE s.event_type = 'SAVE' AND s.file_path = ${sql(filePath)}
+      ORDER BY s.event_id DESC
+      LIMIT 1;
+    `);
+    if (rows.length === 0 || rows[0] === undefined) {
+      return null;
+    }
+    return { decisionId: rows[0].decision_id, driftStatus: rows[0].drift_status };
+  }
+
   verifyChain(): boolean {
     const rows = this.execSqlJson<PersistedEventRow>(`
       SELECT
