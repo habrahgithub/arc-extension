@@ -47,6 +47,172 @@ export type DriftStatus =
   | 'DRIFT_DETECTED'
   | 'NO_LINKED_DECISION'
   | 'FINGERPRINT_UNAVAILABLE';
+export type DeviationType = 'SEQUENCE' | 'POLICY' | 'SHAPE' | 'NONE';
+export type ExplanationCode =
+  | 'NO_DEVIATION'
+  | 'TOOL_SEQUENCE_MISMATCH'
+  | 'REQUIRED_POLICY_MISSING'
+  | 'OUTPUT_SHAPE_MISMATCH';
+
+export type BehaviorContract = {
+  allowedToolSequence?: string[];
+  requiredPolicies?: string[];
+  expectedOutputShape?: string;
+};
+
+export interface ExecutionEvent {
+  eventType: AuditEventType;
+  toolSequence: string[];
+  activePolicies: string[];
+  outputShape?: string;
+}
+
+export interface DeviationResult {
+  isDeviation: boolean;
+  type: DeviationType;
+  reason?: string;
+}
+
+export interface DeviationAuditRecord {
+  isDeviation: boolean;
+  type: DeviationType;
+  reason?: string;
+}
+
+export interface ExplanationInput {
+  event: ExecutionEvent;
+  contract?: BehaviorContract;
+  deviation: DeviationResult;
+  failureType?: 'TYPE-B';
+}
+
+export interface ExplanationResult {
+  code: ExplanationCode;
+  summary: string;
+  cause: string;
+  evidence: string[];
+}
+
+export interface PatternSnapshot {
+  occurrenceCount: number;
+  firstSeenAt?: string;
+  lastSeenAt?: string;
+}
+
+export interface GovernanceFeedbackInput {
+  event: ExecutionEvent;
+  deviation: DeviationResult;
+  explanation: ExplanationResult;
+  failureType?: 'TYPE-B';
+  recentPattern?: PatternSnapshot;
+}
+
+export type GovernanceProposalType =
+  | 'REVIEW_CONTRACT'
+  | 'REVIEW_POLICY_REQUIREMENT'
+  | 'REVIEW_OUTPUT_CONTRACT';
+export type GovernanceReviewStatus =
+  | 'PENDING_REVIEW'
+  | 'APPROVED'
+  | 'REJECTED';
+
+export interface GovernanceReviewDecision {
+  decidedAt: string;
+  decidedBy: string;
+  rationale: string;
+}
+
+export interface GovernanceProposal {
+  proposalType: GovernanceProposalType;
+  triggerCode: ExplanationCode;
+  summary: string;
+  rationale: string;
+  evidence: string[];
+  reviewStatus: 'PENDING_REVIEW';
+}
+
+export interface GovernanceProposalRecord {
+  id: string;
+  proposalType: GovernanceProposalType;
+  triggerCode: ExplanationCode;
+  summary: string;
+  rationale: string;
+  evidence: string[];
+  occurrenceCount: number;
+  firstSeenAt: string;
+  lastSeenAt: string;
+  reviewStatus: GovernanceReviewStatus;
+  reviewDecision?: GovernanceReviewDecision;
+}
+
+export interface GovernanceHandoffReviewContext {
+  decidedAt: string;
+  decidedBy: string;
+  rationale: string;
+}
+
+export interface GovernanceHandoffArtifact {
+  id: string;
+  proposalId: string;
+  proposalType: string;
+  triggerCode: string;
+  sourceReviewStatus: 'APPROVED';
+  createdAt: string;
+  createdBy: string;
+  summary: string;
+  rationale: string;
+  evidence: string[];
+  handoffStatus: 'OPEN';
+  reviewContext?: GovernanceHandoffReviewContext;
+}
+
+export interface ImplementationDraft {
+  id: string;
+  handoffId: string;
+  proposalId: string;
+  proposalType: string;
+  triggerCode: string;
+  sourceHandoffStatus: 'OPEN';
+  createdAt: string;
+  createdBy: string;
+  scope: string;
+  proposedChanges: string[];
+  riskLevel: 'LOW' | 'MEDIUM' | 'HIGH';
+  draftStatus: 'DRAFT' | 'APPROVED' | 'REJECTED' | 'PROMOTED';
+  reviewDecision?: GovernanceReviewDecision;
+}
+
+export interface ImplementationPackageCandidate {
+  id: string;
+  draftId: string;
+  createdAt: string;
+  createdBy: string;
+  scope: string;
+  proposedChanges: string[];
+  riskLevel: string;
+  source: {
+    proposalId: string;
+    handoffId: string;
+  };
+  status: 'CANDIDATE';
+}
+
+export interface ImplementationPackage {
+  id: string;
+  candidateId: string;
+  draftId: string;
+  proposalId: string;
+  handoffId: string;
+  createdAt: string;
+  createdBy: string;
+  scope: string;
+  changeset: string[];
+  constraints: string[];
+  riskLevel: 'LOW' | 'MEDIUM' | 'HIGH';
+  approvalRequired: true;
+  packageStatus: 'DEFINED' | 'AUTHORIZED' | 'DENIED';
+  authorizationDecision?: GovernanceReviewDecision;
+}
 
 export interface RuleMatcher {
   type: RuleScopeType;
@@ -108,6 +274,10 @@ export interface DecisionPayload {
   actor_type?: 'USER' | 'SYSTEM' | 'AGENT';
   fingerprint?: string;
   fingerprint_version?: string;
+  deviation?: DeviationAuditRecord;
+  failure_type?: 'TYPE-B';
+  explanation?: ExplanationResult;
+  governance_proposal?: GovernanceProposal;
 }
 
 export interface ContextPayload {

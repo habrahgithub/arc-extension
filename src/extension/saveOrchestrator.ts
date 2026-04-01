@@ -10,12 +10,15 @@ import type {
   AssessedSave,
   AuditEntry,
   AuditEventType,
+  BehaviorContract,
   BlueprintArtifactLink,
   Classification,
   ContextPayload,
   DecisionPayload,
+  ExecutionEvent,
   DirectiveProofInput,
   FallbackCause,
+  GovernanceProposalRecord,
   SaveInput,
   SaveOutcome,
 } from '../contracts/types';
@@ -34,6 +37,10 @@ import {
   measureAsync,
   measureSync,
 } from '../core/performance';
+import { DeviationDetector } from '../core/deviationDetector';
+import { ExplanationSynthesizer } from '../core/explanationSynthesizer';
+import { GovernanceFeedbackEvaluator } from '../core/governanceFeedbackEvaluator';
+import { GovernanceProposalRegistry } from '../core/governanceProposalRegistry';
 import {
   buildRouteMetadata,
   RoutePolicyStore,
@@ -50,6 +57,10 @@ export class SaveOrchestrator {
   private readonly routePolicy: RoutePolicyStore;
   private readonly routerShell: RouterShell;
   private readonly disabledModelAdapter: ModelAdapter;
+  private readonly deviationDetector = new DeviationDetector();
+  private readonly explanationSynthesizer = new ExplanationSynthesizer();
+  private readonly governanceFeedbackEvaluator = new GovernanceFeedbackEvaluator();
+  private readonly governanceProposalRegistry: GovernanceProposalRegistry;
 
   constructor(
     private readonly workspaceRoot: string,
@@ -66,6 +77,7 @@ export class SaveOrchestrator {
     this.routePolicy = new RoutePolicyStore(workspaceRoot);
     this.routerShell = new RouterShell();
     this.disabledModelAdapter = new DisabledModelAdapter();
+    this.governanceProposalRegistry = new GovernanceProposalRegistry(workspaceRoot);
   }
 
   async assessSave(input: SaveInput): Promise<AssessedSave> {
@@ -231,6 +243,10 @@ export class SaveOrchestrator {
     return this.blueprintArtifacts.resolveProof(proof);
   }
 
+  listPendingGovernanceProposals(): GovernanceProposalRecord[] {
+    return this.governanceProposalRegistry.listPending();
+  }
+
   private getReusableDecision(
     input: SaveInput,
     classification: Classification,
@@ -300,7 +316,63 @@ export class SaveOrchestrator {
       fingerprint_version: 'lease.v1',
     };
 
-    return this.auditLog.append(assessment.classification, decision, eventType);
+    const executionEvent: ExecutionEvent = {
+      eventType,
+      toolSequence: [identifier],
+      activePolicies: activeRuntimePolicies(),
+      outputShape: observedText.length > 0 ? 'NON_EMPTY_TEXT' : 'EMPTY_TEXT',
+    };
+    const contract = contractForObservedEvent(eventType, identifier);
+    const deviation = this.deviationDetector.evaluate(executionEvent, contract);
+    const explanation = deviation.isDeviation
+      ? this.explanationSynthesizer.synthesize({
+          event: executionEvent,
+          contract,
+          deviation,
+          failureType: 'TYPE-B',
+        })
+      : undefined;
+    const recentPatternHistory = explanation
+      ? this.auditLog.explanationPatternSnapshot(explanation.code, {
+          eventType,
+          filePath: assessment.classification.filePath,
+        })
+      : undefined;
+    const recentPattern = recentPatternHistory
+      ? {
+          occurrenceCount: recentPatternHistory.occurrenceCount + 1,
+          firstSeenAt: recentPatternHistory.firstSeenAt,
+          lastSeenAt: new Date().toISOString(),
+        }
+      : undefined;
+    const governanceProposal = explanation
+      ? this.governanceFeedbackEvaluator.evaluate({
+          event: executionEvent,
+          deviation,
+          explanation,
+          failureType: 'TYPE-B',
+          recentPattern,
+        })
+      : undefined;
+    const decisionWithDeviation: DecisionPayload = deviation.isDeviation
+      ? {
+          ...decision,
+          deviation,
+          failure_type: 'TYPE-B',
+          explanation,
+          governance_proposal: governanceProposal,
+        }
+      : decision;
+
+    if (governanceProposal) {
+      this.governanceProposalRegistry.upsert(governanceProposal);
+    }
+
+    return this.auditLog.append(
+      assessment.classification,
+      decisionWithDeviation,
+      eventType,
+    );
   }
 
   private async evaluateModelDecision(
@@ -515,6 +587,45 @@ export class SaveOrchestrator {
       };
     }
   }
+}
+
+function contractForObservedEvent(
+  eventType: AuditEventType,
+  identifier: string,
+): BehaviorContract | undefined {
+  if (eventType !== 'RUN') {
+    return undefined;
+  }
+
+  if (identifier === 'workbench.action.files.save') {
+    return {
+      allowedToolSequence: ['workbench.action.files.save'],
+      requiredPolicies: ['AUDIT_MODE'],
+      expectedOutputShape: 'NON_EMPTY_TEXT',
+    };
+  }
+
+  if (identifier === 'arc.test.sequence') {
+    return {
+      allowedToolSequence: ['workbench.action.files.save'],
+    };
+  }
+
+  if (identifier === 'arc.test.shape') {
+    return {
+      expectedOutputShape: 'NON_EMPTY_TEXT',
+    };
+  }
+
+  return undefined;
+}
+
+function activeRuntimePolicies(): string[] {
+  const active: string[] = [];
+  if (process.env.AUDIT_MODE === 'true') {
+    active.push('AUDIT_MODE');
+  }
+  return active;
 }
 
 function readObservedText(filePath?: string): string {
