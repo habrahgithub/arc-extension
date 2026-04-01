@@ -264,6 +264,16 @@ export class SaveOrchestrator {
     );
   }
 
+  // M4-001 — Commit Context Awareness
+  queryCommitContext(repoRoot: string): { filePath: string; driftStatus: string | null }[] {
+    return this.auditLog.queryCommitContext(repoRoot);
+  }
+
+  // P9-001 — File-Level Audit Indicator
+  queryFileAuditState(filePath: string): { decisionId: string; driftStatus: string | null } | null {
+    return this.auditLog.queryFileAuditState(filePath);
+  }
+
   ensureBlueprintTemplate(directiveId: string): BlueprintArtifactLink {
     return this.blueprintArtifacts.ensureBlueprintTemplate(directiveId);
   }

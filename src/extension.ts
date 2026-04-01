@@ -14,12 +14,15 @@ import { renderRuntimeStatusMarkdown } from './extension/runtimeStatus';
 import { SaveLifecycleController } from './extension/saveLifecycleController';
 import { SaveOrchestrator } from './extension/saveOrchestrator';
 import { StatusBarItemService } from './extension/statusBarItem';
+import { FileAuditIndicator } from './extension/fileAuditIndicator';
 import { TaskBoardViewProvider } from './extension/taskBoardView';
 import { WelcomeSurfaceService } from './extension/welcomeSurface';
 import { resolveWorkspaceTarget } from './extension/workspaceTargeting';
 import { CommitInterceptor } from './extension/interceptors/commitInterceptor';
 import { RunCommandInterceptor } from './extension/interceptors/runCommandInterceptor';
 import { renderDecisionTimeline } from './extension/decisionTimeline';
+import { explainFileState } from './extension/fileStateExplainer';
+import { resolveFileAuditState } from './extension/fileAuditState';
 // ARC-UI-001a — Internal Review Surface Upgrade (UI layer)
 import { registerUiCommands } from './ui';
 // ARCXT-UX-CLARITY-001 — Minimal config template creation commands
@@ -202,10 +205,37 @@ export function activate(context: vscode.ExtensionContext): void {
   const welcomeSurface = new WelcomeSurfaceService(context);
   const statusBarItem = new StatusBarItemService();
   const timelineOutput = vscode.window.createOutputChannel('ARC Output Channel');
+  const fileAuditIndicator = new FileAuditIndicator();
   context.subscriptions.push(statusBarItem);
+  context.subscriptions.push(fileAuditIndicator);
   context.subscriptions.push(timelineOutput);
   context.subscriptions.push(new RunCommandInterceptor(orchestratorFor));
-  context.subscriptions.push(new CommitInterceptor(orchestratorFor));
+  context.subscriptions.push(
+    new CommitInterceptor(orchestratorFor, () => {
+      const fp = vscode.window.activeTextEditor?.document.uri.fsPath;
+      fileAuditIndicator.updateForFile(fp, (f) =>
+        orchestratorFor(f).queryFileAuditState(f),
+      );
+    }),
+  );
+
+  // P9-001 — trigger 1: active editor change (file open / tab switch)
+  context.subscriptions.push(
+    vscode.window.onDidChangeActiveTextEditor((editor) => {
+      fileAuditIndicator.updateForFile(
+        editor?.document.uri.fsPath,
+        (f) => orchestratorFor(f).queryFileAuditState(f),
+      );
+    }),
+  );
+
+  // Prime indicator for the file open at activation time
+  {
+    const fp = vscode.window.activeTextEditor?.document.uri.fsPath;
+    fileAuditIndicator.updateForFile(fp, (f) =>
+      orchestratorFor(f).queryFileAuditState(f),
+    );
+  }
 
   // ARC-UX-002 — Register Task Board View Provider (left sidebar)
   const targetForFirstFile = targetFor(
@@ -305,6 +335,24 @@ export function activate(context: vscode.ExtensionContext): void {
       if (!timeline.available) {
         void vscode.window.showWarningMessage(timeline.message);
       }
+    }),
+    // P9-002 — Inline Context On-Demand Explanation
+    vscode.commands.registerCommand('arc.explainCurrentFileState', () => {
+      const activeFile = vscode.window.activeTextEditor?.document.uri.fsPath;
+      let state: import('./extension/fileAuditState').FileAuditState;
+      try {
+        const row = activeFile
+          ? orchestratorFor(activeFile).queryFileAuditState(activeFile)
+          : null;
+        state = resolveFileAuditState(row);
+      } catch {
+        state = 'UNKNOWN';
+      }
+      const explanation = explainFileState(state, activeFile);
+      for (const line of explanation.lines) {
+        timelineOutput.appendLine(line);
+      }
+      timelineOutput.show(true);
     }),
     vscode.commands.registerCommand('arc.reviewAudit', async () => {
       const filePath = vscode.window.activeTextEditor?.document.uri.fsPath;
@@ -661,6 +709,11 @@ export function activate(context: vscode.ExtensionContext): void {
       );
     }),
     vscode.workspace.onDidSaveTextDocument(async (document) => {
+      // P9-001 — trigger 3: post-save
+      fileAuditIndicator.updateForFile(document.uri.fsPath, (f) =>
+        orchestratorFor(f).queryFileAuditState(f),
+      );
+
       const restore = controllerFor(document.uri.fsPath).handleDidSave(
         document.uri.fsPath,
         document.getText(),

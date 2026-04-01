@@ -602,3 +602,120 @@
 
 - **Next action**
   - **Owner: Axis** — Validate transition guard strictness, non-executable authorization semantics, and additive persistence boundaries for M10 acceptance.
+
+## 2026-04-01 — WO-ARC-XT-M4-001 — Commit Context Awareness (Behavioral Signal)
+
+- **What changed**
+  - Added `AuditLogWriter.queryCommitContext(repoRoot)`: SQL CTE query that returns the latest SAVE entry per file within a repository root, cross-referenced against any linked COMMIT entries to surface per-file drift status. Files with no COMMIT entry are returned with `driftStatus: null` (no-decision).
+  - Created `src/extension/interceptors/commitContextAggregator.ts`: stateless aggregation + formatting layer. `aggregateCommitContext()` classifies rows into `driftCount`, `noDecisionCount`, `verifiedCount`. `formatCommitContextMessage()` returns `undefined` on clean commits (no drift, no unlinked files) to prevent noise.
+  - Updated `CommitInterceptor`: after per-file drift signal, calls `orchestrator.queryCommitContext(repoRoot)` and emits the structured commit summary to the ARC Output Channel only when actionable.
+  - Exposed `queryCommitContext` on `SaveOrchestrator` as a thin delegation method.
+
+- **Commands run + results**
+  - `npm run typecheck` — passed.
+  - `npm run test -- tests/unit/commitContextAggregator.test.ts tests/integration/commitInterceptor.test.ts` — passed (18 tests).
+  - `npm run test` — passed (55 files, 454 tests).
+
+- **Evidence links**
+  - Commit: HEAD (this execution commit)
+  - Artifacts:
+    - `src/core/auditLog.ts` (queryCommitContext method)
+    - `src/extension/interceptors/commitContextAggregator.ts`
+    - `src/extension/interceptors/commitInterceptor.ts`
+    - `src/extension/saveOrchestrator.ts`
+    - `tests/unit/commitContextAggregator.test.ts`
+    - `tests/integration/commitInterceptor.test.ts`
+
+- **Constraints preserved**
+  - No schema changes — query reads existing `audit_events` columns only.
+  - No enforcement — output channel append only, no blocking, no UI panels.
+  - No modal — summary is NOT emitted as `showWarningMessage`; it goes to the output channel only.
+  - Deterministic — all logic is pure functions over audit log state.
+  - Silent on clean commits — `formatCommitContextMessage` returns `undefined` when `driftCount === 0 && noDecisionCount === 0`.
+
+- **Blockers + risks**
+  - Commit context is scoped to files with SAVE entries in the local audit log; files committed without a prior ARC-governed save appear as `noDecisionCount` rather than silently passing.
+
+- **Next action**
+  - **Owner: Axis** — Validate behavioral signal output, confirm output-channel-only constraint, and assess M4 sign-off.
+
+## 2026-04-01 — WO-ARC-XT-P9-001 — File-Level Audit Indicator (Minimal UI Surface)
+
+- **What changed**
+  - Added `AuditLogWriter.queryFileAuditState(filePath)`: SQL query returning the latest SAVE row for a file plus the drift_status from its most recent linked COMMIT entry. Returns null when no SAVE exists.
+  - Created `src/extension/fileAuditState.ts`: pure, vscode-free state resolution. `FileAuditState` type (VERIFIED | DRIFT | NO_DECISION | UNKNOWN). `resolveFileAuditState(row)` maps DB row → state deterministically.
+  - Created `src/extension/fileAuditIndicator.ts`: VS Code status bar item at priority 99 (right of enforcement indicator). `updateForFile(filePath, queryFn)` — resolves state and updates label/color. Falls back to UNKNOWN on error or no active file.
+  - Exposed `queryFileAuditState` on `SaveOrchestrator` (thin delegation).
+  - Wired 4 update triggers in `extension.ts`: activation (prime), active editor change, post-save, post-commit (via `CommitInterceptor` callback).
+  - Updated `CommitInterceptor` to accept optional `onCommitObserved` callback — avoids coupling to indicator directly.
+
+- **State mapping**
+  - `null` row → NO_DECISION (no SAVE entry for file)
+  - `driftStatus = DRIFT_DETECTED` → DRIFT (amber `#e8a000`)
+  - `driftStatus = NO_DRIFT | FINGERPRINT_UNAVAILABLE | null` → VERIFIED (neutral)
+  - error / no active file → UNKNOWN (muted gray)
+
+- **Commands run + results**
+  - `npm run typecheck` — passed.
+  - `npm run test -- tests/unit/fileAuditIndicator.test.ts tests/integration/fileAuditIndicator.test.ts` — passed (11 tests).
+  - `npm run test` — passed (57 files, 465 tests).
+
+- **Evidence links**
+  - Commit: HEAD (this execution commit)
+  - Artifacts:
+    - `src/core/auditLog.ts` (queryFileAuditState method)
+    - `src/extension/fileAuditState.ts`
+    - `src/extension/fileAuditIndicator.ts`
+    - `src/extension/saveOrchestrator.ts`
+    - `src/extension/interceptors/commitInterceptor.ts`
+    - `src/extension.ts`
+    - `tests/unit/fileAuditIndicator.test.ts`
+    - `tests/integration/fileAuditIndicator.test.ts`
+
+- **Constraints preserved**
+  - No schema changes — reads existing columns only.
+  - No enforcement — display only.
+  - No interaction — no click command, no tooltip action, no panel.
+  - No webview, no React, no panel system.
+  - Silent fallback — UNKNOWN on error, never crashes save path.
+  - Pure state logic in `fileAuditState.ts` with no vscode dependency.
+
+- **Next action**
+  - **Owner: Axis** — Validate state correctness, visual subtlety, and no-performance-degradation criteria for P9-001 sign-off.
+
+## 2026-04-01 — WO-ARC-XT-P9-002 — Inline Context On-Demand Explanation
+
+- **What changed**
+  - Created `src/extension/fileStateExplainer.ts`: pure, vscode-free explanation generator. `explainFileState(state, filePath)` returns a `FileStateExplanation` with plain-text lines (no markdown) for VERIFIED, DRIFT, NO_DECISION, and UNKNOWN states. Max 6 lines per state including footer.
+  - Registered `arc.explainCurrentFileState` command in `extension.ts`: resolves active file state via `queryFileAuditState` → `resolveFileAuditState`, calls `explainFileState`, appends all lines to the ARC Output Channel, and shows the channel.
+  - Added `resolveFileAuditState` import alongside existing `explainFileState` import in `extension.ts`.
+  - Wording: descriptive-only, no markdown, no alarming language, no modals. Footer line on all states: "Use: ARC: Show Decision Timeline".
+
+- **State-to-explanation mapping**
+  - VERIFIED — file has a save record; commit diff passed or no commit yet
+  - DRIFT — committed content diverged from recorded decision fingerprint
+  - NO_DECISION — no save entry; file has not been assessed by ARC
+  - UNKNOWN — no active file or query error; graceful fallback
+
+- **Commands run + results**
+  - `npm run build` — passed.
+  - `npm run test -- tests/unit/fileStateExplainer.test.ts` — passed (8 tests).
+  - `npm run test` — passed (58 files, 473 tests).
+
+- **Evidence links**
+  - Commit: HEAD (this execution commit)
+  - Artifacts:
+    - `src/extension/fileStateExplainer.ts`
+    - `src/extension.ts` (arc.explainCurrentFileState command)
+    - `tests/unit/fileStateExplainer.test.ts`
+
+- **Constraints preserved**
+  - No schema changes — reads existing state via existing query path.
+  - No enforcement — output channel append only, no blocking.
+  - No modal — appends to output channel, never `showWarningMessage`.
+  - No webview — plain text lines only.
+  - Pure logic in `fileStateExplainer.ts` with no vscode dependency.
+  - Reuses existing `queryFileAuditState` / `resolveFileAuditState` — no new data path.
+
+- **Next action**
+  - **Owner: Axis** — Validate explanation wording, output-channel-only constraint, and no-additional-data-path criteria for P9-002 sign-off.
