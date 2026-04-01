@@ -1,6 +1,6 @@
 {
   "name": "arc-audit-ready-core",
-  "displayName": "ARC XT \u2014 Audit Ready Core",
+  "displayName": "ARC XT — Audit Ready Core",
   "description": "Governed code enforcement for AI-assisted development in a local-first VS Code extension. Public beta candidate for ARC XT.",
   "version": "0.1.11",
   "preview": true,
@@ -40,28 +40,7 @@
     "theme": "dark"
   },
   "activationEvents": [
-    "onStartupFinished",
-    "onCommand:arc.showWelcome",
-    "onCommand:arc.reviewAudit",
-    "onCommand:arc.showRuntimeStatus",
-    "onCommand:arc.reviewBlueprints",
-    "onCommand:arc.reviewFalsePositives",
-    "onCommand:lintel.showWelcome",
-    "onCommand:lintel.reviewAudit",
-    "onCommand:lintel.showRuntimeStatus",
-    "onCommand:lintel.reviewBlueprints",
-    "onCommand:lintel.reviewFalsePositives",
-    "onCommand:arc.ui.reviewHome",
-    "onCommand:arc.ui.runtimeStatus",
-    "onCommand:arc.ui.auditReview",
-    "onCommand:arc.ui.blueprintProof",
-    "onCommand:arc.ui.falsePositiveReview",
-    "onCommand:arc.ui.guidedWorkflow",
-    "onCommand:arc.ui.decisionFeed",
-    "onCommand:arc.ui.auditTimeline",
-    "onCommand:arc.ui.whyPanel",
-    "onCommand:arc.ui.taskBoard",
-    "onCommand:arc.showDecisionTimeline"
+    "onStartupFinished"
   ],
   "contributes": {
     "commands": [
@@ -169,8 +148,8 @@
     "test:governance": "vitest run tests/governance",
     "test:performance": "vitest run tests/performance",
     "smoke:harness": "node ./scripts/smoke_harness.js",
-    "pack": "vsce package --no-dependencies --allow-missing-repository",
-    "pack:release": "vsce package --no-dependencies --allow-missing-repository --out ./dist/release/"
+    "pack": "vsce package --allow-missing-repository",
+    "pack:release": "vsce package --allow-missing-repository --out ./dist/release/"
   },
   "devDependencies": {
     "@types/node": "^20.17.30",

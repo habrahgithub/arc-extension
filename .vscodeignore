@@ -91,6 +91,7 @@ docs/RELEASE-READINESS.md
 !package.json
 !README.md
 !dist/**
+!node_modules/**
 !rules/**
 !Public/**
 !LICENSE
