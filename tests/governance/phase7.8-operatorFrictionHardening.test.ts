@@ -208,6 +208,10 @@ describe('Phase 7.8 — Operator Friction Hardening Governance', () => {
         'deviationDetector.ts', // added via main (Codex PRs)
         'explanationSynthesizer.ts', // added via main (Codex PRs)
         'governanceFeedbackEvaluator.ts', // added via main (Codex PRs)
+        'governanceProposalRegistry.ts', // added via Codex PR #7
+        'governanceHandoffService.ts', // added via Codex PR #7
+        'implementationDraftService.ts', // added via Codex PR #7
+        'implementationPackageService.ts', // added via Codex PR #7
         'performance.ts',
         'risk.ts',
         'routerPolicy.ts',

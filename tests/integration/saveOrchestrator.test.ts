@@ -168,6 +168,7 @@ describe('save orchestrator', () => {
     expect(runEntry.failure_type).toBeUndefined();
     expect(runEntry.explanation).toBeUndefined();
     expect(runEntry.governance_proposal).toBeUndefined();
+    expect(orchestrator.listPendingGovernanceProposals()).toEqual([]);
   });
 
   it('attaches governance proposal only when repeated explanation reaches threshold', async () => {
@@ -192,6 +193,10 @@ describe('save orchestrator', () => {
       'workbench.action.files.save',
       filePath,
     );
+    const fourth = await orchestrator.observeExecution(
+      'workbench.action.files.save',
+      filePath,
+    );
 
     expect(first.explanation?.code).toBe('REQUIRED_POLICY_MISSING');
     expect(first.governance_proposal).toBeUndefined();
@@ -201,6 +206,37 @@ describe('save orchestrator', () => {
     );
     expect(third.governance_proposal?.triggerCode).toBe('REQUIRED_POLICY_MISSING');
     expect(third.governance_proposal?.reviewStatus).toBe('PENDING_REVIEW');
+
+    const pending = orchestrator.listPendingGovernanceProposals();
+    expect(pending).toHaveLength(1);
+    expect(pending[0]?.proposalType).toBe('REVIEW_POLICY_REQUIREMENT');
+    expect(pending[0]?.occurrenceCount).toBe(2);
+    expect(fourth.governance_proposal?.reviewStatus).toBe('PENDING_REVIEW');
+  });
+
+  it('keeps separate registry records for different proposal types', async () => {
+    const workspace = makeWorkspace();
+    const orchestrator = new SaveOrchestrator(workspace, new DisabledModelAdapter());
+    const filePath = path.join(workspace, 'src', 'deviation', 'registry-types.ts');
+
+    fs.mkdirSync(path.dirname(filePath), { recursive: true });
+    fs.writeFileSync(filePath, '', 'utf8');
+    process.env.AUDIT_MODE = 'true';
+
+    await orchestrator.observeExecution('arc.test.sequence', filePath);
+    await orchestrator.observeExecution('arc.test.sequence', filePath);
+    await orchestrator.observeExecution('arc.test.sequence', filePath);
+
+    await orchestrator.observeExecution('arc.test.shape', filePath);
+    await orchestrator.observeExecution('arc.test.shape', filePath);
+    await orchestrator.observeExecution('arc.test.shape', filePath);
+
+    const pending = orchestrator.listPendingGovernanceProposals();
+    expect(pending).toHaveLength(2);
+    expect(pending.map((record) => record.proposalType).sort()).toEqual([
+      'REVIEW_CONTRACT',
+      'REVIEW_OUTPUT_CONTRACT',
+    ]);
   });
 
   it('writes a hash-chained audit entry with blueprint linkage for REQUIRE_PLAN saves', async () => {

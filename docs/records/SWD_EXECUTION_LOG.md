@@ -340,3 +340,265 @@
 
 - **Next action**
   - **Owner: Axis** — Validate threshold semantics, proposal evidence format, and additive audit compatibility for M3 sign-off.
+
+## 2026-04-02 00:20:00 GST — ARC-RUNTIME-ASSURANCE-M4 — Governance Proposal Registry & Review Queue
+
+- **What changed**
+  - Added isolated `GovernanceProposalRegistry` module with deterministic key-based upsert/list APIs and optional key lookup.
+  - Implemented strict dedup identity key: `${proposalType}:${triggerCode}` via deterministic hashed ID.
+  - Added additive registry persistence in `.arc/governance_registry.json` (separate from audit chain data) with reload-safe behavior.
+  - Integrated registry upsert only after M3 proposal generation path in `observeEvent`; execution remains non-blocking/detect-only.
+  - Added minimal orchestrator read interface for pending queue (`listPendingGovernanceProposals`).
+  - Added test coverage for deduplication, occurrence counting, first/last seen behavior, repeated proposal single-record behavior, multi-type separation, and no-proposal no-mutation path.
+  - Added M4 evidence artifact with before/after registry snapshots and short upsert trace.
+
+- **Commands run + results**
+  - `/check` — failed (`/check: No such file or directory` in this environment).
+  - `npm run lint` — passed.
+  - `npm run build` — passed.
+  - `npm run test -- tests/unit/deviationDetector.test.ts tests/unit/explanationSynthesizer.test.ts tests/unit/governanceFeedbackEvaluator.test.ts tests/unit/governanceProposalRegistry.test.ts tests/integration/saveOrchestrator.test.ts` — passed.
+  - `npm run pack` — failed (`vsce: not found` in this environment).
+
+- **Evidence links**
+  - Commit: pending (next Forge commit)
+  - PR: pending (to be created via make_pr)
+  - Artifacts:
+    - `src/core/governanceProposalRegistry.ts`
+    - `src/extension/saveOrchestrator.ts`
+    - `tests/unit/governanceProposalRegistry.test.ts`
+    - `tests/integration/saveOrchestrator.test.ts`
+    - `artifacts/ARC-RUNTIME-ASSURANCE-M4-SAMPLES.md`
+
+- **Blockers + risks**
+  - `/check` command remains unavailable in this environment and is explicitly acknowledged.
+  - `npm run pack` cannot complete in this environment because `vsce` is unavailable.
+  - Registry is intentionally passive and does not implement review transitions in M4 scope.
+
+- **Next action**
+  - **Owner: Axis** — Validate dedup behavior and registry queue semantics for M4 acceptance.
+
+## 2026-04-02 01:05:00 GST — ARC-RUNTIME-ASSURANCE-M5 — Human Review-State Workflow
+
+- **What changed**
+  - Extended governance registry types with explicit review state support (`PENDING_REVIEW | APPROVED | REJECTED`) and optional `reviewDecision` payload.
+  - Added explicit human review actions to `GovernanceProposalRegistry`: `getById`, `approve`, `reject`, and `listReviewed`.
+  - Implemented strict transition guards allowing only `PENDING_REVIEW -> APPROVED|REJECTED` and blocking all subsequent transition attempts.
+  - Added validation guards requiring non-empty `decidedBy` and `rationale` for approve/reject actions.
+  - Preserved M5 boundary: review actions update registry records only and do not alter runtime execution behavior.
+  - Added unit tests for valid approve/reject transitions, invalid transitions, blank rationale/decider rejection, and reviewed-state persistence.
+  - Added integration tests for pending-queue exclusion after review and restart/reload preservation of reviewed state.
+  - Added M5 artifact with before/after registry snapshots and short transition trace.
+
+- **Commands run + results**
+  - `/check` — failed (`/check: No such file or directory` in this environment).
+  - `npm run lint` — passed.
+  - `npm run build` — passed.
+  - `npm run test -- tests/unit/deviationDetector.test.ts tests/unit/explanationSynthesizer.test.ts tests/unit/governanceFeedbackEvaluator.test.ts tests/unit/governanceProposalRegistry.test.ts tests/integration/saveOrchestrator.test.ts tests/integration/governanceProposalRegistry.test.ts` — passed.
+  - `npm run pack` — failed (`vsce: not found` in this environment).
+
+- **Evidence links**
+  - Commit: pending (next Forge commit)
+  - PR: pending (to be created via make_pr)
+  - Artifacts:
+    - `src/core/governanceProposalRegistry.ts`
+    - `src/contracts/types.ts`
+    - `tests/unit/governanceProposalRegistry.test.ts`
+    - `tests/integration/governanceProposalRegistry.test.ts`
+    - `artifacts/ARC-RUNTIME-ASSURANCE-M5-SAMPLES.md`
+
+- **Blockers + risks**
+  - `/check` remains unavailable in this environment.
+  - `npm run pack` cannot complete because `vsce` is unavailable.
+  - Review-state workflow intentionally does not apply outcomes to contracts/policies/enforcement in M5 scope.
+
+- **Next action**
+  - **Owner: Axis** — Validate transition rules, validation guards, and review-trail persistence for M5 acceptance.
+
+## 2026-04-02 02:00:00 GST — ARC-RUNTIME-ASSURANCE-M6 — Approved Proposal Handoff Artifact
+
+- **What changed**
+  - Added additive handoff artifact types for approved proposal packaging (`GovernanceHandoffArtifact`, optional `reviewContext`).
+  - Implemented isolated `GovernanceHandoffService` with explicit `createFromApprovedProposal(proposalId, createdBy)` action and read methods (`listOpen`, `getById`, `getByProposalId`).
+  - Added strict eligibility guards: proposal exists, proposal is `APPROVED`, review decision exists, and no open handoff already exists for that proposal.
+  - Enforced deterministic dedup identity by source proposal (`proposal:${proposalId}`) with one OPEN handoff per approved proposal.
+  - Added separate additive persistence store `.arc/governance_handoffs.json` (kept separate from audit chain and proposal registry state).
+  - Added unit tests for approved creation, pending/rejected rejection, and duplicate-open prevention.
+  - Added integration tests for explicit-call-only behavior (no auto-create on approval) and reload/restart persistence.
+  - Added M6 evidence artifact with before/after handoff store snapshots and short eligibility trace.
+
+- **Commands run + results**
+  - `/check` — failed (`/check: No such file or directory` in this environment).
+  - `npm run lint` — passed.
+  - `npm run build` — passed.
+  - `npm run test -- tests/unit/deviationDetector.test.ts tests/unit/explanationSynthesizer.test.ts tests/unit/governanceFeedbackEvaluator.test.ts tests/unit/governanceProposalRegistry.test.ts tests/unit/governanceHandoffService.test.ts tests/integration/saveOrchestrator.test.ts tests/integration/governanceProposalRegistry.test.ts tests/integration/governanceHandoffService.test.ts` — passed.
+  - `npm run pack` — failed (`vsce: not found` in this environment).
+
+- **Evidence links**
+  - Commit: pending (next Forge commit)
+  - PR: pending (to be created via make_pr)
+  - Artifacts:
+    - `src/core/governanceHandoffService.ts`
+    - `src/contracts/types.ts`
+    - `tests/unit/governanceHandoffService.test.ts`
+    - `tests/integration/governanceHandoffService.test.ts`
+    - `artifacts/ARC-RUNTIME-ASSURANCE-M6-SAMPLES.md`
+
+- **Blockers + risks**
+  - `/check` remains unavailable in this environment.
+  - `npm run pack` cannot complete because `vsce` is unavailable.
+  - Handoff artifacts remain packaging-only and do not encode implementation instructions by M6 scope.
+
+- **Next action**
+  - **Owner: Axis** — Validate M6 eligibility guards, one-open-handoff dedup behavior, and persistence separation.
+
+## 2026-04-02 02:40:00 GST — ARC-RUNTIME-ASSURANCE-M7 — Implementation Draft Layer
+
+- **What changed**
+  - Added additive `ImplementationDraft` type for handoff-derived staging artifacts.
+  - Implemented isolated `ImplementationDraftService` with explicit `createFromHandoff(handoffId, createdBy)` and minimal read methods (`listOpen`, `getById`, `getByHandoffId`).
+  - Added strict eligibility guards: handoff exists, handoff is OPEN, handoff originates from APPROVED chain, no existing open draft for same handoff, and non-empty `createdBy`.
+  - Implemented deterministic mapping table by proposal type for `scope`, `proposedChanges`, and `riskLevel` with explicit error on unsupported proposal types.
+  - Enforced deterministic one-open-draft-per-handoff identity (`handoff:${handoffId}`) with controlled duplicate rejection.
+  - Added separate additive persistence store `.arc/implementation_drafts.json` (no audit-chain mutation and no execution-flow integration).
+  - Added unit tests for valid creation, missing handoff rejection, duplicate prevention, blank creator rejection, deterministic mapping, and unsupported proposal type rejection.
+  - Added integration tests for explicit-call-only behavior (no auto-draft on handoff create) and restart/reload persistence.
+  - Added M7 evidence artifact with before/after draft snapshots and short chain trace.
+
+- **Commands run + results**
+  - `/check` — failed (`/check: No such file or directory` in this environment).
+  - `npm run lint` — passed.
+  - `npm run build` — passed.
+  - `npm run test -- tests/unit/deviationDetector.test.ts tests/unit/explanationSynthesizer.test.ts tests/unit/governanceFeedbackEvaluator.test.ts tests/unit/governanceProposalRegistry.test.ts tests/unit/governanceHandoffService.test.ts tests/unit/implementationDraftService.test.ts tests/integration/saveOrchestrator.test.ts tests/integration/governanceProposalRegistry.test.ts tests/integration/governanceHandoffService.test.ts tests/integration/implementationDraftService.test.ts` — passed.
+  - `npm run pack` — failed (`vsce: not found` in this environment).
+
+- **Evidence links**
+  - Commit: pending (next Forge commit)
+  - PR: pending (to be created via make_pr)
+  - Artifacts:
+    - `src/core/implementationDraftService.ts`
+    - `src/contracts/types.ts`
+    - `tests/unit/implementationDraftService.test.ts`
+    - `tests/integration/implementationDraftService.test.ts`
+    - `artifacts/ARC-RUNTIME-ASSURANCE-M7-SAMPLES.md`
+
+- **Blockers + risks**
+  - `/check` remains unavailable in this environment.
+  - `npm run pack` cannot complete because `vsce` is unavailable.
+  - Draft content is intentionally bounded/template-driven and excludes implementation instructions by M7 scope.
+
+- **Next action**
+  - **Owner: Axis** — Validate M7 eligibility, mapping determinism, and staging-only boundary for acceptance.
+
+## 2026-04-02 03:30:00 GST — ARC-RUNTIME-ASSURANCE-M8 — Draft Review & Promotion Gate
+
+- **What changed**
+  - Extended implementation draft model with bounded review lifecycle states (`DRAFT | APPROVED | REJECTED | PROMOTED`) and optional `reviewDecision` payload.
+  - Added explicit human draft review actions in `ImplementationDraftService`: `approveDraft`, `rejectDraft`, `promoteDraft`.
+  - Implemented strict transition guards: `DRAFT -> APPROVED|REJECTED` and `APPROVED -> PROMOTED`; invalid transitions are rejected with controlled errors.
+  - Added rationale and decider validation guards for all review/promotion actions.
+  - Added additive `ImplementationPackageCandidate` artifact type and separate persistence store `.arc/implementation_package_candidates.json`.
+  - Implemented promotion behavior: validate approved draft + no existing candidate, create candidate, persist candidate additively, and update draft to `PROMOTED` with decision payload.
+  - Added minimal candidate queries: `listCandidates()` and `getCandidateByDraftId()`.
+  - Added unit coverage for approve/reject/promote, transition errors, duplicate candidate prevention, rationale validation, deterministic mapping behavior, and unsupported proposal type rejection.
+  - Added integration coverage for full lifecycle chain (`handoff -> draft -> approve -> promote -> candidate`) and explicit no-auto-promotion behavior.
+  - Added M8 artifact with before/after snapshots and lifecycle trace.
+
+- **Commands run + results**
+  - `/check` — failed (`/check: No such file or directory` in this environment).
+  - `npm run lint` — passed.
+  - `npm run build` — passed.
+  - `npm run test -- tests/unit/deviationDetector.test.ts tests/unit/explanationSynthesizer.test.ts tests/unit/governanceFeedbackEvaluator.test.ts tests/unit/governanceProposalRegistry.test.ts tests/unit/governanceHandoffService.test.ts tests/unit/implementationDraftService.test.ts tests/integration/saveOrchestrator.test.ts tests/integration/governanceProposalRegistry.test.ts tests/integration/governanceHandoffService.test.ts tests/integration/implementationDraftService.test.ts` — passed.
+  - `npm run pack` — failed (`vsce: not found` in this environment).
+
+- **Evidence links**
+  - Commit: pending (next Forge commit)
+  - PR: pending (to be created via make_pr)
+  - Artifacts:
+    - `src/core/implementationDraftService.ts`
+    - `src/contracts/types.ts`
+    - `tests/unit/implementationDraftService.test.ts`
+    - `tests/integration/implementationDraftService.test.ts`
+    - `artifacts/ARC-RUNTIME-ASSURANCE-M8-SAMPLES.md`
+
+- **Blockers + risks**
+  - `/check` remains unavailable in this environment.
+  - `npm run pack` cannot complete because `vsce` is unavailable.
+  - Promotion remains decision-only and does not produce execution artifacts by M8 scope.
+
+- **Next action**
+  - **Owner: Axis** — Validate transition rules, promotion semantics, and store separation for M8 acceptance.
+
+## 2026-04-02 04:25:00 GST — ARC-RUNTIME-ASSURANCE-M9 — Implementation Package Assembly Layer
+
+- **What changed**
+  - Added additive `ImplementationPackage` artifact type for bounded package records derived from promoted candidates.
+  - Implemented isolated `ImplementationPackageService` with explicit `createFromCandidate(candidateId, createdBy)` and read methods (`list`, `getById`, `getByCandidateId`).
+  - Added strict eligibility guards: candidate exists, candidate remains `CANDIDATE`, and non-empty `createdBy`.
+  - Enforced deterministic one-package-per-candidate identity (`candidate:${candidateId}`) with controlled duplicate rejection.
+  - Added separate additive persistence store `.arc/implementation_packages.json` (no audit-chain mutation and no execution-flow integration).
+  - Added unit coverage for valid package creation, duplicate rejection, missing candidate rejection, and blank actor validation.
+  - Added integration coverage that package creation remains explicit (no auto-create at promotion) and full explicit chain creation through package.
+  - Added M9 evidence artifact with before/after snapshots and lifecycle trace.
+
+- **Commands run + results**
+  - `/check` — failed (`/check: No such file or directory` in this environment).
+  - `npm run lint` — passed.
+  - `npm run build` — passed.
+  - `npm run test -- tests/unit/implementationDraftService.test.ts tests/unit/implementationPackageService.test.ts tests/integration/implementationDraftService.test.ts` — passed.
+  - `npm run pack` — failed (`vsce: not found` in this environment).
+
+- **Evidence links**
+  - Commit: pending (next Forge commit)
+  - PR: pending (to be created via make_pr)
+  - Artifacts:
+    - `src/core/implementationPackageService.ts`
+    - `src/contracts/types.ts`
+    - `tests/unit/implementationPackageService.test.ts`
+    - `tests/integration/implementationDraftService.test.ts`
+    - `artifacts/ARC-RUNTIME-ASSURANCE-M9-SAMPLES.md`
+
+- **Blockers + risks**
+  - `/check` remains unavailable in this environment.
+  - `npm run pack` cannot complete because `vsce` is unavailable.
+  - Package artifacts remain bounded metadata and do not include executable instructions by M9 scope.
+
+- **Next action**
+  - **Owner: Axis** — Validate package eligibility rules, deterministic identity, and store separation for M9 acceptance.
+
+## 2026-04-02 05:05:00 GST — ARC-RUNTIME-ASSURANCE-M10 — Execution Authorization Gate (Non-Executable)
+
+- **What changed**
+  - Extended `ImplementationPackage` authorization state with explicit bounded lifecycle fields: `approvalRequired`, `packageStatus`, and optional `authorizationDecision`.
+  - Added package authorization actions in `ImplementationPackageService`: `authorizePackage` and `denyPackage`.
+  - Enforced strict transition guards: only `DEFINED -> AUTHORIZED` and `DEFINED -> DENIED`; all post-decision transitions are rejected with controlled errors.
+  - Added mandatory decision validation for `decidedBy` and `rationale` (both non-empty).
+  - Added optional additive authorization log store `.arc/implementation_package_authorization_log.json`.
+  - Added minimal query methods for authorization scope visibility: `listDefined()` and `listAuthorized()` while preserving existing `getById()`.
+  - Added unit coverage for authorize/deny paths, duplicate decision prevention, invalid transition rejection, and rationale validation.
+  - Added integration coverage for explicit chain `candidate -> package -> authorize` and proof that authorization has no runtime/audit side effects.
+  - Added M10 evidence artifact with before/after snapshots and transition trace.
+
+- **Commands run + results**
+  - `/check` — failed (`/check: No such file or directory` in this environment).
+  - `npm run lint` — passed.
+  - `npm run build` — passed.
+  - `npm run test -- tests/unit/implementationDraftService.test.ts tests/unit/implementationPackageService.test.ts tests/integration/implementationDraftService.test.ts` — passed.
+  - `npm run pack` — failed (`vsce: not found` in this environment).
+
+- **Evidence links**
+  - Commit: pending (next Forge commit)
+  - PR: pending (to be created via make_pr)
+  - Artifacts:
+    - `src/core/implementationPackageService.ts`
+    - `src/contracts/types.ts`
+    - `tests/unit/implementationPackageService.test.ts`
+    - `tests/integration/implementationDraftService.test.ts`
+    - `artifacts/ARC-RUNTIME-ASSURANCE-M10-SAMPLES.md`
+
+- **Blockers + risks**
+  - `/check` remains unavailable in this environment.
+  - `npm run pack` cannot complete because `vsce` is unavailable.
+  - Authorization remains intentionally non-executable and has no runtime coupling by M10 scope.
+
+- **Next action**
+  - **Owner: Axis** — Validate transition guard strictness, non-executable authorization semantics, and additive persistence boundaries for M10 acceptance.

@@ -19,6 +19,7 @@ import type {
   ExecutionEvent,
   DirectiveProofInput,
   FallbackCause,
+  GovernanceProposalRecord,
   SaveInput,
   SaveOutcome,
 } from '../contracts/types';
@@ -41,6 +42,7 @@ import {
 import { DeviationDetector } from '../core/deviationDetector';
 import { ExplanationSynthesizer } from '../core/explanationSynthesizer';
 import { GovernanceFeedbackEvaluator } from '../core/governanceFeedbackEvaluator';
+import { GovernanceProposalRegistry } from '../core/governanceProposalRegistry';
 import {
   buildRouteMetadata,
   RoutePolicyStore,
@@ -61,6 +63,7 @@ export class SaveOrchestrator {
   private readonly deviationDetector = new DeviationDetector();
   private readonly explanationSynthesizer = new ExplanationSynthesizer();
   private readonly governanceFeedbackEvaluator = new GovernanceFeedbackEvaluator();
+  private readonly governanceProposalRegistry: GovernanceProposalRegistry;
 
   constructor(
     private readonly workspaceRoot: string,
@@ -78,6 +81,7 @@ export class SaveOrchestrator {
     this.routerShell = new RouterShell();
     this.disabledModelAdapter = new DisabledModelAdapter();
     this.overrideLog = new OverrideLogWriter(workspaceRoot);
+    this.governanceProposalRegistry = new GovernanceProposalRegistry(workspaceRoot);
   }
 
   async assessSave(input: SaveInput): Promise<AssessedSave> {
@@ -270,6 +274,10 @@ export class SaveOrchestrator {
     return this.blueprintArtifacts.resolveProof(proof);
   }
 
+  listPendingGovernanceProposals(): GovernanceProposalRecord[] {
+    return this.governanceProposalRegistry.listPending();
+  }
+
   private getReusableDecision(
     input: SaveInput,
     classification: Classification,
@@ -386,6 +394,10 @@ export class SaveOrchestrator {
           governance_proposal: governanceProposal,
         }
       : decision;
+
+    if (governanceProposal) {
+      this.governanceProposalRegistry.upsert(governanceProposal);
+    }
 
     return this.auditLog.append(
       assessment.classification,
@@ -620,6 +632,18 @@ function contractForObservedEvent(
     return {
       allowedToolSequence: ['workbench.action.files.save'],
       requiredPolicies: ['AUDIT_MODE'],
+      expectedOutputShape: 'NON_EMPTY_TEXT',
+    };
+  }
+
+  if (identifier === 'arc.test.sequence') {
+    return {
+      allowedToolSequence: ['workbench.action.files.save'],
+    };
+  }
+
+  if (identifier === 'arc.test.shape') {
+    return {
       expectedOutputShape: 'NON_EMPTY_TEXT',
     };
   }
