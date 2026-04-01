@@ -22,46 +22,57 @@ const projectRoot = path.resolve(
 describe('Phase 7.9 — Precision and False-Positive Reduction Governance', () => {
   describe('OBS-S-7023: Classification Precision (Evidence-Backed)', () => {
     it('false-positive candidates are filtered and ranked by quality', () => {
+      const falsePositiveScorerSource = fs.readFileSync(
+        path.join(projectRoot, 'src', 'core', 'falsePositiveScorer.ts'),
+        'utf8',
+      );
       const reviewSurfacesSource = fs.readFileSync(
         path.join(projectRoot, 'src', 'extension', 'reviewSurfaces.ts'),
         'utf8',
       );
 
-      // Should have quality scoring function
-      expect(reviewSurfacesSource).toContain(
+      // Should have quality scoring function in dedicated module
+      expect(falsePositiveScorerSource).toContain(
         'calculateFalsePositiveQualityScore',
       );
 
       // Should filter to WARN and REQUIRE_PLAN only (not BLOCK)
-      expect(reviewSurfacesSource).toContain("decision === 'WARN'");
-      expect(reviewSurfacesSource).toContain("decision === 'REQUIRE_PLAN'");
+      expect(falsePositiveScorerSource).toContain("decision === 'WARN'");
+      expect(falsePositiveScorerSource).toContain(
+        "decision === 'REQUIRE_PLAN'",
+      );
 
       // Should sort by quality score
       expect(reviewSurfacesSource).toContain('qualityScore - a.qualityScore');
 
-      // Should have quality label display
-      expect(reviewSurfacesSource).toContain('getFalsePositiveQualityLabel');
+      // Should have quality label display and import from module
+      expect(falsePositiveScorerSource).toContain(
+        'getFalsePositiveQualityLabel',
+      );
+      expect(reviewSurfacesSource).toContain('falsePositiveScorer');
     });
 
     it('false-positive quality scoring is evidence-based', () => {
-      const reviewSurfacesSource = fs.readFileSync(
-        path.join(projectRoot, 'src', 'extension', 'reviewSurfaces.ts'),
+      const falsePositiveScorerSource = fs.readFileSync(
+        path.join(projectRoot, 'src', 'core', 'falsePositiveScorer.ts'),
         'utf8',
       );
 
       // Should score based on decision type
-      expect(reviewSurfacesSource).toContain("decision === 'WARN'");
-      expect(reviewSurfacesSource).toContain("decision === 'REQUIRE_PLAN'");
+      expect(falsePositiveScorerSource).toContain("decision === 'WARN'");
+      expect(falsePositiveScorerSource).toContain(
+        "decision === 'REQUIRE_PLAN'",
+      );
 
       // Should score based on evaluation source
-      expect(reviewSurfacesSource).toContain("source === 'RULE'");
-      expect(reviewSurfacesSource).toContain("source === 'FALLBACK'");
+      expect(falsePositiveScorerSource).toContain("source === 'RULE'");
+      expect(falsePositiveScorerSource).toContain("source === 'FALLBACK'");
 
       // Should score based on matched rules
-      expect(reviewSurfacesSource).toContain('matched_rules.length === 0');
+      expect(falsePositiveScorerSource).toContain('matched_rules.length === 0');
 
       // Should score based on route fallback
-      expect(reviewSurfacesSource).toContain('route_fallback ===');
+      expect(falsePositiveScorerSource).toContain('route_fallback ===');
     });
 
     it('false-positive quality notice is advisory-only', () => {

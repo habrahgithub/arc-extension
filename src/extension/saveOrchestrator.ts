@@ -39,6 +39,7 @@ import {
   measureAsync,
   measureSync,
 } from '../core/performance';
+import { AnalysisEngine } from '../core/analysis/AnalysisEngine';
 import { DeviationDetector } from '../core/deviationDetector';
 import { ExplanationSynthesizer } from '../core/explanationSynthesizer';
 import { GovernanceFeedbackEvaluator } from '../core/governanceFeedbackEvaluator';
@@ -62,7 +63,8 @@ export class SaveOrchestrator {
   private readonly overrideLog: OverrideLogWriter;
   private readonly deviationDetector = new DeviationDetector();
   private readonly explanationSynthesizer = new ExplanationSynthesizer();
-  private readonly governanceFeedbackEvaluator = new GovernanceFeedbackEvaluator();
+  private readonly governanceFeedbackEvaluator =
+    new GovernanceFeedbackEvaluator();
   private readonly governanceProposalRegistry: GovernanceProposalRegistry;
 
   constructor(
@@ -71,7 +73,10 @@ export class SaveOrchestrator {
       enabledByDefault: true,
     }),
     private readonly cloudModelAdapter: ModelAdapter = new DisabledModelAdapter(),
-    private readonly leaseStore = new DecisionLeaseStore(5 * 60 * 1000, workspaceRoot),
+    private readonly leaseStore = new DecisionLeaseStore(
+      5 * 60 * 1000,
+      workspaceRoot,
+    ),
     private readonly auditLog = new AuditLogWriter(workspaceRoot),
   ) {
     this.blueprintArtifacts = new BlueprintArtifactStore(workspaceRoot);
@@ -81,7 +86,9 @@ export class SaveOrchestrator {
     this.routerShell = new RouterShell();
     this.disabledModelAdapter = new DisabledModelAdapter();
     this.overrideLog = new OverrideLogWriter(workspaceRoot);
-    this.governanceProposalRegistry = new GovernanceProposalRegistry(workspaceRoot);
+    this.governanceProposalRegistry = new GovernanceProposalRegistry(
+      workspaceRoot,
+    );
   }
 
   async assessSave(input: SaveInput): Promise<AssessedSave> {
@@ -106,6 +113,9 @@ export class SaveOrchestrator {
         );
         const routePolicy = this.routePolicy.load();
         const context = buildContext(classification, input);
+        const analysisEngine = new AnalysisEngine({
+          astFingerprintingEnabled: routePolicy.config.astFingerprintingEnabled,
+        });
         const contextPacket = buildContextPacket(
           classification,
           input,
@@ -117,6 +127,7 @@ export class SaveOrchestrator {
           contextPacket,
           input,
         );
+        const analysis = analysisEngine.runAnalysis(classification, input);
         const ruleDecision = this.withRouteMetadata(
           measureSync(
             (entry) => this.performanceRecorder.record(entry),
@@ -144,6 +155,7 @@ export class SaveOrchestrator {
             classification,
             context,
             contextPacket,
+            analysis,
             decision: observeDecision,
             input,
             routePolicy,
@@ -162,6 +174,7 @@ export class SaveOrchestrator {
             classification,
             context,
             contextPacket,
+            analysis,
             decision: this.withRouteMetadata(reusedLease, routerShell),
             input,
             routePolicy,
@@ -182,6 +195,7 @@ export class SaveOrchestrator {
           classification,
           context,
           contextPacket,
+          analysis,
           decision: evaluatedDecision,
           input,
           routePolicy,
@@ -225,11 +239,18 @@ export class SaveOrchestrator {
         const auditEntry = this.auditLog.append(
           assessment.classification,
           decisionWithFingerprint,
+          'SAVE',
+          actor,
+          assessment.analysis.fingerprints?.file,
         );
 
         // Phase 8 — Write override record on fresh acknowledged save
         if (finalizedDecision.lease_status === 'NEW') {
-          this.overrideLog.append(assessment.classification, finalizedDecision, actor);
+          this.overrideLog.append(
+            assessment.classification,
+            finalizedDecision,
+            actor,
+          );
         }
 
         return {
@@ -251,11 +272,22 @@ export class SaveOrchestrator {
     return this.auditLog.verifyChain();
   }
 
-  async observeExecution(commandId: string, filePath?: string): Promise<AuditEntry> {
-    return this.observeEvent('RUN', commandId, filePath, readObservedText(filePath));
+  async observeExecution(
+    commandId: string,
+    filePath?: string,
+  ): Promise<AuditEntry> {
+    return this.observeEvent(
+      'RUN',
+      commandId,
+      filePath,
+      readObservedText(filePath),
+    );
   }
 
-  async observeCommit(repositoryRoot?: string, observedText?: string): Promise<AuditEntry> {
+  async observeCommit(
+    repositoryRoot?: string,
+    observedText?: string,
+  ): Promise<AuditEntry> {
     return this.observeEvent(
       'COMMIT',
       'git.commit',
@@ -265,12 +297,16 @@ export class SaveOrchestrator {
   }
 
   // M4-001 — Commit Context Awareness
-  queryCommitContext(repoRoot: string): { filePath: string; driftStatus: string | null }[] {
+  queryCommitContext(
+    repoRoot: string,
+  ): { filePath: string; driftStatus: string | null }[] {
     return this.auditLog.queryCommitContext(repoRoot);
   }
 
   // P9-001 — File-Level Audit Indicator
-  queryFileAuditState(filePath: string): { decisionId: string; driftStatus: string | null } | null {
+  queryFileAuditState(
+    filePath: string,
+  ): { decisionId: string; driftStatus: string | null } | null {
     return this.auditLog.queryFileAuditState(filePath);
   }
 

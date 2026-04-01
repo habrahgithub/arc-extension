@@ -6,6 +6,10 @@ import {
   type BlueprintProofResolution,
 } from '../core/blueprintArtifacts';
 import { LocalPerformanceRecorder, measureSync } from '../core/performance';
+import {
+  calculateFalsePositiveQualityScore,
+  getFalsePositiveQualityLabel,
+} from '../core/falsePositiveScorer';
 import { RoutePolicyStore } from '../core/routerPolicy';
 import { WorkspaceMappingStore } from '../core/workspaceMapping';
 
@@ -506,53 +510,6 @@ function summarizeDecisionCounts(
     },
     { ALLOW: 0, WARN: 0, REQUIRE_PLAN: 0, BLOCK: 0 },
   );
-}
-
-// Phase 7.9 — False-positive quality scoring (advisory only, WRD-0081)
-// Higher score = more likely to be a true false positive candidate
-function calculateFalsePositiveQualityScore(entry: AuditEntry): number {
-  let score = 0;
-
-  // WARN decisions are more likely false positives than REQUIRE_PLAN
-  if (entry.decision === 'WARN') {
-    score += 30;
-  } else if (entry.decision === 'REQUIRE_PLAN') {
-    score += 10;
-  }
-
-  // Rule-only evaluations (no model) are more likely false positives
-  if (entry.source === 'RULE' || entry.source === 'FALLBACK') {
-    score += 20;
-  }
-
-  // Files with no matched rules but still flagged are likely false positives
-  if (entry.matched_rules.length === 0) {
-    score += 25;
-  }
-
-  // Demoted decisions are more likely false positives (UI path demotion)
-  // Note: demotion info is not in audit entry, would need to be added
-
-  // Fallback with config/packet issues are more likely false positives
-  if (
-    entry.route_fallback === 'CONFIG_MISSING' ||
-    entry.route_fallback === 'CONFIG_INVALID'
-  ) {
-    score += 15;
-  }
-
-  return score;
-}
-
-function getFalsePositiveQualityLabel(entry: AuditEntry): string {
-  const score = calculateFalsePositiveQualityScore(entry);
-  if (score >= 50) {
-    return '⚡ High (rule-only, no matched rules)';
-  }
-  if (score >= 30) {
-    return '🔶 Medium (WARN decision, rule-only)';
-  }
-  return '🔷 Low (REQUIRE_PLAN or model-evaluated)';
 }
 
 // Phase 7.10 — Task Board v1 status derivation (ARC-UI-002)

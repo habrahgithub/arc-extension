@@ -195,7 +195,10 @@ describe('Phase 7.8 — Operator Friction Hardening Governance', () => {
 
       // Phase 7.8 should not add new core files
       // All existing core files are from prior phases
+      // Note: analysis/ folder and falsePositiveScorer added via Phase 7.11 AST analysis merge
+      // Note: execution* files added via Phase 7.11 execution governance chain
       const expectedCoreFiles = [
+        'analysis', // Phase 7.11 — AST analysis layer
         'auditLog.ts',
         'auditVisibility.ts',
         'blueprintArtifacts.ts',
@@ -204,14 +207,18 @@ describe('Phase 7.8 — Operator Friction Hardening Governance', () => {
         'contextPacket.ts',
         'decisionLease.ts',
         'decisionPolicy.ts',
-        'overrideLog.ts', // Phase 8 (ARC-PHASE-008) — not Phase 7.8
         'deviationDetector.ts', // added via main (Codex PRs)
+        'executionGovernance.ts', // Phase 7.11 — execution governance chain
+        'executionService.ts', // Phase 7.11 — execution governance chain
+        'executionStore.ts', // Phase 7.11 — execution governance chain
         'explanationSynthesizer.ts', // added via main (Codex PRs)
+        'falsePositiveScorer.ts', // Phase 7.11 — AST analysis layer
         'governanceFeedbackEvaluator.ts', // added via main (Codex PRs)
         'governanceProposalRegistry.ts', // added via Codex PR #7
         'governanceHandoffService.ts', // added via Codex PR #7
         'implementationDraftService.ts', // added via Codex PR #7
         'implementationPackageService.ts', // added via Codex PR #7
+        'overrideLog.ts', // Phase 8 (ARC-PHASE-008) — not Phase 7.8
         'performance.ts',
         'risk.ts',
         'routerPolicy.ts',

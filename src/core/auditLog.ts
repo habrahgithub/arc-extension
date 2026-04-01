@@ -3,6 +3,7 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import type {
+  ActorIdentity,
   AuditEntry,
   AuditEventType,
   Classification,
@@ -181,16 +182,20 @@ export class AuditLogWriter {
     ).some((column) => column.name === 'decision_id');
 
     if (!decisionIdColumn) {
-      this.execSql("ALTER TABLE audit_events ADD COLUMN decision_id TEXT;");
-      this.execSql("UPDATE audit_events SET decision_id = hash WHERE decision_id IS NULL;");
+      this.execSql('ALTER TABLE audit_events ADD COLUMN decision_id TEXT;');
+      this.execSql(
+        'UPDATE audit_events SET decision_id = hash WHERE decision_id IS NULL;',
+      );
       this.execSql(
         'CREATE UNIQUE INDEX IF NOT EXISTS idx_audit_events_decision_id ON audit_events(decision_id);',
       );
     }
 
-    const linkedDecisionIdColumn = this.execSqlJson<Array<{ name: string }>[number]>(
-      `PRAGMA table_info('audit_events');`,
-    ).some((column) => column.name === 'linked_decision_id');
+    const linkedDecisionIdColumn = this.execSqlJson<
+      Array<{ name: string }>[number]
+    >(`PRAGMA table_info('audit_events');`).some(
+      (column) => column.name === 'linked_decision_id',
+    );
 
     if (!linkedDecisionIdColumn) {
       this.execSql(
@@ -214,21 +219,17 @@ export class AuditLogWriter {
       this.execSql('ALTER TABLE audit_events ADD COLUMN deviation TEXT;');
     }
 
-    const failureTypeColumn = this.execSqlJson<
-      Array<{ name: string }>[number]
-    >(`PRAGMA table_info('audit_events');`).some(
-      (column) => column.name === 'failure_type',
-    );
+    const failureTypeColumn = this.execSqlJson<Array<{ name: string }>[number]>(
+      `PRAGMA table_info('audit_events');`,
+    ).some((column) => column.name === 'failure_type');
 
     if (!failureTypeColumn) {
       this.execSql('ALTER TABLE audit_events ADD COLUMN failure_type TEXT;');
     }
 
-    const explanationColumn = this.execSqlJson<
-      Array<{ name: string }>[number]
-    >(`PRAGMA table_info('audit_events');`).some(
-      (column) => column.name === 'explanation',
-    );
+    const explanationColumn = this.execSqlJson<Array<{ name: string }>[number]>(
+      `PRAGMA table_info('audit_events');`,
+    ).some((column) => column.name === 'explanation');
 
     if (!explanationColumn) {
       this.execSql('ALTER TABLE audit_events ADD COLUMN explanation TEXT;');
@@ -251,6 +252,8 @@ export class AuditLogWriter {
     classification: Classification,
     decision: DecisionPayload,
     eventType: AuditEventType = 'SAVE',
+    actor?: ActorIdentity,
+    fingerprint?: string,
   ): AuditEntry {
     this.ensureReady();
 
@@ -278,7 +281,7 @@ export class AuditLogWriter {
       ...decision,
       actor_id: decision.actor_id,
       actor_type: decision.actor_type,
-      fingerprint: decision.fingerprint,
+      fingerprint: fingerprint ?? decision.fingerprint,
       fingerprint_version: decision.fingerprint_version,
     };
 
@@ -364,7 +367,10 @@ export class AuditLogWriter {
   ): { filePath: string; driftStatus: string | null }[] {
     this.ensureReady();
     const prefix = repoRoot.endsWith('/') ? repoRoot : `${repoRoot}/`;
-    const rows = this.execSqlJson<{ file_path: string; drift_status: string | null }>(`
+    const rows = this.execSqlJson<{
+      file_path: string;
+      drift_status: string | null;
+    }>(`
       WITH latest_saves AS (
         SELECT file_path, MAX(event_id) AS max_id
         FROM audit_events
@@ -389,7 +395,10 @@ export class AuditLogWriter {
       )
       SELECT file_path, drift_status FROM commit_status;
     `);
-    return rows.map((r) => ({ filePath: r.file_path, driftStatus: r.drift_status }));
+    return rows.map((r) => ({
+      filePath: r.file_path,
+      driftStatus: r.drift_status,
+    }));
   }
 
   /**
@@ -424,7 +433,10 @@ export class AuditLogWriter {
     if (rows.length === 0 || rows[0] === undefined) {
       return null;
     }
-    return { decisionId: rows[0].decision_id, driftStatus: rows[0].drift_status };
+    return {
+      decisionId: rows[0].decision_id,
+      driftStatus: rows[0].drift_status,
+    };
   }
 
   verifyChain(): boolean {
@@ -541,7 +553,11 @@ export class AuditLogWriter {
     const payload = rows
       .map((row) => JSON.stringify(this.rowToAuditEntry(row)))
       .join('\n');
-    fs.writeFileSync(this.auditPath(), payload.length > 0 ? `${payload}\n` : '', 'utf8');
+    fs.writeFileSync(
+      this.auditPath(),
+      payload.length > 0 ? `${payload}\n` : '',
+      'utf8',
+    );
   }
 
   private persistAppendAtomically(entry: AuditEntry): void {
@@ -613,7 +629,9 @@ export class AuditLogWriter {
       drift_status: row.drift_status ?? undefined,
       file_path: row.file_path,
       risk_flags: JSON.parse(row.risk_flags) as AuditEntry['risk_flags'],
-      matched_rules: JSON.parse(row.matched_rules) as AuditEntry['matched_rules'],
+      matched_rules: JSON.parse(
+        row.matched_rules,
+      ) as AuditEntry['matched_rules'],
       decision: row.decision,
       reason: row.reason,
       risk_level: row.risk_level,
@@ -637,12 +655,15 @@ export class AuditLogWriter {
       deviation: row.deviation
         ? (JSON.parse(row.deviation) as AuditEntry['deviation'])
         : undefined,
-      failure_type: (row.failure_type as AuditEntry['failure_type']) ?? undefined,
+      failure_type:
+        (row.failure_type as AuditEntry['failure_type']) ?? undefined,
       explanation: row.explanation
         ? (JSON.parse(row.explanation) as AuditEntry['explanation'])
         : undefined,
       governance_proposal: row.governance_proposal
-        ? (JSON.parse(row.governance_proposal) as AuditEntry['governance_proposal'])
+        ? (JSON.parse(
+            row.governance_proposal,
+          ) as AuditEntry['governance_proposal'])
         : undefined,
       prev_hash: row.prev_hash,
       hash: row.hash,
@@ -729,9 +750,13 @@ export class AuditLogWriter {
   }
 
   private execSqlJson<T>(sqlStatement: string): T[] {
-    const output = execFileSync('sqlite3', ['-json', this.sqlitePath(), sqlStatement], {
-      encoding: 'utf8',
-    }).trim();
+    const output = execFileSync(
+      'sqlite3',
+      ['-json', this.sqlitePath(), sqlStatement],
+      {
+        encoding: 'utf8',
+      },
+    ).trim();
     if (!output) {
       return [];
     }
@@ -834,7 +859,6 @@ export class AuditLogWriter {
       .digest('hex');
   }
 }
-
 
 function hasRouteMetadata(entry: Partial<AuditEntry>): boolean {
   return (
