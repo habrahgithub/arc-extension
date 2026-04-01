@@ -157,6 +157,10 @@ describe('sqlite-backed audit log', () => {
     writer.exportJsonlFromSqlite();
     const jsonl = fs.readFileSync(path.join(workspace, '.arc', 'audit.jsonl'), 'utf8');
     const exported = JSON.parse(jsonl.trim()) as Record<string, unknown>;
+    expect(exported.event_type).toBe('SAVE');
+    expect(typeof exported.decision_id).toBe('string');
+    expect(exported.linked_decision_id).toBeUndefined();
+    expect(exported.drift_status).toBeUndefined();
     expect(exported.file_path).toBe(schemaClassification.filePath);
     expect(Array.isArray(exported.matched_rules)).toBe(true);
     expect(Array.isArray(exported.risk_flags)).toBe(true);

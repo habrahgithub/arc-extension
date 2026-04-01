@@ -2,7 +2,12 @@ import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
-import type { AuditEntry, Classification, DecisionPayload } from '../contracts/types';
+import type {
+  AuditEntry,
+  AuditEventType,
+  Classification,
+  DecisionPayload,
+} from '../contracts/types';
 
 interface AuditLogOptions {
   readonly maxBytes?: number;
@@ -10,6 +15,10 @@ interface AuditLogOptions {
 
 interface PersistedEventRow {
   readonly event_id: number;
+  readonly event_type: AuditEntry['event_type'];
+  readonly decision_id: string;
+  readonly linked_decision_id: string | null;
+  readonly drift_status: AuditEntry['drift_status'] | null;
   readonly ts: string;
   readonly file_path: string;
   readonly decision: AuditEntry['decision'];
@@ -84,6 +93,10 @@ export class AuditLogWriter {
 
       CREATE TABLE IF NOT EXISTS audit_events (
         event_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        event_type TEXT NOT NULL DEFAULT 'SAVE',
+        decision_id TEXT NOT NULL,
+        linked_decision_id TEXT,
+        drift_status TEXT,
         ts TEXT NOT NULL,
         file_path TEXT NOT NULL,
         decision TEXT NOT NULL,
@@ -134,6 +147,7 @@ export class AuditLogWriter {
 
       CREATE INDEX IF NOT EXISTS idx_audit_events_ts ON audit_events(ts);
       CREATE INDEX IF NOT EXISTS idx_audit_events_file_path ON audit_events(file_path);
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_audit_events_decision_id ON audit_events(decision_id);
       CREATE INDEX IF NOT EXISTS idx_audit_rules_rule_id ON audit_event_rules(rule_id);
       CREATE INDEX IF NOT EXISTS idx_audit_flags_risk_flag ON audit_event_flags(risk_flag);
 
@@ -141,13 +155,73 @@ export class AuditLogWriter {
       SELECT 1, 'ROOT', datetime('now')
       WHERE NOT EXISTS (SELECT 1 FROM audit_chain_state WHERE singleton_id = 1);
     `);
+
+    const eventTypeColumn = this.execSqlJson<Array<{ name: string }>[number]>(
+      `PRAGMA table_info('audit_events');`,
+    ).some((column) => column.name === 'event_type');
+
+    if (!eventTypeColumn) {
+      this.execSql(
+        "ALTER TABLE audit_events ADD COLUMN event_type TEXT NOT NULL DEFAULT 'SAVE';",
+      );
+    }
+
+    const decisionIdColumn = this.execSqlJson<Array<{ name: string }>[number]>(
+      `PRAGMA table_info('audit_events');`,
+    ).some((column) => column.name === 'decision_id');
+
+    if (!decisionIdColumn) {
+      this.execSql("ALTER TABLE audit_events ADD COLUMN decision_id TEXT;");
+      this.execSql("UPDATE audit_events SET decision_id = hash WHERE decision_id IS NULL;");
+      this.execSql(
+        'CREATE UNIQUE INDEX IF NOT EXISTS idx_audit_events_decision_id ON audit_events(decision_id);',
+      );
+    }
+
+    const linkedDecisionIdColumn = this.execSqlJson<Array<{ name: string }>[number]>(
+      `PRAGMA table_info('audit_events');`,
+    ).some((column) => column.name === 'linked_decision_id');
+
+    if (!linkedDecisionIdColumn) {
+      this.execSql(
+        'ALTER TABLE audit_events ADD COLUMN linked_decision_id TEXT;',
+      );
+    }
+
+    const driftStatusColumn = this.execSqlJson<Array<{ name: string }>[number]>(
+      `PRAGMA table_info('audit_events');`,
+    ).some((column) => column.name === 'drift_status');
+
+    if (!driftStatusColumn) {
+      this.execSql('ALTER TABLE audit_events ADD COLUMN drift_status TEXT;');
+    }
   }
 
-  append(classification: Classification, decision: DecisionPayload): AuditEntry {
+  append(
+    classification: Classification,
+    decision: DecisionPayload,
+    eventType: AuditEventType = 'SAVE',
+  ): AuditEntry {
     this.ensureReady();
 
+    const timestamp = new Date().toISOString();
+    const decisionId = this.computeDecisionId(
+      eventType,
+      classification.filePath,
+      decision.fingerprint,
+      timestamp,
+    );
+    const linkage = this.resolveLifecycleLink(
+      eventType,
+      classification.filePath,
+      decision.fingerprint,
+    );
     const baseEntry = {
-      ts: new Date().toISOString(),
+      event_type: eventType,
+      decision_id: decisionId,
+      linked_decision_id: linkage.linkedDecisionId,
+      drift_status: linkage.driftStatus,
+      ts: timestamp,
       file_path: classification.filePath,
       risk_flags: classification.riskFlags,
       matched_rules: classification.matchedRuleIds,
@@ -187,6 +261,10 @@ export class AuditLogWriter {
     const rows = this.execSqlJson<PersistedEventRow>(`
       SELECT
         ae.event_id,
+        ae.event_type,
+        ae.decision_id,
+        ae.linked_decision_id,
+        ae.drift_status,
         ae.ts,
         ae.file_path,
         ae.decision,
@@ -249,6 +327,10 @@ export class AuditLogWriter {
     const rows = this.execSqlJson<PersistedEventRow>(`
       SELECT
         ae.event_id,
+        ae.event_type,
+        ae.decision_id,
+        ae.linked_decision_id,
+        ae.drift_status,
         ae.ts,
         ae.file_path,
         ae.decision,
@@ -302,6 +384,10 @@ export class AuditLogWriter {
     this.execSql(`
       BEGIN IMMEDIATE;
       INSERT INTO audit_events (
+        event_type,
+        decision_id,
+        linked_decision_id,
+        drift_status,
         ts, file_path, decision, reason, risk_level, source,
         violated_rules, next_action, fallback_cause, lease_status,
         directive_id, blueprint_id, route_mode, route_lane, route_reason,
@@ -309,6 +395,10 @@ export class AuditLogWriter {
         actor_id, actor_type, fingerprint, fingerprint_version,
         prev_hash, hash
       ) VALUES (
+        ${sql(entry.event_type)},
+        ${sql(entry.decision_id)},
+        ${sql(entry.linked_decision_id ?? null)},
+        ${sql(entry.drift_status ?? null)},
         ${sql(entry.ts)}, ${sql(entry.file_path)}, ${sql(entry.decision)}, ${sql(entry.reason)}, ${sql(entry.risk_level)}, ${sql(entry.source)},
         ${sql(JSON.stringify(entry.violated_rules))}, ${sql(entry.next_action)}, ${sql(entry.fallback_cause)}, ${sql(entry.lease_status)},
         ${sql(entry.directive_id ?? null)}, ${sql(entry.blueprint_id ?? null)}, ${sql(entry.route_mode ?? null)}, ${sql(entry.route_lane ?? null)}, ${sql(entry.route_reason ?? null)},
@@ -333,6 +423,10 @@ export class AuditLogWriter {
   private rowToAuditEntry(row: PersistedEventRow): AuditEntry {
     return {
       ts: row.ts,
+      event_type: row.event_type,
+      decision_id: row.decision_id,
+      linked_decision_id: row.linked_decision_id ?? undefined,
+      drift_status: row.drift_status ?? undefined,
       file_path: row.file_path,
       risk_flags: JSON.parse(row.risk_flags) as AuditEntry['risk_flags'],
       matched_rules: JSON.parse(row.matched_rules) as AuditEntry['matched_rules'],
@@ -377,6 +471,10 @@ export class AuditLogWriter {
   ): string {
     const basePayload = {
       prev_hash: prevHash,
+      event_type: entry.event_type,
+      decision_id: entry.decision_id,
+      linked_decision_id: entry.linked_decision_id ?? null,
+      drift_status: entry.drift_status ?? null,
       ts: entry.ts,
       file_path: entry.file_path,
       risk_flags: entry.risk_flags,
@@ -432,6 +530,102 @@ export class AuditLogWriter {
       return [];
     }
     return JSON.parse(output) as T[];
+  }
+
+  private findLatestSaveDecisionId(
+    filePath: string,
+    fingerprint?: string,
+  ): string | undefined {
+    const fingerprintPredicate =
+      fingerprint === undefined
+        ? 'fingerprint IS NULL'
+        : `fingerprint = ${sql(fingerprint)}`;
+    const rows = this.execSqlJson<Array<{ decision_id: string }>[number]>(`
+      SELECT decision_id
+      FROM audit_events
+      WHERE event_type = 'SAVE'
+        AND file_path = ${sql(filePath)}
+        AND ${fingerprintPredicate}
+      ORDER BY event_id DESC
+      LIMIT 1;
+    `);
+
+    return rows[0]?.decision_id;
+  }
+
+  private findLatestSaveDecisionByFilePath(
+    filePath: string,
+  ): { decision_id: string; fingerprint: string | null } | undefined {
+    const rows = this.execSqlJson<
+      Array<{ decision_id: string; fingerprint: string | null }>[number]
+    >(`
+      SELECT decision_id, fingerprint
+      FROM audit_events
+      WHERE event_type = 'SAVE'
+        AND file_path = ${sql(filePath)}
+      ORDER BY event_id DESC
+      LIMIT 1;
+    `);
+
+    return rows[0];
+  }
+
+  private resolveLifecycleLink(
+    eventType: AuditEventType,
+    filePath: string,
+    fingerprint?: string,
+  ): {
+    linkedDecisionId?: string;
+    driftStatus?: AuditEntry['drift_status'];
+  } {
+    if (eventType === 'SAVE') {
+      return {};
+    }
+
+    if (eventType === 'RUN') {
+      return {
+        linkedDecisionId: this.findLatestSaveDecisionId(filePath, fingerprint),
+      };
+    }
+
+    const linkedSave = this.findLatestSaveDecisionByFilePath(filePath);
+    if (!linkedSave) {
+      return {
+        driftStatus: 'NO_LINKED_DECISION',
+      };
+    }
+
+    if (!linkedSave.fingerprint || !fingerprint) {
+      return {
+        linkedDecisionId: linkedSave.decision_id,
+        driftStatus: 'FINGERPRINT_UNAVAILABLE',
+      };
+    }
+
+    return {
+      linkedDecisionId: linkedSave.decision_id,
+      driftStatus:
+        linkedSave.fingerprint === fingerprint ? 'NO_DRIFT' : 'DRIFT_DETECTED',
+    };
+  }
+
+  private computeDecisionId(
+    eventType: AuditEventType,
+    filePath: string,
+    fingerprint: string | undefined,
+    timestamp: string,
+  ): string {
+    return crypto
+      .createHash('sha256')
+      .update(
+        JSON.stringify({
+          event_type: eventType,
+          file_path: filePath,
+          fingerprint: fingerprint ?? null,
+          ts: timestamp,
+        }),
+      )
+      .digest('hex');
   }
 }
 

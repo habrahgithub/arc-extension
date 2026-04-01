@@ -4,7 +4,11 @@ import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { DisabledModelAdapter, ModelAdapterError } from '../../src/adapters/modelAdapter';
 import type { ContextPayload, ModelEvaluationResult } from '../../src/contracts/types';
+import { AuditLogWriter } from '../../src/core/auditLog';
+import { classifyFile } from '../../src/core/classifier';
 import { validateContextPacket } from '../../src/core/contextPacket';
+import { DEFAULT_RULES } from '../../src/core/rules';
+import { evaluateRules } from '../../src/core/ruleEngine';
 import { SaveOrchestrator } from '../../src/extension/saveOrchestrator';
 import {
   createBlueprintArtifact,
@@ -163,6 +167,165 @@ describe('save orchestrator', () => {
     expect(perfLines.length).toBeGreaterThanOrEqual(2);
     expect(perfEntries.some((entry) => entry.operation === 'classify_file')).toBe(true);
     expect(perfEntries.some((entry) => entry.operation === 'evaluate_rules')).toBe(true);
+  });
+
+  it('records deterministic save → run → commit decision lifecycle linkage', async () => {
+    const workspace = makeWorkspace();
+    const orchestrator = new SaveOrchestrator(workspace, new DisabledModelAdapter());
+    const filePath = path.join(workspace, 'src', 'auth', 'linked.ts');
+    const text = 'export const linked = true;\n';
+
+    fs.mkdirSync(path.dirname(filePath), { recursive: true });
+    fs.writeFileSync(filePath, text, 'utf8');
+
+    const assessed = await orchestrator.assessSave({
+      ...fixtureInputs.auth,
+      filePath,
+      fileName: path.basename(filePath),
+      text,
+      previousText: text,
+    });
+    const saved = orchestrator.commitAssessment(assessed, true);
+    const saveEntry = saved.auditEntry;
+
+    expect(saveEntry).toBeDefined();
+    expect(saveEntry?.event_type).toBe('SAVE');
+    expect(saveEntry?.decision_id.length).toBe(64);
+
+    const runEntry = await orchestrator.observeExecution(
+      'workbench.action.files.save',
+      filePath,
+    );
+    const commitEntry = await orchestrator.observeCommit(filePath, text);
+
+    expect(runEntry.event_type).toBe('RUN');
+    expect(runEntry.actor_type).toBe('SYSTEM');
+    expect(runEntry.actor_id).toBe('workbench.action.files.save');
+    expect(runEntry.next_action).toContain('No runtime mutation');
+
+    expect(commitEntry.event_type).toBe('COMMIT');
+    expect(commitEntry.actor_type).toBe('SYSTEM');
+    expect(commitEntry.actor_id).toBe('git.commit');
+    expect(runEntry.linked_decision_id).toBe(saveEntry?.decision_id);
+    expect(commitEntry.linked_decision_id).toBe(saveEntry?.decision_id);
+    expect(commitEntry.prev_hash).toBe(runEntry.hash);
+    expect(orchestrator.verifyAuditChain()).toBe(true);
+
+    const auditPath = path.join(workspace, '.arc', 'audit.jsonl');
+    const entries = fs
+      .readFileSync(auditPath, 'utf8')
+      .trim()
+      .split('\n')
+      .filter(Boolean)
+      .map((line) =>
+        JSON.parse(line) as {
+          event_type: string;
+          decision_id: string;
+          linked_decision_id?: string;
+        },
+      );
+
+    expect(entries[0]?.event_type).toBe('SAVE');
+    expect(entries[1]?.event_type).toBe('RUN');
+    expect(entries[1]?.linked_decision_id).toBe(entries[0]?.decision_id);
+    expect(entries[2]?.event_type).toBe('COMMIT');
+    expect(entries[2]?.linked_decision_id).toBe(entries[0]?.decision_id);
+  });
+
+  it('records NO_DRIFT when commit fingerprint matches linked save fingerprint', async () => {
+    const workspace = makeWorkspace();
+    const orchestrator = new SaveOrchestrator(workspace, new DisabledModelAdapter());
+    const filePath = path.join(workspace, 'src', 'auth', 'policy.ts');
+    const text = 'export const canAccess = true;\n';
+
+    fs.mkdirSync(path.dirname(filePath), { recursive: true });
+    fs.writeFileSync(filePath, text, 'utf8');
+
+    const saveInput = {
+      ...fixtureInputs.auth,
+      filePath,
+      fileName: path.basename(filePath),
+      text,
+      previousText: text,
+    };
+
+    const assessed = await orchestrator.assessSave(saveInput);
+    const saved = orchestrator.commitAssessment(assessed, true);
+    const committed = await orchestrator.observeCommit(filePath, text);
+
+    expect(saved.auditEntry?.decision_id).toBeTruthy();
+    expect(committed.linked_decision_id).toBe(saved.auditEntry?.decision_id);
+    expect(committed.drift_status).toBe('NO_DRIFT');
+  });
+
+  it('records DRIFT_DETECTED when commit fingerprint differs from linked save fingerprint', async () => {
+    const workspace = makeWorkspace();
+    const orchestrator = new SaveOrchestrator(workspace, new DisabledModelAdapter());
+    const filePath = path.join(workspace, 'src', 'auth', 'drift.ts');
+
+    fs.mkdirSync(path.dirname(filePath), { recursive: true });
+    fs.writeFileSync(filePath, 'export const version = 1;\n', 'utf8');
+
+    const saveInput = {
+      ...fixtureInputs.auth,
+      filePath,
+      fileName: path.basename(filePath),
+      text: 'export const version = 1;\n',
+      previousText: 'export const version = 1;\n',
+    };
+
+    const assessed = await orchestrator.assessSave(saveInput);
+    const saved = orchestrator.commitAssessment(assessed, true);
+    const committed = await orchestrator.observeCommit(
+      filePath,
+      'export const version = 2;\n',
+    );
+
+    expect(committed.linked_decision_id).toBe(saved.auditEntry?.decision_id);
+    expect(committed.drift_status).toBe('DRIFT_DETECTED');
+  });
+
+  it('records NO_LINKED_DECISION when commit has no save lifecycle link', async () => {
+    const workspace = makeWorkspace();
+    const orchestrator = new SaveOrchestrator(workspace, new DisabledModelAdapter());
+    const filePath = path.join(workspace, 'src', 'auth', 'unlinked.ts');
+
+    const committed = await orchestrator.observeCommit(
+      filePath,
+      'export const unlinked = true;\n',
+    );
+
+    expect(committed.linked_decision_id).toBeUndefined();
+    expect(committed.drift_status).toBe('NO_LINKED_DECISION');
+  });
+
+  it('records FINGERPRINT_UNAVAILABLE when linked save fingerprint is unavailable', async () => {
+    const workspace = makeWorkspace();
+    const orchestrator = new SaveOrchestrator(workspace, new DisabledModelAdapter());
+    const writer = new AuditLogWriter(workspace);
+    const filePath = path.join(workspace, 'src', 'auth', 'legacy.ts');
+    const saveInput = {
+      ...fixtureInputs.auth,
+      filePath,
+      fileName: path.basename(filePath),
+      text: 'export const legacy = true;\n',
+      previousText: 'export const legacy = true;\n',
+    };
+    const classification = classifyFile(saveInput, DEFAULT_RULES);
+
+    writer.append(classification, {
+      ...evaluateRules(classification, saveInput),
+      fingerprint: undefined,
+      fingerprint_version: undefined,
+    });
+
+    const committed = await orchestrator.observeCommit(
+      filePath,
+      'export const legacy = true;\n',
+    );
+
+    expect(committed.linked_decision_id).toBeTruthy();
+    expect(committed.drift_status).toBe('FINGERPRINT_UNAVAILABLE');
   });
 
   it('fails closed to RULE_ONLY and keeps decisions unchanged when cloud-assisted config violates local-first prerequisites', async () => {
