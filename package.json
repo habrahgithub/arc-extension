@@ -2,7 +2,7 @@
   "name": "arc-audit-ready-core",
   "displayName": "ARC XT \u2014 Audit Ready Core",
   "description": "Governed code enforcement for AI-assisted development in a local-first VS Code extension. Public beta candidate for ARC XT.",
-  "version": "0.1.10",
+  "version": "0.1.11",
   "preview": true,
   "private": true,
   "publisher": "swd",
