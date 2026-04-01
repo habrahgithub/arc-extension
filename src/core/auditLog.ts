@@ -7,6 +7,8 @@ import type {
   AuditEventType,
   Classification,
   DecisionPayload,
+  ExplanationCode,
+  PatternSnapshot,
 } from '../contracts/types';
 
 interface AuditLogOptions {
@@ -41,6 +43,10 @@ interface PersistedEventRow {
   readonly actor_type: AuditEntry['actor_type'] | null;
   readonly fingerprint: string | null;
   readonly fingerprint_version: string | null;
+  readonly deviation: string | null;
+  readonly failure_type: string | null;
+  readonly explanation: string | null;
+  readonly governance_proposal: string | null;
   readonly prev_hash: string;
   readonly hash: string;
   readonly matched_rules: string;
@@ -119,6 +125,10 @@ export class AuditLogWriter {
         actor_type TEXT,
         fingerprint TEXT,
         fingerprint_version TEXT,
+        deviation TEXT,
+        failure_type TEXT,
+        explanation TEXT,
+        governance_proposal TEXT,
         prev_hash TEXT NOT NULL,
         hash TEXT NOT NULL UNIQUE
       );
@@ -195,6 +205,46 @@ export class AuditLogWriter {
     if (!driftStatusColumn) {
       this.execSql('ALTER TABLE audit_events ADD COLUMN drift_status TEXT;');
     }
+
+    const deviationColumn = this.execSqlJson<Array<{ name: string }>[number]>(
+      `PRAGMA table_info('audit_events');`,
+    ).some((column) => column.name === 'deviation');
+
+    if (!deviationColumn) {
+      this.execSql('ALTER TABLE audit_events ADD COLUMN deviation TEXT;');
+    }
+
+    const failureTypeColumn = this.execSqlJson<
+      Array<{ name: string }>[number]
+    >(`PRAGMA table_info('audit_events');`).some(
+      (column) => column.name === 'failure_type',
+    );
+
+    if (!failureTypeColumn) {
+      this.execSql('ALTER TABLE audit_events ADD COLUMN failure_type TEXT;');
+    }
+
+    const explanationColumn = this.execSqlJson<
+      Array<{ name: string }>[number]
+    >(`PRAGMA table_info('audit_events');`).some(
+      (column) => column.name === 'explanation',
+    );
+
+    if (!explanationColumn) {
+      this.execSql('ALTER TABLE audit_events ADD COLUMN explanation TEXT;');
+    }
+
+    const governanceProposalColumn = this.execSqlJson<
+      Array<{ name: string }>[number]
+    >(`PRAGMA table_info('audit_events');`).some(
+      (column) => column.name === 'governance_proposal',
+    );
+
+    if (!governanceProposalColumn) {
+      this.execSql(
+        'ALTER TABLE audit_events ADD COLUMN governance_proposal TEXT;',
+      );
+    }
   }
 
   append(
@@ -257,6 +307,49 @@ export class AuditLogWriter {
     return rows[0]?.tail_hash ?? 'ROOT';
   }
 
+  explanationPatternSnapshot(
+    explanationCode: ExplanationCode,
+    options: {
+      eventType?: AuditEventType;
+      filePath?: string;
+      limit?: number;
+    } = {},
+  ): PatternSnapshot {
+    this.ensureReady();
+    const filters: string[] = [
+      'explanation IS NOT NULL',
+      `json_extract(explanation, '$.code') = ${sql(explanationCode)}`,
+    ];
+
+    if (options.eventType) {
+      filters.push(`event_type = ${sql(options.eventType)}`);
+    }
+
+    if (options.filePath) {
+      filters.push(`file_path = ${sql(options.filePath)}`);
+    }
+
+    const limit = options.limit ?? 50;
+    const rows = this.execSqlJson<Array<{ ts: string }>[number]>(`
+      SELECT ts
+      FROM audit_events
+      WHERE ${filters.join(' AND ')}
+      ORDER BY event_id DESC
+      LIMIT ${limit};
+    `);
+
+    if (rows.length === 0) {
+      return { occurrenceCount: 0 };
+    }
+
+    const ordered = [...rows].reverse();
+    return {
+      occurrenceCount: rows.length,
+      firstSeenAt: ordered[0]?.ts,
+      lastSeenAt: rows[0]?.ts,
+    };
+  }
+
   verifyChain(): boolean {
     const rows = this.execSqlJson<PersistedEventRow>(`
       SELECT
@@ -287,6 +380,10 @@ export class AuditLogWriter {
         ae.actor_type,
         ae.fingerprint,
         ae.fingerprint_version,
+        ae.deviation,
+        ae.failure_type,
+        ae.explanation,
+        ae.governance_proposal,
         ae.prev_hash,
         ae.hash,
         COALESCE((SELECT json_group_array(rule_id) FROM audit_event_rules WHERE event_id = ae.event_id), '[]') AS matched_rules,
@@ -353,6 +450,10 @@ export class AuditLogWriter {
         ae.actor_type,
         ae.fingerprint,
         ae.fingerprint_version,
+        ae.deviation,
+        ae.failure_type,
+        ae.explanation,
+        ae.governance_proposal,
         ae.prev_hash,
         ae.hash,
         COALESCE((SELECT json_group_array(rule_id) FROM audit_event_rules WHERE event_id = ae.event_id), '[]') AS matched_rules,
@@ -393,6 +494,9 @@ export class AuditLogWriter {
         directive_id, blueprint_id, route_mode, route_lane, route_reason,
         route_clarity, route_fallback, route_policy_hash,
         actor_id, actor_type, fingerprint, fingerprint_version,
+        deviation, failure_type,
+        explanation,
+        governance_proposal,
         prev_hash, hash
       ) VALUES (
         ${sql(entry.event_type)},
@@ -404,6 +508,9 @@ export class AuditLogWriter {
         ${sql(entry.directive_id ?? null)}, ${sql(entry.blueprint_id ?? null)}, ${sql(entry.route_mode ?? null)}, ${sql(entry.route_lane ?? null)}, ${sql(entry.route_reason ?? null)},
         ${sql(entry.route_clarity ?? null)}, ${sql(entry.route_fallback ?? null)}, ${sql(entry.route_policy_hash ?? null)},
         ${sql(entry.actor_id ?? null)}, ${sql(entry.actor_type ?? null)}, ${sql(entry.fingerprint ?? null)}, ${sql(entry.fingerprint_version ?? null)},
+        ${sql(entry.deviation ? JSON.stringify(entry.deviation) : null)}, ${sql(entry.failure_type ?? null)},
+        ${sql(entry.explanation ? JSON.stringify(entry.explanation) : null)},
+        ${sql(entry.governance_proposal ? JSON.stringify(entry.governance_proposal) : null)},
         ${sql(entry.prev_hash)}, ${sql(entry.hash)}
       );
 
@@ -450,6 +557,16 @@ export class AuditLogWriter {
       actor_type: row.actor_type ?? undefined,
       fingerprint: row.fingerprint ?? undefined,
       fingerprint_version: row.fingerprint_version ?? undefined,
+      deviation: row.deviation
+        ? (JSON.parse(row.deviation) as AuditEntry['deviation'])
+        : undefined,
+      failure_type: (row.failure_type as AuditEntry['failure_type']) ?? undefined,
+      explanation: row.explanation
+        ? (JSON.parse(row.explanation) as AuditEntry['explanation'])
+        : undefined,
+      governance_proposal: row.governance_proposal
+        ? (JSON.parse(row.governance_proposal) as AuditEntry['governance_proposal'])
+        : undefined,
       prev_hash: row.prev_hash,
       hash: row.hash,
     };
@@ -503,15 +620,27 @@ export class AuditLogWriter {
         }
       : basePayload;
 
-    const serialized = hasFingerprintMetadata(entry)
-      ? JSON.stringify({
+    const withFingerprint = hasFingerprintMetadata(entry)
+      ? {
           ...withRoute,
           actor_id: entry.actor_id ?? null,
           actor_type: entry.actor_type ?? null,
           fingerprint: entry.fingerprint ?? null,
           fingerprint_version: entry.fingerprint_version ?? null,
-        })
-      : JSON.stringify(withRoute);
+        }
+      : withRoute;
+
+    const serialized = JSON.stringify(
+      hasDeviationMetadata(entry)
+        ? {
+            ...withFingerprint,
+            deviation: entry.deviation ?? null,
+            failure_type: entry.failure_type ?? null,
+            explanation: entry.explanation ?? null,
+            governance_proposal: entry.governance_proposal ?? null,
+          }
+        : withFingerprint,
+    );
 
     return crypto.createHash('sha256').update(serialized).digest('hex');
   }
@@ -647,6 +776,15 @@ function hasFingerprintMetadata(entry: Partial<AuditEntry>): boolean {
     entry.actor_type !== undefined ||
     entry.fingerprint !== undefined ||
     entry.fingerprint_version !== undefined
+  );
+}
+
+function hasDeviationMetadata(entry: Partial<AuditEntry>): boolean {
+  return (
+    entry.deviation !== undefined ||
+    entry.failure_type !== undefined ||
+    entry.explanation !== undefined ||
+    entry.governance_proposal !== undefined
   );
 }
 

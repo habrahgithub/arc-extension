@@ -234,3 +234,109 @@
 
 - **Next action**
   - **Owner: Axis** — Validate ordering, drift visibility at COMMIT, and on-demand reliability for active-file workflow.
+
+## 2026-04-01 12:19:12 GST — ARC-RUNTIME-ASSURANCE-M1 — Deterministic Deviation Detection (Detect-only)
+
+- **What changed**
+  - Added static behavior-contract types and deterministic deviation result types for execution-time checks.
+  - Added stateless `DeviationDetector` module with deterministic sequence/policy/shape checks only.
+  - Integrated detect-only deviation evaluation into existing RUN observation flow; normal execution remains non-blocking.
+  - Attached detected deviation metadata to decision context and mapped detected deviations to existing `TYPE-B` classification.
+  - Extended audit persistence additively with optional `deviation` and `failure_type` fields (SQLite + JSONL) while preserving chain verification compatibility.
+  - Added test coverage for valid execution, sequence violation, policy violation, and runtime observation logging behavior.
+  - Added sample vault entries and short execution trace artifact for before/after evidence.
+
+- **Commands run + results**
+  - `/check` — failed (`/check: No such file or directory` in this environment).
+  - `npm run lint` — passed.
+  - `npm run build` — passed.
+  - `npm run test -- tests/unit/deviationDetector.test.ts tests/integration/saveOrchestrator.test.ts` — passed (34 tests).
+
+- **Evidence links**
+  - Commit: pending (next Forge commit)
+  - PR: pending (to be created via make_pr)
+  - Artifacts:
+    - `src/core/deviationDetector.ts`
+    - `src/extension/saveOrchestrator.ts`
+    - `src/core/auditLog.ts`
+    - `tests/unit/deviationDetector.test.ts`
+    - `tests/integration/saveOrchestrator.test.ts`
+    - `artifacts/ARC-RUNTIME-ASSURANCE-M1-SAMPLES.md`
+
+- **Blockers + risks**
+  - `/check` command is unavailable in this environment; this is explicitly acknowledged before PR creation.
+  - M1 intentionally does not enforce or block on detected deviations by scope constraint.
+
+- **Next action**
+  - **Owner: Axis** — Review detect-only integration placement, TYPE-B mapping semantics, and additive audit-field compatibility.
+
+## 2026-04-01 23:05:00 GST — ARC-RUNTIME-ASSURANCE-M2 — Deterministic Explanation Synthesizer
+
+- **What changed**
+  - Added deterministic explanation contracts (`ExplanationInput`, `ExplanationResult`, canonical explanation codes) to support bounded causal rendering on top of M1 deviation output.
+  - Implemented isolated `ExplanationSynthesizer` core module with table-driven mappings for `SEQUENCE`, `POLICY`, and `SHAPE` deviations.
+  - Integrated explanation synthesis only on deviation path in RUN observation flow after `DeviationDetector.evaluate`, preserving detect-only/non-blocking behavior.
+  - Extended audit persistence additively with optional `explanation` field in SQLite + JSONL paths and hash-chain payload generation.
+  - Added unit coverage for all explanation mappings and non-deviation behavior; extended integration coverage to verify explanation persistence only when deviation exists.
+  - Added M2 evidence artifact with before/after audit samples and deterministic short traces for sequence/policy/shape mappings.
+
+- **Commands run + results**
+  - `/check` — failed (`/check: No such file or directory` in this environment).
+  - `npm run lint` — passed.
+  - `npm run build` — passed.
+  - `npm run test -- tests/unit/deviationDetector.test.ts tests/unit/explanationSynthesizer.test.ts tests/integration/saveOrchestrator.test.ts` — passed.
+
+- **Evidence links**
+  - Commit: pending (next Forge commit)
+  - PR: pending (to be created via make_pr)
+  - Artifacts:
+    - `src/core/explanationSynthesizer.ts`
+    - `src/contracts/types.ts`
+    - `src/extension/saveOrchestrator.ts`
+    - `src/core/auditLog.ts`
+    - `tests/unit/explanationSynthesizer.test.ts`
+    - `tests/integration/saveOrchestrator.test.ts`
+    - `artifacts/ARC-RUNTIME-ASSURANCE-M2-SAMPLES.md`
+
+- **Blockers + risks**
+  - `/check` command remains unavailable in this environment and is explicitly acknowledged.
+  - Explanation output is intentionally canonical and bounded; it does not provide expanded narrative by design.
+
+- **Next action**
+  - **Owner: Axis** — Validate explanation field semantics, additive persistence behavior, and M2 acceptance criteria sign-off.
+
+## 2026-04-01 23:45:00 GST — ARC-RUNTIME-ASSURANCE-M3 — Governance Feedback Hook
+
+- **What changed**
+  - Added deterministic governance feedback types (`PatternSnapshot`, `GovernanceFeedbackInput`, `GovernanceProposal`) and optional `governance_proposal` payload field.
+  - Added isolated `GovernanceFeedbackEvaluator` module with fixed threshold constant `GOVERNANCE_PROPOSAL_THRESHOLD = 3` and table-driven explanation-code mappings to review-only proposal types.
+  - Integrated governance evaluation only after M2 explanation generation in RUN observation flow; proposals are attached only when threshold is satisfied.
+  - Added bounded recurrence lookup from existing audit entries (`explanationPatternSnapshot`) without background workers or separate analytics storage.
+  - Extended audit persistence additively with optional `governance_proposal` column/serialization in SQLite + JSONL and hash-chain payload computation.
+  - Added unit tests for evaluator mapping + threshold behavior and integration coverage proving proposal attaches only after repeated pattern at threshold.
+  - Added M3 evidence artifact with before/after proposal payload and short recurrence trace.
+
+- **Commands run + results**
+  - `/check` — failed (`/check: No such file or directory` in this environment).
+  - `npm run lint` — passed.
+  - `npm run build` — passed.
+  - `npm run test -- tests/unit/deviationDetector.test.ts tests/unit/explanationSynthesizer.test.ts tests/unit/governanceFeedbackEvaluator.test.ts tests/integration/saveOrchestrator.test.ts` — passed.
+  - `npm run pack` — failed (`vsce: not found` in this environment).
+
+- **Evidence links**
+  - Commit: pending (next Forge commit)
+  - PR: pending (to be created via make_pr)
+  - Artifacts:
+    - `src/core/governanceFeedbackEvaluator.ts`
+    - `src/core/auditLog.ts`
+    - `src/extension/saveOrchestrator.ts`
+    - `tests/unit/governanceFeedbackEvaluator.test.ts`
+    - `tests/integration/saveOrchestrator.test.ts`
+    - `artifacts/ARC-RUNTIME-ASSURANCE-M3-SAMPLES.md`
+
+- **Blockers + risks**
+  - `/check` command remains unavailable in this environment and is explicitly acknowledged.
+  - Recurrence lookup is intentionally bounded/local; it is not a trend engine and does not perform clustering.
+
+- **Next action**
+  - **Owner: Axis** — Validate threshold semantics, proposal evidence format, and additive audit compatibility for M3 sign-off.
