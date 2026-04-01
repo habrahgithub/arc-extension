@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
+import Ajv from 'ajv';
 import type {
   ContextPacket,
   DataClass,
@@ -14,11 +15,25 @@ import type {
 } from '../contracts/types';
 import { validateContextPacket } from './contextPacket';
 
+const ajv = new Ajv();
+const validateRoutePolicyConfig = ajv.compile({
+  type: 'object',
+  properties: {
+    mode: { type: 'string', enum: ['RULE_ONLY', 'LOCAL_PREFERRED', 'CLOUD_ASSISTED'] },
+    local_lane_enabled: { type: 'boolean' },
+    cloud_lane_enabled: { type: 'boolean' },
+    cloud_data_class: { type: 'string', enum: ['LOCAL_ONLY', 'CLOUD_ELIGIBLE', 'RESTRICTED'] },
+    governance_mode: { type: 'string', enum: ['OBSERVE', 'ENFORCE'] },
+  },
+  additionalProperties: false,
+});
+
 const DEFAULT_ROUTE_POLICY: NormalizedRoutePolicy = {
   mode: 'RULE_ONLY',
   localLaneEnabled: false,
   cloudLaneEnabled: false,
   cloudDataClass: 'LOCAL_ONLY',
+  governanceMode: 'ENFORCE',
 };
 
 const INVALID_PACKET_REASON =
@@ -74,9 +89,9 @@ export class RoutePolicyStore {
       };
     }
 
-    let parsed: RoutePolicyConfig;
+    let rawParsed: unknown;
     try {
-      parsed = JSON.parse(fs.readFileSync(configPath, 'utf8')) as RoutePolicyConfig;
+      rawParsed = JSON.parse(fs.readFileSync(configPath, 'utf8'));
     } catch {
       return {
         status: 'INVALID',
@@ -87,6 +102,17 @@ export class RoutePolicyStore {
       };
     }
 
+    if (!validateRoutePolicyConfig(rawParsed)) {
+      return {
+        status: 'INVALID',
+        config: DEFAULT_ROUTE_POLICY,
+        reason:
+          'The route policy config failed schema validation. Phase 6.6 is failing closed to RULE_ONLY with local and cloud lanes disabled.',
+        policyHash: hashPolicy(DEFAULT_ROUTE_POLICY),
+      };
+    }
+
+    const parsed = rawParsed as RoutePolicyConfig;
     const normalized = normalizeRoutePolicy(parsed);
     if (!normalized) {
       return {
@@ -459,6 +485,7 @@ function normalizeRoutePolicy(
   const localLaneEnabled = config.local_lane_enabled ?? false;
   const cloudLaneEnabled = config.cloud_lane_enabled ?? false;
   const cloudDataClass = normalizeCloudDataClass(config.cloud_data_class);
+  const governanceMode = config.governance_mode ?? 'ENFORCE';
 
   if (mode === 'RULE_ONLY') {
     if (localLaneEnabled || cloudLaneEnabled || cloudDataClass !== 'LOCAL_ONLY') {
@@ -470,6 +497,7 @@ function normalizeRoutePolicy(
       localLaneEnabled: false,
       cloudLaneEnabled: false,
       cloudDataClass: 'LOCAL_ONLY',
+      governanceMode,
     };
   }
 
@@ -483,6 +511,7 @@ function normalizeRoutePolicy(
       localLaneEnabled: true,
       cloudLaneEnabled: false,
       cloudDataClass: 'LOCAL_ONLY',
+      governanceMode,
     };
   }
 
@@ -496,6 +525,7 @@ function normalizeRoutePolicy(
       localLaneEnabled: true,
       cloudLaneEnabled: true,
       cloudDataClass,
+      governanceMode,
     };
   }
 
@@ -523,5 +553,14 @@ function loadedRouteReason(config: NormalizedRoutePolicy): string {
 }
 
 function hashPolicy(config: NormalizedRoutePolicy): string {
-  return crypto.createHash('sha256').update(JSON.stringify(config)).digest('hex');
+  return crypto
+    .createHash('sha256')
+    .update(JSON.stringify({
+      mode: config.mode,
+      localLaneEnabled: config.localLaneEnabled,
+      cloudLaneEnabled: config.cloudLaneEnabled,
+      cloudDataClass: config.cloudDataClass,
+      governanceMode: config.governanceMode,
+    }))
+    .digest('hex');
 }

@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import * as vscode from 'vscode';
 import type {
+  ActorIdentity,
   AssessedSave,
   AuditEntry,
   DirectiveProofInput,
@@ -27,6 +28,14 @@ import {
   createMinimalRoutePolicy,
   createMinimalWorkspaceMapping,
 } from './extension/configTemplates';
+
+function humanActor(): ActorIdentity {
+  return {
+    type: 'human',
+    id: vscode.env.machineId,
+    session: vscode.env.sessionId,
+  };
+}
 
 function autoSaveMode():
   | 'off'
@@ -576,11 +585,13 @@ export function activate(context: vscode.ExtensionContext): void {
             void assessment.reducedGuaranteeNotice;
           }
 
+          const actor = humanActor();
+
           if (
             assessment.decision.decision === 'ALLOW' ||
             assessment.decision.lease_status === 'REUSED'
           ) {
-            controller.finalizeSave(assessment, true);
+            controller.finalizeSave(assessment, true, undefined, actor);
             statusBarItem.updateFromDecision(
               assessment.decision.decision,
               false,
@@ -590,7 +601,7 @@ export function activate(context: vscode.ExtensionContext): void {
           }
 
           if (assessment.decision.decision === 'BLOCK') {
-            controller.finalizeSave(assessment, false);
+            controller.finalizeSave(assessment, false, undefined, actor);
             statusBarItem.updateFromDecision(
               assessment.decision.decision,
               true,
@@ -615,6 +626,7 @@ export function activate(context: vscode.ExtensionContext): void {
               assessment,
               planFlow.acknowledged,
               planFlow.proof,
+              actor,
             );
             statusBarItem.updateFromDecision(
               assessment.decision.decision,
@@ -632,7 +644,7 @@ export function activate(context: vscode.ExtensionContext): void {
               'Cancel',
             );
 
-            controller.finalizeSave(assessment, choice === 'Continue');
+            controller.finalizeSave(assessment, choice === 'Continue', undefined, actor);
             statusBarItem.updateFromDecision(
               assessment.decision.decision,
               choice !== 'Continue',
@@ -641,7 +653,7 @@ export function activate(context: vscode.ExtensionContext): void {
             return [];
           }
 
-          controller.finalizeSave(assessment, false);
+          controller.finalizeSave(assessment, false, undefined, actor);
           statusBarItem.updateFromDecision(assessment.decision.decision, false);
           taskBoardProvider.refresh();
           return [];

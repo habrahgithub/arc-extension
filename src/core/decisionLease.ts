@@ -1,4 +1,6 @@
 import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
 import type {
   Classification,
   DecisionPayload,
@@ -7,10 +9,55 @@ import type {
   SaveInput,
 } from '../contracts/types';
 
+interface PersistedLeaseRecord extends LeaseRecord {
+  filePath: string;
+}
+
 export class DecisionLeaseStore {
   private readonly leases = new Map<string, LeaseRecord>();
+  private readonly leasePath?: string;
 
-  constructor(private readonly ttlMs = 5 * 60 * 1000) {}
+  constructor(
+    private readonly ttlMs = 5 * 60 * 1000,
+    workspaceRoot?: string,
+  ) {
+    if (workspaceRoot) {
+      this.leasePath = path.join(workspaceRoot, '.arc', 'leases.jsonl');
+      this.loadFromDisk();
+    }
+  }
+
+  private loadFromDisk(): void {
+    if (!this.leasePath || !fs.existsSync(this.leasePath)) {
+      return;
+    }
+    const now = Date.now();
+    const lines = fs.readFileSync(this.leasePath, 'utf8').split('\n').filter(Boolean);
+    for (const line of lines) {
+      try {
+        const record = JSON.parse(line) as PersistedLeaseRecord;
+        if (record.filePath && record.expiresAt > now) {
+          this.leases.set(record.filePath, {
+            fingerprint: record.fingerprint,
+            decision: record.decision,
+            expiresAt: record.expiresAt,
+          });
+        }
+      } catch {
+        // skip malformed lines
+      }
+    }
+  }
+
+  private persistLease(filePath: string, record: LeaseRecord): void {
+    if (!this.leasePath) {
+      return;
+    }
+    const arcDir = path.dirname(this.leasePath);
+    fs.mkdirSync(arcDir, { recursive: true });
+    const persisted: PersistedLeaseRecord = { filePath, ...record };
+    fs.appendFileSync(this.leasePath, `${JSON.stringify(persisted)}\n`, 'utf8');
+  }
 
   fingerprint(
     input: SaveInput,
@@ -104,11 +151,14 @@ export class DecisionLeaseStore {
       lease_status: 'NEW',
     };
 
-    this.leases.set(classification.filePath, {
+    const record: LeaseRecord = {
       fingerprint,
       decision: storedDecision,
       expiresAt: Date.now() + this.ttlMs,
-    });
+    };
+
+    this.leases.set(classification.filePath, record);
+    this.persistLease(classification.filePath, record);
 
     return storedDecision;
   }

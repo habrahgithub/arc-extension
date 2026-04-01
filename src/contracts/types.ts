@@ -41,6 +41,15 @@ export type AutoSaveMode =
   | 'onFocusChange'
   | 'onWindowChange';
 export type BlueprintMode = 'LOCAL_ONLY' | 'TEAM_SHARED';
+export type GovernanceMode = 'OBSERVE' | 'ENFORCE';
+export type ActorType = 'human' | 'agent' | 'model';
+
+export interface ActorIdentity {
+  type: ActorType;
+  id: string;
+  session?: string;
+}
+
 export type AuditEventType = 'SAVE' | 'RUN' | 'COMMIT';
 export type DriftStatus =
   | 'NO_DRIFT'
@@ -270,6 +279,8 @@ export interface DecisionPayload {
     | 'UNAVAILABLE_AT_RUNTIME'
     | 'AVAILABLE_AND_USED'
     | 'NOT_ATTEMPTED';
+  // Phase 8 — Governance mode marker
+  governance_mode?: GovernanceMode;
   actor_id?: string;
   actor_type?: 'USER' | 'SYSTEM' | 'AGENT';
   fingerprint?: string;
@@ -361,6 +372,7 @@ export interface RoutePolicyConfig {
   local_lane_enabled?: boolean;
   cloud_lane_enabled?: boolean;
   cloud_data_class?: DataClass;
+  governance_mode?: GovernanceMode;
 }
 
 export interface NormalizedRoutePolicy {
@@ -368,6 +380,19 @@ export interface NormalizedRoutePolicy {
   localLaneEnabled: boolean;
   cloudLaneEnabled: boolean;
   cloudDataClass: DataClass;
+  governanceMode: GovernanceMode;
+}
+
+export interface OverrideEntry {
+  ts: string;
+  file_path: string;
+  decision: Decision;
+  risk_level: RiskLevel;
+  violated_rules: string[];
+  actor?: ActorIdentity;
+  directive_id?: string;
+  blueprint_id?: string;
+  governance_mode?: GovernanceMode;
 }
 
 export interface RoutePolicyResolution {
@@ -403,6 +428,7 @@ export interface AuditEntry extends DecisionPayload {
   file_path: string;
   risk_flags: RiskFlag[];
   matched_rules: string[];
+  actor?: ActorIdentity;
   prev_hash: string;
   hash: string;
 }

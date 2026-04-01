@@ -7,6 +7,7 @@ import {
   type ModelAdapter,
 } from '../adapters/modelAdapter';
 import type {
+  ActorIdentity,
   AssessedSave,
   AuditEntry,
   AuditEventType,
@@ -32,6 +33,7 @@ import { buildContext } from '../core/contextBuilder';
 import { buildContextPacket } from '../core/contextPacket';
 import { enforceMinimumFloor } from '../core/decisionPolicy';
 import { DecisionLeaseStore } from '../core/decisionLease';
+import { OverrideLogWriter } from '../core/overrideLog';
 import {
   LocalPerformanceRecorder,
   measureAsync,
@@ -57,6 +59,7 @@ export class SaveOrchestrator {
   private readonly routePolicy: RoutePolicyStore;
   private readonly routerShell: RouterShell;
   private readonly disabledModelAdapter: ModelAdapter;
+  private readonly overrideLog: OverrideLogWriter;
   private readonly deviationDetector = new DeviationDetector();
   private readonly explanationSynthesizer = new ExplanationSynthesizer();
   private readonly governanceFeedbackEvaluator = new GovernanceFeedbackEvaluator();
@@ -68,7 +71,7 @@ export class SaveOrchestrator {
       enabledByDefault: true,
     }),
     private readonly cloudModelAdapter: ModelAdapter = new DisabledModelAdapter(),
-    private readonly leaseStore = new DecisionLeaseStore(),
+    private readonly leaseStore = new DecisionLeaseStore(5 * 60 * 1000, workspaceRoot),
     private readonly auditLog = new AuditLogWriter(workspaceRoot),
   ) {
     this.blueprintArtifacts = new BlueprintArtifactStore(workspaceRoot);
@@ -77,6 +80,7 @@ export class SaveOrchestrator {
     this.routePolicy = new RoutePolicyStore(workspaceRoot);
     this.routerShell = new RouterShell();
     this.disabledModelAdapter = new DisabledModelAdapter();
+    this.overrideLog = new OverrideLogWriter(workspaceRoot);
     this.governanceProposalRegistry = new GovernanceProposalRegistry(workspaceRoot);
   }
 
@@ -127,6 +131,27 @@ export class SaveOrchestrator {
           routerShell,
         );
 
+        // Phase 8 — Observe mode: audit-only, no prompts, no blocking
+        if (routePolicy.config.governanceMode === 'OBSERVE') {
+          const observeDecision: DecisionPayload = {
+            ...ruleDecision,
+            decision: 'ALLOW',
+            reason: `Observe mode: ${ruleDecision.decision} would have been required — governance is audit-only.`,
+            lease_status: 'BYPASSED',
+            governance_mode: 'OBSERVE',
+          };
+          return {
+            classification,
+            context,
+            contextPacket,
+            decision: observeDecision,
+            input,
+            routePolicy,
+            leaseReusable: false,
+            shouldPrompt: false,
+          };
+        }
+
         const reusedLease = this.getReusableDecision(
           input,
           classification,
@@ -176,6 +201,7 @@ export class SaveOrchestrator {
     assessment: AssessedSave,
     acknowledged: boolean,
     proof?: DirectiveProofInput,
+    actor?: ActorIdentity,
   ): SaveOutcome {
     return measureSync(
       (entry) => this.performanceRecorder.record(entry),
@@ -200,6 +226,11 @@ export class SaveOrchestrator {
           assessment.classification,
           decisionWithFingerprint,
         );
+
+        // Phase 8 — Write override record on fresh acknowledged save
+        if (finalizedDecision.lease_status === 'NEW') {
+          this.overrideLog.append(assessment.classification, finalizedDecision, actor);
+        }
 
         return {
           ...assessment,

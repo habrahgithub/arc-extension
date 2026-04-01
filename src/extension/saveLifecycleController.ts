@@ -1,4 +1,5 @@
 import type {
+  ActorIdentity,
   AssessedSave,
   AutoSaveMode,
   Decision,
@@ -70,8 +71,9 @@ export class SaveLifecycleController {
     assessment: AssessedSave,
     acknowledged: boolean,
     proof?: DirectiveProofInput,
+    actor?: ActorIdentity,
   ): SaveOutcome {
-    const outcome = this.orchestrator.commitAssessment(assessment, acknowledged, proof);
+    const outcome = this.orchestrator.commitAssessment(assessment, acknowledged, proof, actor);
 
     if (outcome.shouldRevertAfterSave) {
       this.pendingReverts.set(outcome.input.filePath, {
