@@ -2,8 +2,14 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { DisabledModelAdapter, ModelAdapterError } from '../../src/adapters/modelAdapter';
-import type { ContextPayload, ModelEvaluationResult } from '../../src/contracts/types';
+import {
+  DisabledModelAdapter,
+  ModelAdapterError,
+} from '../../src/adapters/modelAdapter';
+import type {
+  ContextPayload,
+  ModelEvaluationResult,
+} from '../../src/contracts/types';
 import { AuditLogWriter } from '../../src/core/auditLog';
 import { classifyFile } from '../../src/core/classifier';
 import { validateContextPacket } from '../../src/core/contextPacket';
@@ -31,7 +37,9 @@ function makeWorkspace(): string {
 class TimeoutAdapter {
   readonly enabledByDefault = true;
 
-  evaluate(_context: ContextPayload): Promise<ModelEvaluationResult | undefined> {
+  evaluate(
+    _context: ContextPayload,
+  ): Promise<ModelEvaluationResult | undefined> {
     void _context;
     return Promise.reject(new ModelAdapterError('timed out', 'TIMEOUT'));
   }
@@ -40,7 +48,9 @@ class TimeoutAdapter {
 class ParseFailureAdapter {
   readonly enabledByDefault = true;
 
-  evaluate(_context: ContextPayload): Promise<ModelEvaluationResult | undefined> {
+  evaluate(
+    _context: ContextPayload,
+  ): Promise<ModelEvaluationResult | undefined> {
     void _context;
     return Promise.reject(new ModelAdapterError('bad json', 'PARSE_FAILURE'));
   }
@@ -49,7 +59,9 @@ class ParseFailureAdapter {
 class UnavailableAdapter {
   readonly enabledByDefault = true;
 
-  evaluate(_context: ContextPayload): Promise<ModelEvaluationResult | undefined> {
+  evaluate(
+    _context: ContextPayload,
+  ): Promise<ModelEvaluationResult | undefined> {
     void _context;
     return Promise.reject(new ModelAdapterError('offline', 'UNAVAILABLE'));
   }
@@ -58,7 +70,9 @@ class UnavailableAdapter {
 class UndefinedAdapter {
   readonly enabledByDefault = true;
 
-  evaluate(_context: ContextPayload): Promise<ModelEvaluationResult | undefined> {
+  evaluate(
+    _context: ContextPayload,
+  ): Promise<ModelEvaluationResult | undefined> {
     void _context;
     return Promise.resolve(undefined);
   }
@@ -67,7 +81,9 @@ class UndefinedAdapter {
 class TighteningAdapter {
   readonly enabledByDefault = true;
 
-  evaluate(_context: ContextPayload): Promise<ModelEvaluationResult | undefined> {
+  evaluate(
+    _context: ContextPayload,
+  ): Promise<ModelEvaluationResult | undefined> {
     void _context;
     return Promise.resolve({
       decision: 'BLOCK',
@@ -82,7 +98,9 @@ class TighteningAdapter {
 class CloudTighteningAdapter {
   readonly enabledByDefault = true;
 
-  evaluate(_context: ContextPayload): Promise<ModelEvaluationResult | undefined> {
+  evaluate(
+    _context: ContextPayload,
+  ): Promise<ModelEvaluationResult | undefined> {
     void _context;
     return Promise.resolve({
       decision: 'BLOCK',
@@ -98,7 +116,9 @@ class CountingCloudAdapter {
   readonly enabledByDefault = true;
   calls = 0;
 
-  evaluate(_context: ContextPayload): Promise<ModelEvaluationResult | undefined> {
+  evaluate(
+    _context: ContextPayload,
+  ): Promise<ModelEvaluationResult | undefined> {
     void _context;
     this.calls += 1;
     return Promise.resolve({
@@ -128,7 +148,10 @@ afterEach(() => {
 describe('save orchestrator', () => {
   it('records deviation metadata for RUN observation when runtime policy contract is missing', async () => {
     const workspace = makeWorkspace();
-    const orchestrator = new SaveOrchestrator(workspace, new DisabledModelAdapter());
+    const orchestrator = new SaveOrchestrator(
+      workspace,
+      new DisabledModelAdapter(),
+    );
     const filePath = path.join(workspace, 'src', 'deviation', 'run.ts');
     const text = 'export const run = true;\n';
 
@@ -145,13 +168,18 @@ describe('save orchestrator', () => {
     expect(runEntry.deviation?.type).toBe('POLICY');
     expect(runEntry.failure_type).toBe('TYPE-B');
     expect(runEntry.explanation?.code).toBe('REQUIRED_POLICY_MISSING');
-    expect(runEntry.explanation?.evidence).toContain('missing_policy=AUDIT_MODE');
+    expect(runEntry.explanation?.evidence).toContain(
+      'missing_policy=AUDIT_MODE',
+    );
     expect(runEntry.governance_proposal).toBeUndefined();
   });
 
   it('does not flag deviation when RUN observation contract is satisfied', async () => {
     const workspace = makeWorkspace();
-    const orchestrator = new SaveOrchestrator(workspace, new DisabledModelAdapter());
+    const orchestrator = new SaveOrchestrator(
+      workspace,
+      new DisabledModelAdapter(),
+    );
     const filePath = path.join(workspace, 'src', 'deviation', 'clean.ts');
     const text = 'export const clean = true;\n';
 
@@ -173,7 +201,10 @@ describe('save orchestrator', () => {
 
   it('attaches governance proposal only when repeated explanation reaches threshold', async () => {
     const workspace = makeWorkspace();
-    const orchestrator = new SaveOrchestrator(workspace, new DisabledModelAdapter());
+    const orchestrator = new SaveOrchestrator(
+      workspace,
+      new DisabledModelAdapter(),
+    );
     const filePath = path.join(workspace, 'src', 'deviation', 'threshold.ts');
     const text = 'export const threshold = true;\n';
 
@@ -204,7 +235,9 @@ describe('save orchestrator', () => {
     expect(third.governance_proposal?.proposalType).toBe(
       'REVIEW_POLICY_REQUIREMENT',
     );
-    expect(third.governance_proposal?.triggerCode).toBe('REQUIRED_POLICY_MISSING');
+    expect(third.governance_proposal?.triggerCode).toBe(
+      'REQUIRED_POLICY_MISSING',
+    );
     expect(third.governance_proposal?.reviewStatus).toBe('PENDING_REVIEW');
 
     const pending = orchestrator.listPendingGovernanceProposals();
@@ -216,8 +249,16 @@ describe('save orchestrator', () => {
 
   it('keeps separate registry records for different proposal types', async () => {
     const workspace = makeWorkspace();
-    const orchestrator = new SaveOrchestrator(workspace, new DisabledModelAdapter());
-    const filePath = path.join(workspace, 'src', 'deviation', 'registry-types.ts');
+    const orchestrator = new SaveOrchestrator(
+      workspace,
+      new DisabledModelAdapter(),
+    );
+    const filePath = path.join(
+      workspace,
+      'src',
+      'deviation',
+      'registry-types.ts',
+    );
 
     fs.mkdirSync(path.dirname(filePath), { recursive: true });
     fs.writeFileSync(filePath, '', 'utf8');
@@ -241,7 +282,10 @@ describe('save orchestrator', () => {
 
   it('writes a hash-chained audit entry with blueprint linkage for REQUIRE_PLAN saves', async () => {
     const workspace = makeWorkspace();
-    const orchestrator = new SaveOrchestrator(workspace, new DisabledModelAdapter());
+    const orchestrator = new SaveOrchestrator(
+      workspace,
+      new DisabledModelAdapter(),
+    );
     const blueprint = createBlueprintArtifact(workspace);
 
     const assessed = await orchestrator.assessSave(fixtureInputs.auth);
@@ -253,8 +297,8 @@ describe('save orchestrator', () => {
     const perfPath = path.join(workspace, '.arc', 'perf.jsonl');
     const auditLines = fs.readFileSync(auditPath, 'utf8').trim().split('\n');
     const perfLines = fs.readFileSync(perfPath, 'utf8').trim().split('\n');
-    const perfEntries = perfLines.map((line) =>
-      JSON.parse(line) as { operation: string },
+    const perfEntries = perfLines.map(
+      (line) => JSON.parse(line) as { operation: string },
     );
     const parsed = JSON.parse(auditLines[0]) as {
       prev_hash: string;
@@ -278,13 +322,53 @@ describe('save orchestrator', () => {
     expect(parsed.route_lane).toBe('RULE_ONLY');
     expect(parsed.route_fallback).toBe('CONFIG_MISSING');
     expect(perfLines.length).toBeGreaterThanOrEqual(2);
-    expect(perfEntries.some((entry) => entry.operation === 'classify_file')).toBe(true);
-    expect(perfEntries.some((entry) => entry.operation === 'evaluate_rules')).toBe(true);
+    expect(
+      perfEntries.some((entry) => entry.operation === 'classify_file'),
+    ).toBe(true);
+    expect(
+      perfEntries.some((entry) => entry.operation === 'evaluate_rules'),
+    ).toBe(true);
+  });
+
+  it('records AST fingerprint hash in audit entries when ast fingerprinting is enabled', async () => {
+    const workspace = makeWorkspace();
+    fs.mkdirSync(path.join(workspace, '.arc'), { recursive: true });
+    fs.writeFileSync(
+      path.join(workspace, '.arc', 'router.json'),
+      JSON.stringify({
+        mode: 'RULE_ONLY',
+        local_lane_enabled: false,
+        cloud_lane_enabled: false,
+        ast_fingerprinting_enabled: true,
+      }),
+      'utf8',
+    );
+
+    const orchestrator = new SaveOrchestrator(
+      workspace,
+      new DisabledModelAdapter(),
+    );
+    const assessed = await orchestrator.assessSave({
+      ...fixtureInputs.auth,
+      filePath: 'src/example.ts',
+      fileName: 'example.ts',
+      text: 'export function save(){ return true; }',
+    });
+    const outcome = orchestrator.commitAssessment(assessed, true);
+    const auditPath = path.join(workspace, '.arc', 'audit.jsonl');
+    const entries = fs.readFileSync(auditPath, 'utf8').trim().split('\n');
+    const parsed = JSON.parse(entries[0]) as { fingerprint?: string };
+
+    expect(outcome.analysis.fingerprints?.file).toBeDefined();
+    expect(parsed.fingerprint).toBe(outcome.analysis.fingerprints?.file);
   });
 
   it('records deterministic save → run → commit decision lifecycle linkage', async () => {
     const workspace = makeWorkspace();
-    const orchestrator = new SaveOrchestrator(workspace, new DisabledModelAdapter());
+    const orchestrator = new SaveOrchestrator(
+      workspace,
+      new DisabledModelAdapter(),
+    );
     const filePath = path.join(workspace, 'src', 'auth', 'linked.ts');
     const text = 'export const linked = true;\n';
 
@@ -330,12 +414,13 @@ describe('save orchestrator', () => {
       .trim()
       .split('\n')
       .filter(Boolean)
-      .map((line) =>
-        JSON.parse(line) as {
-          event_type: string;
-          decision_id: string;
-          linked_decision_id?: string;
-        },
+      .map(
+        (line) =>
+          JSON.parse(line) as {
+            event_type: string;
+            decision_id: string;
+            linked_decision_id?: string;
+          },
       );
 
     expect(entries[0]?.event_type).toBe('SAVE');
@@ -347,7 +432,10 @@ describe('save orchestrator', () => {
 
   it('records NO_DRIFT when commit fingerprint matches linked save fingerprint', async () => {
     const workspace = makeWorkspace();
-    const orchestrator = new SaveOrchestrator(workspace, new DisabledModelAdapter());
+    const orchestrator = new SaveOrchestrator(
+      workspace,
+      new DisabledModelAdapter(),
+    );
     const filePath = path.join(workspace, 'src', 'auth', 'policy.ts');
     const text = 'export const canAccess = true;\n';
 
@@ -373,7 +461,10 @@ describe('save orchestrator', () => {
 
   it('records DRIFT_DETECTED when commit fingerprint differs from linked save fingerprint', async () => {
     const workspace = makeWorkspace();
-    const orchestrator = new SaveOrchestrator(workspace, new DisabledModelAdapter());
+    const orchestrator = new SaveOrchestrator(
+      workspace,
+      new DisabledModelAdapter(),
+    );
     const filePath = path.join(workspace, 'src', 'auth', 'drift.ts');
 
     fs.mkdirSync(path.dirname(filePath), { recursive: true });
@@ -400,7 +491,10 @@ describe('save orchestrator', () => {
 
   it('records NO_LINKED_DECISION when commit has no save lifecycle link', async () => {
     const workspace = makeWorkspace();
-    const orchestrator = new SaveOrchestrator(workspace, new DisabledModelAdapter());
+    const orchestrator = new SaveOrchestrator(
+      workspace,
+      new DisabledModelAdapter(),
+    );
     const filePath = path.join(workspace, 'src', 'auth', 'unlinked.ts');
 
     const committed = await orchestrator.observeCommit(
@@ -414,7 +508,10 @@ describe('save orchestrator', () => {
 
   it('records FINGERPRINT_UNAVAILABLE when linked save fingerprint is unavailable', async () => {
     const workspace = makeWorkspace();
-    const orchestrator = new SaveOrchestrator(workspace, new DisabledModelAdapter());
+    const orchestrator = new SaveOrchestrator(
+      workspace,
+      new DisabledModelAdapter(),
+    );
     const writer = new AuditLogWriter(workspace);
     const filePath = path.join(workspace, 'src', 'auth', 'legacy.ts');
     const saveInput = {
@@ -455,7 +552,10 @@ describe('save orchestrator', () => {
       'utf8',
     );
 
-    const orchestrator = new SaveOrchestrator(workspace, new DisabledModelAdapter());
+    const orchestrator = new SaveOrchestrator(
+      workspace,
+      new DisabledModelAdapter(),
+    );
     const assessed = await orchestrator.assessSave(fixtureInputs.auth);
 
     expect(assessed.decision.decision).toBe('REQUIRE_PLAN');
@@ -469,7 +569,9 @@ describe('save orchestrator', () => {
       ok: true,
       issues: [],
     });
-    expect(assessed.contextPacket.authority_tag).toBe('LINTEL_LOCAL_ENFORCEMENT');
+    expect(assessed.contextPacket.authority_tag).toBe(
+      'LINTEL_LOCAL_ENFORCEMENT',
+    );
     expect(assessed.decision.route_reason).toContain('Phase 6.6');
   });
 
@@ -486,14 +588,19 @@ describe('save orchestrator', () => {
       'utf8',
     );
 
-    const orchestrator = new SaveOrchestrator(workspace, new DisabledModelAdapter());
+    const orchestrator = new SaveOrchestrator(
+      workspace,
+      new DisabledModelAdapter(),
+    );
     const assessed = await orchestrator.assessSave(fixtureInputs.auth);
 
     expect(assessed.decision.decision).toBe('REQUIRE_PLAN');
     expect(assessed.decision.route_mode).toBe('RULE_ONLY');
     expect(assessed.decision.route_lane).toBe('RULE_ONLY');
     expect(assessed.decision.route_fallback).toBe('NONE');
-    expect(assessed.decision.route_reason).toContain('Phase 6.6 router shell remains RULE_ONLY');
+    expect(assessed.decision.route_reason).toContain(
+      'Phase 6.6 router shell remains RULE_ONLY',
+    );
   });
 
   it('executes the local lane only for explicit LOCAL_PREFERRED saves and preserves the rule floor', async () => {
@@ -509,7 +616,10 @@ describe('save orchestrator', () => {
       'utf8',
     );
 
-    const orchestrator = new SaveOrchestrator(workspace, new TighteningAdapter());
+    const orchestrator = new SaveOrchestrator(
+      workspace,
+      new TighteningAdapter(),
+    );
     const assessed = await orchestrator.assessSave(fixtureInputs.auth);
 
     expect(assessed.routePolicy.status).toBe('LOADED');
@@ -537,7 +647,10 @@ describe('save orchestrator', () => {
       'utf8',
     );
 
-    const orchestrator = new SaveOrchestrator(workspace, new TighteningAdapter());
+    const orchestrator = new SaveOrchestrator(
+      workspace,
+      new TighteningAdapter(),
+    );
     const assessed = await orchestrator.assessSave(fixtureInputs.autoAuth);
 
     expect(assessed.decision.decision).toBe('REQUIRE_PLAN');
@@ -546,7 +659,9 @@ describe('save orchestrator', () => {
     expect(assessed.decision.route_mode).toBe('LOCAL_PREFERRED');
     expect(assessed.decision.route_lane).toBe('RULE_ONLY');
     expect(assessed.decision.route_fallback).toBe('AUTO_SAVE_BLOCKED');
-    expect(assessed.decision.route_reason).toContain('auto-save assessments fail closed to RULE_ONLY');
+    expect(assessed.decision.route_reason).toContain(
+      'auto-save assessments fail closed to RULE_ONLY',
+    );
   });
 
   it('executes cloud fallback only after approved local fallback and only for CLOUD_ELIGIBLE packets', async () => {
@@ -634,7 +749,9 @@ describe('save orchestrator', () => {
     expect(assessed.decision.route_mode).toBe('CLOUD_ASSISTED');
     expect(assessed.decision.route_lane).toBe('RULE_ONLY');
     expect(assessed.decision.route_fallback).toBe('AUTO_SAVE_BLOCKED');
-    expect(assessed.decision.route_reason).toContain('auto-save assessments fail closed to RULE_ONLY');
+    expect(assessed.decision.route_reason).toContain(
+      'auto-save assessments fail closed to RULE_ONLY',
+    );
     expect(cloudAdapter.calls).toBe(0);
   });
 
@@ -668,7 +785,10 @@ describe('save orchestrator', () => {
 
   it('denies REQUIRE_PLAN saves without a blueprint artifact', async () => {
     const workspace = makeWorkspace();
-    const orchestrator = new SaveOrchestrator(workspace, new DisabledModelAdapter());
+    const orchestrator = new SaveOrchestrator(
+      workspace,
+      new DisabledModelAdapter(),
+    );
 
     const assessed = await orchestrator.assessSave(fixtureInputs.auth);
     const outcome = orchestrator.commitAssessment(assessed, true, {
@@ -696,7 +816,9 @@ describe('save orchestrator', () => {
 
     expect(outcome.decision.lease_status).toBe('BYPASSED');
     expect(outcome.shouldRevertAfterSave).toBe(true);
-    expect(outcome.decision.reason).toContain('does not match the canonical Phase 5 artifact path');
+    expect(outcome.decision.reason).toContain(
+      'does not match the canonical Phase 5 artifact path',
+    );
   });
 
   it('rejects incomplete templates and unsupported shared/team proof modes', async () => {
@@ -816,7 +938,9 @@ describe('save orchestrator', () => {
       previousText: 'export const secure = false;\n',
     });
 
-    expect(assessed.classification.matchedRuleIds).toContain('workspace-security-auth');
+    expect(assessed.classification.matchedRuleIds).toContain(
+      'workspace-security-auth',
+    );
     expect(assessed.decision.decision).toBe('REQUIRE_PLAN');
   });
 
@@ -864,7 +988,13 @@ describe('save orchestrator', () => {
       .readFileSync(perfPath, 'utf8')
       .trim()
       .split('\n')
-      .map((line) => JSON.parse(line) as { operation: string; metadata?: Record<string, string> });
+      .map(
+        (line) =>
+          JSON.parse(line) as {
+            operation: string;
+            metadata?: Record<string, string>;
+          },
+      );
 
     expect(
       perfEntries.find((entry) => entry.operation === 'evaluate_model'),
@@ -887,7 +1017,10 @@ describe('save orchestrator', () => {
       }),
       'utf8',
     );
-    const orchestrator = new SaveOrchestrator(workspace, new UnavailableAdapter());
+    const orchestrator = new SaveOrchestrator(
+      workspace,
+      new UnavailableAdapter(),
+    );
 
     const assessed = await orchestrator.assessSave(fixtureInputs.auth);
 
@@ -910,7 +1043,10 @@ describe('save orchestrator', () => {
       }),
       'utf8',
     );
-    const orchestrator = new SaveOrchestrator(workspace, new ParseFailureAdapter());
+    const orchestrator = new SaveOrchestrator(
+      workspace,
+      new ParseFailureAdapter(),
+    );
 
     const assessed = await orchestrator.assessSave(fixtureInputs.auth);
 
@@ -933,7 +1069,10 @@ describe('save orchestrator', () => {
       }),
       'utf8',
     );
-    const orchestrator = new SaveOrchestrator(workspace, new UndefinedAdapter());
+    const orchestrator = new SaveOrchestrator(
+      workspace,
+      new UndefinedAdapter(),
+    );
 
     const assessed = await orchestrator.assessSave(fixtureInputs.auth);
 

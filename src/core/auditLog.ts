@@ -251,6 +251,8 @@ export class AuditLogWriter {
     classification: Classification,
     decision: DecisionPayload,
     eventType: AuditEventType = 'SAVE',
+    actor?: ActorIdentity,
+    fingerprint?: string,
   ): AuditEntry {
     this.ensureReady();
 
@@ -278,7 +280,7 @@ export class AuditLogWriter {
       ...decision,
       actor_id: decision.actor_id,
       actor_type: decision.actor_type,
-      fingerprint: decision.fingerprint,
+      fingerprint: fingerprint ?? decision.fingerprint,
       fingerprint_version: decision.fingerprint_version,
     };
 
@@ -694,6 +696,7 @@ export class AuditLogWriter {
           route_clarity: entry.route_clarity ?? null,
           route_fallback: entry.route_fallback ?? null,
           route_policy_hash: entry.route_policy_hash ?? null,
+<<<<<<< HEAD
         }
       : basePayload;
 
@@ -718,6 +721,32 @@ export class AuditLogWriter {
           }
         : withFingerprint,
     );
+=======
+          ...(entry.fingerprint !== undefined
+            ? { fingerprint: entry.fingerprint }
+            : {}),
+        })
+      : JSON.stringify({
+          prev_hash: prevHash,
+          ts: entry.ts,
+          file_path: entry.file_path,
+          risk_flags: entry.risk_flags,
+          matched_rules: entry.matched_rules,
+          decision: entry.decision,
+          reason: entry.reason,
+          risk_level: entry.risk_level,
+          violated_rules: entry.violated_rules,
+          next_action: entry.next_action,
+          source: entry.source,
+          fallback_cause: entry.fallback_cause,
+          lease_status: entry.lease_status,
+          directive_id: entry.directive_id ?? null,
+          blueprint_id: entry.blueprint_id ?? null,
+          ...(entry.fingerprint !== undefined
+            ? { fingerprint: entry.fingerprint }
+            : {}),
+        });
+>>>>>>> origin/codex/build-ast-layer-and-unify-analysis-engine
 
     return crypto.createHash('sha256').update(serialized).digest('hex');
   }

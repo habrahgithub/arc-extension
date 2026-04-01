@@ -43,6 +43,7 @@ export type AutoSaveMode =
 export type BlueprintMode = 'LOCAL_ONLY' | 'TEAM_SHARED';
 export type GovernanceMode = 'OBSERVE' | 'ENFORCE';
 export type ActorType = 'human' | 'agent' | 'model';
+export type FindingSource = 'RULE' | 'AST';
 
 export interface ActorIdentity {
   type: ActorType;
@@ -291,6 +292,13 @@ export interface DecisionPayload {
   governance_proposal?: GovernanceProposal;
 }
 
+export interface Finding {
+  source: FindingSource;
+  code: string;
+  severity: RiskLevel;
+  detail: string;
+}
+
 export interface ContextPayload {
   file_path: string;
   risk_flags: RiskFlag[];
@@ -373,6 +381,7 @@ export interface RoutePolicyConfig {
   cloud_lane_enabled?: boolean;
   cloud_data_class?: DataClass;
   governance_mode?: GovernanceMode;
+  ast_fingerprinting_enabled?: boolean;
 }
 
 export interface NormalizedRoutePolicy {
@@ -381,6 +390,7 @@ export interface NormalizedRoutePolicy {
   cloudLaneEnabled: boolean;
   cloudDataClass: DataClass;
   governanceMode: GovernanceMode;
+  astFingerprintingEnabled: boolean;
 }
 
 export interface OverrideEntry {
@@ -429,6 +439,7 @@ export interface AuditEntry extends DecisionPayload {
   risk_flags: RiskFlag[];
   matched_rules: string[];
   actor?: ActorIdentity;
+  fingerprint?: string;
   prev_hash: string;
   hash: string;
 }
@@ -437,6 +448,13 @@ export interface AssessedSave {
   classification: Classification;
   context: ContextPayload;
   contextPacket: ContextPacket;
+  analysis: {
+    findings: Finding[];
+    fingerprints?: {
+      file: string;
+      features: string[];
+    };
+  };
   decision: DecisionPayload;
   input: SaveInput;
   routePolicy: RoutePolicyResolution;
