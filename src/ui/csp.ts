@@ -28,23 +28,20 @@ export function generateNonce(): string {
  * - script-src 'nonce-{nonce}': Only scripts with valid nonce
  * - style-src 'self' 'unsafe-inline': Styles from source + inline for VS Code theme vars
  * - img-src 'self' data: Images from source or data URIs (for icons)
- * - font-src 'self': Only local fonts
+ * - font-src 'self' data: Local fonts and data URI fonts (for embedded fonts)
  * - connect-src 'none': No XHR/fetch (read-only UI)
  * - frame-src 'none': No iframes
  * - object-src 'none': No plugins
  * - base-uri 'none': No <base> tag manipulation
  * - form-action 'none': No form submissions (read-only UI)
  */
-export function buildCSPWithNonce(
-  nonce: string,
-  cspSource = "'self'",
-): string {
+export function buildCSPWithNonce(nonce: string, cspSource = "'self'"): string {
   return [
     "default-src 'none'",
     `script-src 'nonce-${nonce}'`,
     "style-src 'self' 'unsafe-inline'",
     `img-src ${cspSource} data:`,
-    "font-src 'self'",
+    `font-src ${cspSource} data:`,
     "connect-src 'none'",
     "frame-src 'none'",
     "object-src 'none'",
