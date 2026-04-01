@@ -21,6 +21,8 @@ import { resolveWorkspaceTarget } from './extension/workspaceTargeting';
 import { CommitInterceptor } from './extension/interceptors/commitInterceptor';
 import { RunCommandInterceptor } from './extension/interceptors/runCommandInterceptor';
 import { renderDecisionTimeline } from './extension/decisionTimeline';
+import { explainFileState } from './extension/fileStateExplainer';
+import { resolveFileAuditState } from './extension/fileAuditState';
 // ARC-UI-001a — Internal Review Surface Upgrade (UI layer)
 import { registerUiCommands } from './ui';
 // ARCXT-UX-CLARITY-001 — Minimal config template creation commands
@@ -333,6 +335,24 @@ export function activate(context: vscode.ExtensionContext): void {
       if (!timeline.available) {
         void vscode.window.showWarningMessage(timeline.message);
       }
+    }),
+    // P9-002 — Inline Context On-Demand Explanation
+    vscode.commands.registerCommand('arc.explainCurrentFileState', () => {
+      const activeFile = vscode.window.activeTextEditor?.document.uri.fsPath;
+      let state: import('./extension/fileAuditState').FileAuditState;
+      try {
+        const row = activeFile
+          ? orchestratorFor(activeFile).queryFileAuditState(activeFile)
+          : null;
+        state = resolveFileAuditState(row);
+      } catch {
+        state = 'UNKNOWN';
+      }
+      const explanation = explainFileState(state, activeFile);
+      for (const line of explanation.lines) {
+        timelineOutput.appendLine(line);
+      }
+      timelineOutput.show(true);
     }),
     vscode.commands.registerCommand('arc.reviewAudit', async () => {
       const filePath = vscode.window.activeTextEditor?.document.uri.fsPath;

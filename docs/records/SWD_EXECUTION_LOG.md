@@ -420,3 +420,40 @@
 
 - **Next action**
   - **Owner: Axis** — Validate state correctness, visual subtlety, and no-performance-degradation criteria for P9-001 sign-off.
+
+## 2026-04-01 — WO-ARC-XT-P9-002 — Inline Context On-Demand Explanation
+
+- **What changed**
+  - Created `src/extension/fileStateExplainer.ts`: pure, vscode-free explanation generator. `explainFileState(state, filePath)` returns a `FileStateExplanation` with plain-text lines (no markdown) for VERIFIED, DRIFT, NO_DECISION, and UNKNOWN states. Max 6 lines per state including footer.
+  - Registered `arc.explainCurrentFileState` command in `extension.ts`: resolves active file state via `queryFileAuditState` → `resolveFileAuditState`, calls `explainFileState`, appends all lines to the ARC Output Channel, and shows the channel.
+  - Added `resolveFileAuditState` import alongside existing `explainFileState` import in `extension.ts`.
+  - Wording: descriptive-only, no markdown, no alarming language, no modals. Footer line on all states: "Use: ARC: Show Decision Timeline".
+
+- **State-to-explanation mapping**
+  - VERIFIED — file has a save record; commit diff passed or no commit yet
+  - DRIFT — committed content diverged from recorded decision fingerprint
+  - NO_DECISION — no save entry; file has not been assessed by ARC
+  - UNKNOWN — no active file or query error; graceful fallback
+
+- **Commands run + results**
+  - `npm run build` — passed.
+  - `npm run test -- tests/unit/fileStateExplainer.test.ts` — passed (8 tests).
+  - `npm run test` — passed (58 files, 473 tests).
+
+- **Evidence links**
+  - Commit: HEAD (this execution commit)
+  - Artifacts:
+    - `src/extension/fileStateExplainer.ts`
+    - `src/extension.ts` (arc.explainCurrentFileState command)
+    - `tests/unit/fileStateExplainer.test.ts`
+
+- **Constraints preserved**
+  - No schema changes — reads existing state via existing query path.
+  - No enforcement — output channel append only, no blocking.
+  - No modal — appends to output channel, never `showWarningMessage`.
+  - No webview — plain text lines only.
+  - Pure logic in `fileStateExplainer.ts` with no vscode dependency.
+  - Reuses existing `queryFileAuditState` / `resolveFileAuditState` — no new data path.
+
+- **Next action**
+  - **Owner: Axis** — Validate explanation wording, output-channel-only constraint, and no-additional-data-path criteria for P9-002 sign-off.
