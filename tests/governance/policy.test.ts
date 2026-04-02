@@ -1,7 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { CloudModelAdapter, DisabledModelAdapter, OllamaModelAdapter } from '../../src/adapters/modelAdapter';
+import {
+  CloudModelAdapter,
+  DisabledModelAdapter,
+  OllamaModelAdapter,
+} from '../../src/adapters/modelAdapter';
 
 const projectRoot = path.resolve(
   path.dirname(new URL(import.meta.url).pathname),
@@ -74,9 +78,15 @@ describe('governance guards', () => {
     expect(modelAdapter).toContain('OLLAMA_TIMEOUT_MS');
     expect(modelAdapter).toContain('OLLAMA_RETRIES');
     expect(modelAdapter).toContain('must remain local-only');
-    expect(architecture).toContain('non-local `OLLAMA_HOST` configuration must fail closed');
-    expect(testing).toContain('non-local `OLLAMA_HOST` values must not imply cloud-lane activation');
-    expect(testing).toContain('Malformed or contradictory model output must surface as explicit fallback behavior');
+    expect(architecture).toContain(
+      'non-local `OLLAMA_HOST` configuration must fail closed',
+    );
+    expect(testing).toContain(
+      'non-local `OLLAMA_HOST` values must not imply cloud-lane activation',
+    );
+    expect(testing).toContain(
+      'Malformed or contradictory model output must surface as explicit fallback behavior',
+    );
   });
 
   it('documents that audit verification is file-level only', () => {
@@ -95,7 +105,9 @@ describe('governance guards', () => {
     );
 
     expect(readme).toContain('Local-only blueprints');
-    expect(architecture).toContain('Local-model activation in Phase 6.8 is bounded to the local lane only');
+    expect(architecture).toContain(
+      'Local-model activation in Phase 6.8 is bounded to the local lane only',
+    );
   });
 
   it('documents RULE_ONLY defaults and no ARC/Vault save-path dependency for Phase 6.0', () => {
@@ -106,7 +118,9 @@ describe('governance guards', () => {
 
     expect(readme).toContain('RULE_ONLY');
     expect(architecture).toContain('The default route mode is `RULE_ONLY`.');
-    expect(architecture).toContain('ARC Console and Vault are not runtime save-path dependencies.');
+    expect(architecture).toContain(
+      'ARC Console and Vault are not runtime save-path dependencies.',
+    );
   });
 
   it('documents Lease v2 invalidation and the carried-forward Warden gate for non-default trust-boundary values', () => {
@@ -133,8 +147,12 @@ describe('governance guards', () => {
       'utf8',
     );
 
-    expect(architecture).toContain('Vault-ready export bundles are local handoff only');
-    expect(architecture).toContain('CLI failure must not weaken or block save enforcement');
+    expect(architecture).toContain(
+      'Vault-ready export bundles are local handoff only',
+    );
+    expect(architecture).toContain(
+      'CLI failure must not weaken or block save enforcement',
+    );
     expect(testing).toContain('CLI export contract correctness');
   });
 
@@ -148,8 +166,12 @@ describe('governance guards', () => {
       'utf8',
     );
 
-    expect(architecture).toContain('authority_tag` must be locally asserted by trusted code');
-    expect(architecture).toContain('packet presence is not a routing activation signal');
+    expect(architecture).toContain(
+      'authority_tag` must be locally asserted by trusted code',
+    );
+    expect(architecture).toContain(
+      'packet presence is not a routing activation signal',
+    );
     expect(testing).toContain('Context Bus packet validation');
   });
 
@@ -181,10 +203,16 @@ describe('governance guards', () => {
     expect(readme).toContain('LOCAL_PREFERRED');
     expect(readme).toContain('CLOUD_ASSISTED');
     expect(architecture).toContain('`LOCAL_PREFERRED` is local-only');
-    expect(architecture).toContain('`CLOUD_ASSISTED` may be accepted only when `local_lane_enabled: true` and `cloud_lane_enabled: true`');
-    expect(architecture).toContain('auto-save assessments fail closed to `RULE_ONLY`');
+    expect(architecture).toContain(
+      '`CLOUD_ASSISTED` may be accepted only when `local_lane_enabled: true` and `cloud_lane_enabled: true`',
+    );
+    expect(architecture).toContain(
+      'auto-save assessments fail closed to `RULE_ONLY`',
+    );
     expect(testing).toContain('cloud fallback gate');
-    expect(testing).toContain('cloud fallback must occur only after approved local fallback states');
+    expect(testing).toContain(
+      'cloud fallback must occur only after approved local fallback states',
+    );
   });
 
   it('documents Phase 6.7 Vault-ready export validation as local-only and non-mutating', () => {
@@ -197,10 +225,18 @@ describe('governance guards', () => {
       'utf8',
     );
 
-    expect(architecture).toContain('Vault-ready means schema alignment for later handoff, not direct Vault write');
-    expect(architecture).toContain('direct evidence sections remain distinguishable from derived summary sections');
-    expect(testing).toContain('Vault-ready export coverage must retain versioned schema generation');
-    expect(testing).toContain('malformed or incomplete export inputs must surface as `PARTIAL`');
+    expect(architecture).toContain(
+      'Vault-ready means schema alignment for later handoff, not direct Vault write',
+    );
+    expect(architecture).toContain(
+      'direct evidence sections remain distinguishable from derived summary sections',
+    );
+    expect(testing).toContain(
+      'Vault-ready export coverage must retain versioned schema generation',
+    );
+    expect(testing).toContain(
+      'malformed or incomplete export inputs must surface as `PARTIAL`',
+    );
   });
 
   it('documents Phase 6.8 controlled activation review and rollback drill boundaries', () => {
@@ -213,10 +249,16 @@ describe('governance guards', () => {
       'utf8',
     );
 
-    expect(architecture).toContain('rollback target remains hardened-equivalent posture');
+    expect(architecture).toContain(
+      'rollback target remains hardened-equivalent posture',
+    );
     expect(architecture).toContain('recommendation output is advisory only');
-    expect(testing).toContain('integrated validation coverage must prove no assembled path is looser than the hardened baseline');
-    expect(testing).toContain('rollback drill must restore hardened-equivalent posture and preserve audit continuity');
+    expect(testing).toContain(
+      'integrated validation coverage must prove no assembled path is looser than the hardened baseline',
+    );
+    expect(testing).toContain(
+      'rollback drill must restore hardened-equivalent posture and preserve audit continuity',
+    );
   });
 
   it('removes the obsolete createIfMissing proof-input contract field', () => {
@@ -244,7 +286,8 @@ describe('governance guards', () => {
     expect(commands).toContain('arc.showRuntimeStatus');
     expect(commands).toContain('arc.reviewBlueprints');
     expect(commands).toContain('arc.reviewFalsePositives');
-    expect(activationEvents).toContain('onCommand:lintel.showRuntimeStatus');
+    // Activation is onStartupFinished (commands are registered dynamically)
+    expect(activationEvents).toContain('onStartupFinished');
   });
 
   it('anchors the runtime-status command to an explicit observational-only diagnostic contract', () => {
@@ -269,7 +312,9 @@ describe('governance guards', () => {
       'Fail-closed note: missing/invalid route policy still degrades to `RULE_ONLY` and does not loosen baseline enforcement.',
     );
     expect(readme).toContain('Show Active Workspace Status');
-    expect(testing).toContain('runtime status command must remain governance-anchored');
+    expect(testing).toContain(
+      'runtime status command must remain governance-anchored',
+    );
   });
 
   it('anchors enforcement-related review-surface messaging to read-only, non-authorizing semantics', () => {
@@ -299,8 +344,12 @@ describe('governance guards', () => {
       'False-positive candidates are advisory only. They do not rewrite audit history, demote recorded decisions, or weaken the enforcement floor.',
     );
     expect(readme).toContain('Review surfaces');
-    expect(architecture).toContain('review-surface wording remains descriptive or advisory only');
-    expect(testing).toContain('enforcement-related review-surface wording must remain governance-anchored');
+    expect(architecture).toContain(
+      'review-surface wording remains descriptive or advisory only',
+    );
+    expect(testing).toContain(
+      'enforcement-related review-surface wording must remain governance-anchored',
+    );
   });
 
   it('anchors the Phase 7.3 identity freeze without command-id migration or control-plane implication', () => {
@@ -329,14 +378,29 @@ describe('governance guards', () => {
     expect(commands).toEqual(
       expect.arrayContaining([
         { command: 'arc.reviewAudit', title: 'ARC XT: Review Audit Log' },
-        { command: 'arc.showRuntimeStatus', title: 'ARC XT: Show Active Workspace Status' },
-        { command: 'arc.reviewBlueprints', title: 'ARC XT: Review Blueprint Proofs' },
-        { command: 'arc.reviewFalsePositives', title: 'ARC XT: Review False-Positive Candidates' },
+        {
+          command: 'arc.showRuntimeStatus',
+          title: 'ARC XT: Show Active Workspace Status',
+        },
+        {
+          command: 'arc.reviewBlueprints',
+          title: 'ARC XT: Review Blueprint Proofs',
+        },
+        {
+          command: 'arc.reviewFalsePositives',
+          title: 'ARC XT: Review False-Positive Candidates',
+        },
       ]),
     );
-    expect(architecture).toContain('command ids remain `lintel.*` until a separately approved package authorizes migration');
-    expect(testing).toContain('user-facing command titles may change, but command ids must remain `lintel.*`');
-    expect(testing).toContain('ARC XT naming must not imply ARC Console coupling, Vault dependency, cloud readiness, or broader runtime authority');
+    expect(architecture).toContain(
+      'command ids remain `lintel.*` until a separately approved package authorizes migration',
+    );
+    expect(testing).toContain(
+      'user-facing command titles may change, but command ids must remain `lintel.*`',
+    );
+    expect(testing).toContain(
+      'ARC XT naming must not imply ARC Console coupling, Vault dependency, cloud readiness, or broader runtime authority',
+    );
   });
 
   it('defines a local audit visibility cli script without mutation commands or remote endpoints', () => {
@@ -345,7 +409,10 @@ describe('governance guards', () => {
     ) as {
       scripts?: Record<string, string>;
     };
-    const cliSource = fs.readFileSync(path.join(projectRoot, 'src', 'cli.ts'), 'utf8');
+    const cliSource = fs.readFileSync(
+      path.join(projectRoot, 'src', 'cli.ts'),
+      'utf8',
+    );
 
     expect(packageJson.scripts?.['audit:cli']).toBe('node ./dist/cli.js');
     expect(cliSource).toContain('query');
@@ -367,7 +434,9 @@ describe('governance guards', () => {
 
     expect(visibilitySource).toContain('phase-6.7-v1');
     expect(visibilitySource).toContain('LINTEL_VAULT_READY_EXPORT');
-    expect(visibilitySource).toContain("allowed_destinations: ['stdout', 'local_file']");
+    expect(visibilitySource).toContain(
+      "allowed_destinations: ['stdout', 'local_file']",
+    );
     expect(visibilitySource).not.toMatch(/https?:\/\//);
     expect(visibilitySource).not.toContain('fetch(');
     expect(visibilitySource).not.toContain('writeFileSync(');
@@ -415,7 +484,9 @@ describe('governance guards', () => {
     );
 
     expect(decisionPolicy).toContain('const minimumFloor = stricterDecision(');
-    expect(decisionPolicy).toContain('const decision = stricterDecision(modelDecision.decision, minimumFloor)');
+    expect(decisionPolicy).toContain(
+      'const decision = stricterDecision(modelDecision.decision, minimumFloor)',
+    );
     expect(modelAdapter).toContain('http://127.0.0.1:11434/api/generate');
     expect(modelAdapter).toContain('class CloudModelAdapter');
     expect(modelAdapter).not.toContain('api.openai.com');
