@@ -105,11 +105,64 @@ async function openMarkdownPreview(
   void title;
 }
 
+const PLAN_LINKED_SAVE_SOP_SEQUENCE =
+  'Governed Root → Config → Change ID → Blueprint → Save Blueprint → Re-save Governed File → Review';
+
+const PLAN_LINKED_SAVE_SOP_MARKDOWN = `# ARC XT — Current Plan-Linked Save SOP
+
+Use this order for any \`REQUIRE_PLAN\` save:
+
+1. **Confirm governed root**
+2. **Confirm local ARC config**
+3. **Enter a real Change ID**
+4. **Create or open the local blueprint artifact**
+5. **Complete the blueprint**
+6. **Save the blueprint**
+7. **Re-save the governed file**
+8. **Review proof and audit evidence**
+
+## Important clarifications
+
+- The dialog placeholder (for example \`LINTEL-PH5-001\`) is only an example format. It is not submitted input.
+- \`.arc/workspace-map.json\` does **not** satisfy proof by itself.
+- The canonical proof path is \`.arc/blueprints/<CHANGE-ID>.md\`.
+- Template creation is a starting point only; incomplete blueprints do not authorize saves.
+`;
+
+async function showPlanLinkedSaveSopPreview(): Promise<void> {
+  await openMarkdownPreview(
+    'ARC XT — Plan-Linked Save SOP',
+    PLAN_LINKED_SAVE_SOP_MARKDOWN,
+  );
+}
+
+async function handlePlanLinkedSaveHelpChoice(
+  choice: string | undefined,
+): Promise<void> {
+  switch (choice) {
+    case 'Review SOP':
+      await showPlanLinkedSaveSopPreview();
+      return;
+    case 'Guided Workflow':
+      await vscode.commands.executeCommand('arc.ui.guidedWorkflow');
+      return;
+    case 'Runtime Status':
+      await vscode.commands.executeCommand('arc.showRuntimeStatus');
+      return;
+    case 'Blueprint Review':
+      await vscode.commands.executeCommand('arc.reviewBlueprints');
+      return;
+    default:
+      return;
+  }
+}
+
 // **WRD-0102: Instructional wording — submitted for Warden review**
 async function promptForDirectiveId(): Promise<string | undefined> {
   return vscode.window.showInputBox({
-    title: 'ARC XT — Plan-Linked Save',
-    prompt: 'Enter the Change ID that links this save to a governance plan.',
+    title: 'ARC XT — Plan-Linked Save (Step 3: Change ID)',
+    prompt:
+      'Current SOP: confirm governed root and local ARC config, then enter the Change ID that links this save to a governance plan.',
     placeHolder: 'LINTEL-PH5-001',
     ignoreFocusOut: true,
     validateInput: (value) => {
@@ -130,6 +183,14 @@ async function collectRequirePlanProof(
 ): Promise<{ acknowledged: boolean; proof?: DirectiveProofInput }> {
   const directiveId = (await promptForDirectiveId())?.trim();
   if (!directiveId) {
+    const choice = await vscode.window.showWarningMessage(
+      `[ARC XT] Plan-linked save remains blocked until you enter a real Change ID and link a valid local blueprint proof.\nCurrent SOP: ${PLAN_LINKED_SAVE_SOP_SEQUENCE}`,
+      { modal: true },
+      'Guided Workflow',
+      'Runtime Status',
+      'Review SOP',
+    );
+    await handlePlanLinkedSaveHelpChoice(choice);
     return { acknowledged: false };
   }
 
@@ -140,13 +201,15 @@ async function collectRequirePlanProof(
 
   if (resolution.status === 'MISSING_ARTIFACT') {
     const choice = await vscode.window.showWarningMessage(
-      `[ARC XT] ${resolution.reason}`,
+      `[ARC XT] ${resolution.reason}\nCurrent SOP: ${PLAN_LINKED_SAVE_SOP_SEQUENCE}`,
       { modal: true },
       'Create Blueprint',
-      'Cancel',
+      'Guided Workflow',
+      'Review SOP',
     );
 
     if (choice !== 'Create Blueprint') {
+      await handlePlanLinkedSaveHelpChoice(choice);
       return {
         acknowledged: false,
         proof: { directiveId, blueprintMode: 'LOCAL_ONLY' },
@@ -166,9 +229,14 @@ async function collectRequirePlanProof(
   }
 
   if (!resolution.ok || !resolution.link) {
-    void vscode.window.showWarningMessage(`[ARC XT] ${resolution.reason}`, {
-      modal: true,
-    });
+    const choice = await vscode.window.showWarningMessage(
+      `[ARC XT] ${resolution.reason}\nCurrent SOP: ${PLAN_LINKED_SAVE_SOP_SEQUENCE}`,
+      { modal: true },
+      'Blueprint Review',
+      'Guided Workflow',
+      'Review SOP',
+    );
+    await handlePlanLinkedSaveHelpChoice(choice);
     return {
       acknowledged: false,
       proof: {

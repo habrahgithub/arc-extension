@@ -61,39 +61,51 @@ function getGuidedWorkflowHtml(nonce: string): string {
   const steps = [
     {
       step: 1,
+      title: 'Confirm Governed Root',
+      content:
+        'Before a plan-linked save, confirm ARC XT is targeting the correct governed root. Use Active Workspace Status to verify the effective governed root, especially in monorepos or nested repos.',
+    },
+    {
+      step: 2,
+      title: 'Confirm Local ARC Config',
+      content:
+        'Verify the governed root has the expected local ARC config. `workspace-map.json` helps classify risk, but it does not satisfy proof by itself.',
+    },
+    {
+      step: 3,
       title: 'Enter Change ID',
       content:
         'When prompted for a plan-linked save, enter the Change ID that links your change to a governance plan (e.g., LINTEL-PH5-001). The Change ID must be in uppercase, hyphenated format.',
     },
     {
-      step: 2,
+      step: 4,
       title: 'Open Blueprint Artifact',
       content:
         'ARC XT will open or create the blueprint file at `.arc/blueprints/<change-id>.md`. This is your local proof artifact — you must complete all required sections with directive-specific content.',
     },
     {
-      step: 3,
+      step: 5,
       title: 'Complete Required Sections',
       content:
         'Fill in all sections marked as required. Replace any placeholder text (e.g., [REQUIRED]) with actual content that describes your change. Template creation does not equal authorization — the blueprint must be complete.',
     },
     {
-      step: 4,
+      step: 6,
       title: 'Save Blueprint File',
       content:
         'Save the blueprint file after completing all sections. ARC XT will validate the blueprint structure and content.',
     },
     {
-      step: 5,
+      step: 7,
       title: 'Re-save the Governed File',
       content:
         'Return to your original file and attempt the save again. ARC XT will re-evaluate the save — a valid, complete blueprint satisfies the proof requirement, but other rules may still apply.',
     },
     {
-      step: 6,
+      step: 8,
       title: 'Review Proof Status',
       content:
-        'After a successful save, you can review the proof status using the Blueprint Proof Review surface. Records will show the change linkage in the audit entry.',
+        'After a successful save, review proof status and audit evidence. Records will show the change linkage in the audit entry, but this guidance does not approve or override anything.',
     },
   ];
 

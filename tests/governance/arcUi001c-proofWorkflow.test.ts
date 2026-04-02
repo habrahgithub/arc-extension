@@ -59,6 +59,24 @@ describe('ARC-UI-001c — UI Governance', () => {
       expect(workflow).toContain('does not approve saves');
     });
 
+    it('Screen 6 reflects the current plan-linked save SOP order', () => {
+      const workflowPath = path.join(
+        projectRoot,
+        'src',
+        'ui',
+        'webview',
+        'GuidedProofWorkflow.ts',
+      );
+      const workflow = fs.readFileSync(workflowPath, 'utf8');
+
+      expect(workflow).toContain('Confirm Governed Root');
+      expect(workflow).toContain('Confirm Local ARC Config');
+      expect(workflow).toContain('Enter Change ID');
+      expect(workflow.indexOf('Confirm Governed Root')).toBeLessThan(
+        workflow.indexOf('Enter Change ID'),
+      );
+    });
+
     it('Screen 6 footer notices are present', () => {
       const workflowPath = path.join(
         projectRoot,
