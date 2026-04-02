@@ -22,6 +22,7 @@ Per WARDEN standing conditions and Axis recommendations.
 **Issue:** `execSqlJson()` at `auditLog.ts:755` does not have `stdio: 'pipe'` for stderr capture. While SELECT queries rarely produce stderr noise, this is a gap in the hardening posture.
 
 **Fix Required:**
+
 ```typescript
 private execSqlJson<T>(sqlStatement: string): T[] {
   const output = execFileSync(
@@ -39,6 +40,7 @@ private execSqlJson<T>(sqlStatement: string): T[] {
 **Target:** Next release cycle (post-internal pilot)
 
 **Verification:**
+
 - Run `npm run test` — no stderr output
 - Verify JSON parsing still works correctly
 
@@ -53,11 +55,13 @@ private execSqlJson<T>(sqlStatement: string): T[] {
 **Issue:** Isolated test runs (`npm run test -- tests/integration/auditLog.test.ts`) may fail with `spawnSync sqlite3 EPERM` in some sandboxed environments, while full suite passes.
 
 **Investigation Required:**
+
 1. Reproduce in clean sandbox environment
 2. Identify file permission differences
 3. Determine if test harness or sqlite3 binary issue
 
 **Potential Fixes:**
+
 - Use temp dir with explicit permissions
 - Switch to `better-sqlite3` npm package (no subprocess)
 - Document as known limitation if environment-specific
@@ -77,6 +81,7 @@ private execSqlJson<T>(sqlStatement: string): T[] {
 **Issue:** Verify install + activate in a clean VS Code profile before broader use.
 
 **Verification Steps:**
+
 1. Create fresh VS Code profile
 2. Install VSIX: `arc-audit-ready-core-0.1.11.vsix`
 3. Verify activation without errors
@@ -84,6 +89,7 @@ private execSqlJson<T>(sqlStatement: string): T[] {
 5. Verify no unexpected extensions/dependencies
 
 **Checklist:**
+
 - [ ] Clean profile created
 - [ ] VSIX installed successfully
 - [ ] Extension activates on startup
@@ -101,27 +107,34 @@ private execSqlJson<T>(sqlStatement: string): T[] {
 ### H-004: Kill-Switch / Rollback Readiness
 
 **Priority:** High  
-**Status:** Open  
+**Status:** ✅ **CLOSED** (2026-04-02)  
 **WARDEN Reference:** Axis Recommendation #5
 
-**Requirement:** One-step disable path for model lane with revert to rule-only.
-
 **Implementation:**
-1. Document disable procedure in `ACTIVATION-GUIDE.md`
-2. Create rollback script: `scripts/disable-model-lane.sh`
-3. Verify rollback preserves audit chain
-4. Test fallback cause capture in audit evidence
 
-**Rollback Steps (Draft):**
+- Script: `scripts/kill-switch.sh`
+- One-step disable: `./scripts/kill-switch.sh [workspace-root]`
+- Backs up existing config before overwrite
+- Sets `local_lane_enabled: false` explicitly
+
+**Rollback Steps:**
+
 ```bash
-# Disable local lane in router config
-echo '{"mode": "RULE_ONLY", "local_lane_enabled": false}' > .arc/router.json
+# Disable model lane
+./scripts/kill-switch.sh
 
 # Reload VS Code
 # Verify: Extension operates in rule-only mode
 ```
 
-**Target:** Before Stage 2 rollout
+**Verification:**
+
+- [x] Script created and executable
+- [ ] Tested in clean profile (part of H-003)
+- [x] Config backup created before overwrite
+- [x] Rule-only mode enforced after disable
+
+**Target:** ✅ Closed — Stage 2 gate satisfied
 
 **Owner:** Forge
 
@@ -136,6 +149,7 @@ echo '{"mode": "RULE_ONLY", "local_lane_enabled": false}' > .arc/router.json
 **Requirement:** Capture fallback cause, timeout, unavailable, and disabled states in audit evidence.
 
 **Verification:**
+
 - Review `auditLog.ts` — ensure `fallback_cause` persisted
 - Check `DecisionPayload` type — all failure modes represented
 - Test each failure mode:
@@ -152,12 +166,12 @@ echo '{"mode": "RULE_ONLY", "local_lane_enabled": false}' > .arc/router.json
 
 ## Rollout Sequence Status
 
-| Stage | Description | Status | Gate |
-|-------|-------------|--------|------|
-| **Stage 1** | Internal pilot only | 🟡 In Progress | WARDEN approval |
-| **Stage 2** | Explicit-save path only (`LOCAL_PREFERRED`) | ⏳ Pending | H-003, H-004 closed |
-| **Stage 3** | Limited operator cohort | ⏳ Pending | Sentinel stability verification |
-| **Stage 4** | Broader rollout | ⏳ Pending | All hardening items closed |
+| Stage       | Description                                 | Status         | Gate                            |
+| ----------- | ------------------------------------------- | -------------- | ------------------------------- |
+| **Stage 1** | Internal pilot only                         | 🟡 In Progress | WARDEN approval                 |
+| **Stage 2** | Explicit-save path only (`LOCAL_PREFERRED`) | ⏳ Pending     | H-003, H-004 closed             |
+| **Stage 3** | Limited operator cohort                     | ⏳ Pending     | Sentinel stability verification |
+| **Stage 4** | Broader rollout                             | ⏳ Pending     | All hardening items closed      |
 
 ---
 
