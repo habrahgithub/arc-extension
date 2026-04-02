@@ -58,7 +58,7 @@ private execSqlJson<T>(sqlStatement: string): T[] {
 ### H-002: SQLite EPERM Test-Path Investigation
 
 **Priority:** Low  
-**Status:** Open  
+**Status:** ⏳ Open  
 **WARDEN Reference:** Axis Recommendation #6
 
 **Issue:** Isolated test runs (`npm run test -- tests/integration/auditLog.test.ts`) may fail with `spawnSync sqlite3 EPERM` in some sandboxed environments, while full suite passes.
@@ -78,6 +78,69 @@ private execSqlJson<T>(sqlStatement: string): T[] {
 **Target:** After internal pilot stability verified
 
 **Workaround:** Run full test suite (`npm run test`) instead of isolated files.
+
+---
+
+### H-006: Duplicate Output Channel Creation
+
+**Priority:** Low  
+**Status:** 🟡 **CARRY-FORWARD** (Advisory, Non-Blocking)  
+**WARDEN Reference:** Sentinel observation  
+**Stage 3 Impact:** Required before Stage 3 request
+
+**Issue:** Extension creates duplicate output channels on repeated activations. Cosmetic issue — does not affect functionality.
+
+**Classification:**
+
+- **Runtime Impact:** None — output still visible
+- **Security Impact:** None — output channel hygiene only
+- **User Experience:** Minor — console noise in Output panel
+- **Stage 2 Blocker:** No — advisory only
+- **Stage 3 Blocker:** Yes — must be closed before Stage 3
+
+**Fix Required:**
+
+- Ensure single output channel instance via dispose pattern
+- Check channel existence before creation
+
+**Target:** Before Stage 3 rollout request
+
+**Owner:** Forge
+
+---
+
+### H-007: Test Infrastructure Gap
+
+**Priority:** High  
+**Status:** 🟡 **CARRY-FORWARD** (Governance Risk, Documented)  
+**WARDEN Reference:** Axis Directive 2026-04-02  
+**Stage 3 Impact:** Required documentation before Stage 3 request
+
+**Issue:** Sentinel cannot independently run test suite due to `ERR_REQUIRE_ESM` incompatibility (vitest 3.2.4 + vite 7.3.1 ESM module system).
+
+**Classification:**
+
+- **Runtime Impact:** None — tests pass in Forge environment
+- **Security Impact:** None — test infrastructure only
+- **Governance Impact:** High — Sentinel cannot independently verify test claims
+- **Stage 2 Blocker:** No — evidence artifact provides alternative verification
+- **Stage 3 Blocker:** Yes — must be documented and mitigated
+
+**Risk Assessment:**
+
+- **Current Mitigation:** Committed test evidence artifacts (`test-evidence/stage2-gate-test-output.txt`)
+- **Residual Risk:** Medium — relies on Forge environment integrity
+- **Long-term Fix:** Resolve vitest/vite ESM compatibility in Sentinel environment
+
+**Closure Criteria:**
+
+- [x] Test evidence artifact committed (H-006 precedent)
+- [ ] Sentinel environment fixed (vitest runs independently)
+- [ ] OR: Alternative verification protocol documented
+
+**Target:** Before Stage 3 rollout request (documentation complete)
+
+**Owner:** Forge
 
 ---
 
@@ -223,26 +286,30 @@ private execSqlJson<T>(sqlStatement: string): T[] {
 
 ## Rollout Sequence Status
 
-| Stage       | Description                                 | Status         | Gate                                  |
-| ----------- | ------------------------------------------- | -------------- | ------------------------------------- |
-| **Stage 1** | Internal pilot only                         | 🟡 In Progress | WARDEN approval ✅                    |
-| **Stage 2** | Explicit-save path only (`LOCAL_PREFERRED`) | ✅ **READY**   | H-003 ✅, H-004 ✅, H-005 ✅          |
-| **Stage 3** | Limited operator cohort                     | ⏳ Pending     | Sentinel stability verification       |
-| **Stage 4** | Broader rollout                             | ⏳ Pending     | H-001 closed (carry-forward advisory) |
+| Stage       | Description                                 | Status            | Gate                                   |
+| ----------- | ------------------------------------------- | ----------------- | -------------------------------------- |
+| **Stage 1** | Internal pilot only                         | 🟡 In Progress    | WARDEN approval ✅                     |
+| **Stage 2** | Explicit-save path only (`LOCAL_PREFERRED`) | ✅ **AUTHORIZED** | H-003 ✅, H-004 ✅, H-005 ✅, H-006 ✅ |
+| **Stage 3** | Limited operator cohort                     | ⏳ Pending        | H-006 closed + Sentinel stability      |
+| **Stage 4** | Broader rollout                             | ⏳ Pending        | H-001 + H-007 closed                   |
 
 ---
 
 ## Hardening Summary
 
-| Item  | Priority | Status           | Stage 2 Gate            |
-| ----- | -------- | ---------------- | ----------------------- |
-| H-001 | Medium   | 🟡 Carry-Forward | Advisory (non-blocking) |
-| H-002 | Low      | ⏳ Open          | Optional                |
-| H-003 | High     | ✅ **CLOSED**    | **Required**            |
-| H-004 | High     | ✅ **CLOSED**    | **Required**            |
-| H-005 | Medium   | ✅ **CLOSED**    | Optional                |
+| Item  | Priority | Status           | Stage 2 Gate    | Stage 3 Gate |
+| ----- | -------- | ---------------- | --------------- | ------------ |
+| H-001 | Medium   | 🟡 Carry-Forward | Advisory        | Required     |
+| H-002 | Low      | ⏳ Open          | Optional        | Optional     |
+| H-003 | High     | ✅ **CLOSED**    | **Required** ✅ | —            |
+| H-004 | High     | ✅ **CLOSED**    | **Required** ✅ | —            |
+| H-005 | Medium   | ✅ **CLOSED**    | Optional ✅     | —            |
+| H-006 | Low      | 🟡 Carry-Forward | Advisory        | **Required** |
+| H-007 | High     | 🟡 **NEW**       | —               | **Required** |
 
-**Stage 2 Authorization:** ✅ **READY** — All required gates closed, H-001 classified as carry-forward advisory.
+**Stage 2 Authorization:** ✅ **AUTHORIZED** (Axis 2026-04-02) — All required gates closed.
+
+**Stage 3 Blockers:** H-006 (duplicate output channel), H-007 (test infrastructure gap)
 
 ---
 
@@ -254,13 +321,34 @@ private execSqlJson<T>(sqlStatement: string): T[] {
 
 ---
 
+## Mandatory Carry-Forward (Axis Directive)
+
+Per Axis decision 2026-04-02, the following must be formalized before Stage 3:
+
+### H-006: Duplicate Output Channel
+
+- **Severity:** Low (cosmetic)
+- **Owner:** Forge
+- **Stage 3 Gate:** Required closure
+- **Fix:** Single-instance output channel pattern
+
+### H-007: Test Infrastructure Gap
+
+- **Severity:** High (governance risk)
+- **Owner:** Forge
+- **Stage 3 Gate:** Required documentation
+- **Issue:** Sentinel cannot independently run test suite (ERR_REQUIRE_ESM)
+- **Mitigation:** Committed test evidence artifacts (H-006 precedent)
+
+---
+
 ## Next Review
 
-**Trigger:** Stage 2 rollout request  
-**Required Closures:** H-001 (carry-forward advisory)  
-**Optional:** H-002 (EPERM investigation)
+**Trigger:** Stage 3 rollout request  
+**Required Closures:** H-006, H-007  
+**Optional:** H-001, H-002
 
 ---
 
 **Last Updated:** 2026-04-02  
-**Audit Point:** `7bfcd1a` (lintel) / `4324888` (workspace)
+**Audit Point:** `df6acf5` (lintel) / `686ce82` (workspace)
