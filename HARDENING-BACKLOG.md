@@ -286,12 +286,14 @@ private execSqlJson<T>(sqlStatement: string): T[] {
 
 ## Rollout Sequence Status
 
-| Stage       | Description                                 | Status            | Gate                                   |
-| ----------- | ------------------------------------------- | ----------------- | -------------------------------------- |
-| **Stage 1** | Internal pilot only                         | 🟡 In Progress    | WARDEN approval ✅                     |
-| **Stage 2** | Explicit-save path only (`LOCAL_PREFERRED`) | ✅ **AUTHORIZED** | H-003 ✅, H-004 ✅, H-005 ✅, H-006 ✅ |
-| **Stage 3** | Limited operator cohort                     | ⏳ Pending        | H-006 closed + Sentinel stability      |
-| **Stage 4** | Broader rollout                             | ⏳ Pending        | H-001 + H-007 closed                   |
+| Stage       | Description                                 | Status            | Gate                              |
+| ----------- | ------------------------------------------- | ----------------- | --------------------------------- |
+| **Stage 1** | Internal pilot only                         | ✅ Complete       | WARDEN approval ✅                |
+| **Stage 2** | Explicit-save path only (`LOCAL_PREFERRED`) | ✅ **AUTHORIZED** | H-003 ✅, H-004 ✅, H-005 ✅      |
+| **Stage 3** | Limited operator cohort                     | ⏳ Pending        | H-006 closed + Sentinel stability |
+| **Stage 4** | Broader rollout                             | ⏳ Pending        | H-001 + H-007 closed              |
+
+**Note:** H-006 (duplicate output channel) is classified as carry-forward advisory for Stage 2, but must be closed before Stage 3 request.
 
 ---
 
@@ -305,9 +307,9 @@ private execSqlJson<T>(sqlStatement: string): T[] {
 | H-004 | High     | ✅ **CLOSED**    | **Required** ✅ | —            |
 | H-005 | Medium   | ✅ **CLOSED**    | Optional ✅     | —            |
 | H-006 | Low      | 🟡 Carry-Forward | Advisory        | **Required** |
-| H-007 | High     | 🟡 **NEW**       | —               | **Required** |
+| H-007 | High     | 🟡 Carry-Forward | Documented      | **Required** |
 
-**Stage 2 Authorization:** ✅ **AUTHORIZED** (Axis 2026-04-02) — All required gates closed.
+**Stage 2 Authorization:** ✅ **AUTHORIZED** (Axis 2026-04-02) — All required gates (H-003, H-004, H-005) closed.
 
 **Stage 3 Blockers:** H-006 (duplicate output channel), H-007 (test infrastructure gap)
 
@@ -351,4 +353,4 @@ Per Axis decision 2026-04-02, the following must be formalized before Stage 3:
 ---
 
 **Last Updated:** 2026-04-02  
-**Audit Point:** `df6acf5` (lintel) / `686ce82` (workspace)
+**Audit Point:** `505d5e5` (lintel) / `f3778c8` (workspace)
