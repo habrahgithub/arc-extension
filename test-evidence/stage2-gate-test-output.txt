@@ -1,0 +1,171 @@
+
+> arc-audit-ready-core@0.1.11 test
+> vitest run
+
+
+ RUN  v3.2.4 /home/habib/workspace/projects/lintel
+
+ ✓ tests/e2e/phase6.8-pilot.test.ts (1 test) 1798ms
+   ✓ Phase 6.8 pilot > runs the integrated validation matrix and proves rollback to hardened-equivalent posture with audit continuity  1797ms
+ ✓ tests/unit/auditVisibility.test.ts (3 tests) 2160ms
+   ✓ audit visibility service > supports deterministic query, directive trace, route trace, perf summary, and versioned export bundle generation  835ms
+   ✓ audit visibility service > surfaces malformed audit history as partial evidence instead of silently accepting it  610ms
+   ✓ audit visibility service > fails bundle validation when local-only destination metadata is corrupted  705ms
+ ✓ tests/integration/fileAuditIndicator.test.ts (5 tests) 3251ms
+   ✓ AuditLogWriter.queryFileAuditState > returns null for a file with no SAVE entry  661ms
+   ✓ AuditLogWriter.queryFileAuditState > returns row with null driftStatus when SAVE exists but no COMMIT  517ms
+   ✓ AuditLogWriter.queryFileAuditState > returns DRIFT when latest COMMIT entry has DRIFT_DETECTED  854ms
+   ✓ AuditLogWriter.queryFileAuditState > returns null for a different file path (isolation)  452ms
+   ✓ AuditLogWriter.queryFileAuditState > returns only the latest SAVE row when multiple SAVEs exist  764ms
+ ✓ tests/integration/governanceProposalRegistry.test.ts (2 tests) 2738ms
+   ✓ governance proposal registry integration > removes reviewed records from pending queue  1354ms
+   ✓ governance proposal registry integration > preserves reviewed state after restart/reload  1381ms
+ ✓ tests/integration/governanceHandoffService.test.ts (2 tests) 2781ms
+   ✓ governance handoff service integration > does not auto-create handoff after approval without explicit create call  1346ms
+   ✓ governance handoff service integration > preserves open handoff artifact across reload/restart  1429ms
+ ✓ tests/integration/auditLog.test.ts (5 tests) 3807ms
+   ✓ sqlite-backed audit log > preserves append continuity and hash-chain integrity  1067ms
+   ✓ sqlite-backed audit log > detects tamper/hash mismatch during verification  472ms
+   ✓ sqlite-backed audit log > persists and exports optional fingerprint metadata while allowing null fingerprint  708ms
+   ✓ sqlite-backed audit log > rolls back the full append when a transactional insert step fails  953ms
+   ✓ sqlite-backed audit log > writes SQLite as primary while keeping JSONL as derived export shape  605ms
+ ✓ tests/unit/arcGov002.test.ts (26 tests) 4067ms
+   ✓ ActorIdentity — audit entry attribution > stores actor when provided via decision fields  443ms
+   ✓ ActorIdentity — audit entry attribution > omits actor fields when not provided  514ms
+   ✓ ActorIdentity — audit entry attribution > persists actor to audit.jsonl and reads it back  441ms
+   ✓ ActorIdentity — audit entry attribution > preserves hash-chain integrity when actor fields are present  781ms
+   ✓ ActorIdentity — audit entry attribution > supports agent actor type  466ms
+   ✓ ActorIdentity — audit entry attribution > chain verifies correctly when mixing entries with and without actor  1304ms
+ ✓ tests/integration/commitInterceptor.test.ts (7 tests) 2051ms
+   ✓ M4-001 — queryCommitContext integration > returns no-decision for saves with no corresponding commit entry  710ms
+   ✓ M4-001 — queryCommitContext integration > returns row for saves followed by a linked commit  873ms
+   ✓ M4-001 — queryCommitContext integration > returns empty array when no saves exist for repo root  445ms
+ ✓ tests/e2e/phase1-pilot.test.ts (1 test) 1450ms
+   ✓ phase 1 pilot scenarios > matches the required decision matrix for the pilot  1446ms
+ ✓ tests/e2e/phase2-pilot.test.ts (1 test) 2037ms
+   ✓ phase 2 pilot scenarios > keeps the required decision matrix and auto-save protection  2026ms
+ ✓ tests/integration/cli.test.ts (2 tests) 1760ms
+   ✓ audit visibility cli > supports read-only query and verify commands without mutating audit state  825ms
+   ✓ audit visibility cli > exports a versioned local Vault-ready bundle only to the explicit output path  926ms
+ ✓ tests/unit/arcPhase008.test.ts (19 tests) 2089ms
+   ✓ OverrideLogWriter — override persistence > override is written via orchestrator on acknowledged WARN save  431ms
+   ✓ OverrideLogWriter — override persistence > override NOT written on ALLOW save  459ms
+   ✓ Observe governance mode > Observe mode still writes audit entry  485ms
+   ✓ Observe governance mode > Observe mode does NOT write override entry (no acknowledgment required)  468ms
+ ✓ tests/e2e/phase3-pilot.test.ts (2 tests) 1740ms
+   ✓ phase 3 pilot scenarios > blocks REQUIRE_PLAN saves without valid proof and allows them with canonical linkage  859ms
+   ✓ phase 3 pilot scenarios > rejects malformed blueprint artifacts and malformed directive ids  871ms
+ ✓ tests/integration/decisionTimeline.test.ts (2 tests) 1400ms
+   ✓ decision timeline visibility > renders ordered timeline for active file decision lifecycle  1387ms
+ ✓ tests/integration/implementationDraftService.test.ts (5 tests) 7523ms
+   ✓ implementation draft service integration > keeps package creation explicit after candidate promotion  1396ms
+   ✓ implementation draft service integration > executes full chain handoff -> draft -> approve -> promote -> candidate  1450ms
+   ✓ implementation draft service integration > does not auto-promote after draft creation  1586ms
+   ✓ implementation draft service integration > creates package explicitly from promoted candidate  1439ms
+   ✓ implementation draft service integration > candidate -> package -> authorize remains non-executing and runtime-isolated  1648ms
+ ✓ tests/unit/tsAstParser.test.ts (4 tests) 781ms
+   ✓ ts ast parser boundaries > rejects unsupported file extensions  743ms
+ ✓ tests/unit/analysisEngine.test.ts (4 tests) 753ms
+   ✓ analysis engine > produces deterministic fingerprints for equivalent TS structure  726ms
+ ✓ tests/integration/saveLifecycleController.test.ts (3 tests) 1484ms
+   ✓ save lifecycle controller > reverts denied auto-saves to the previous snapshot  495ms
+   ✓ save lifecycle controller > suppresses the next save for a restored snapshot  527ms
+   ✓ save lifecycle controller > does not queue a revert when REQUIRE_PLAN proof is valid  456ms
+ ✓ tests/e2e/phase6.4-pilot.test.ts (1 test) 925ms
+   ✓ Phase 6.4 pilot > keeps the router shell live but RULE_ONLY, truthful, and non-executing  921ms
+ ✓ tests/e2e/phase6.5-pilot.test.ts (1 test) 851ms
+   ✓ Phase 6.5 pilot > activates the local lane only for explicit LOCAL_PREFERRED saves and fails closed on auto-save  847ms
+ ✓ tests/e2e/phase6.2-pilot.test.ts (1 test) 905ms
+   ✓ Phase 6.2 pilot > keeps route visibility observational and RULE_ONLY while exposing local audit evidence  900ms
+ ✓ tests/unit/implementationDraftService.test.ts (7 tests) 163ms
+ ✓ tests/e2e/phase4-pilot.test.ts (1 test) 862ms
+   ✓ phase 4 pilot scenarios > denies incomplete proofs, accepts completed local proofs, and exposes local review surfaces  855ms
+ ✓ tests/unit/implementationPackageService.test.ts (7 tests) 204ms
+ ✓ tests/unit/reviewSurfaces.test.ts (2 tests) 530ms
+   ✓ local review surfaces > renders local-only audit, blueprint, and false-positive views  513ms
+ ✓ tests/e2e/phase6.1-pilot.test.ts (1 test) 521ms
+   ✓ phase 6.1 pilot scenarios > invalidates prior acknowledged reuse when route-policy state changes while remaining RULE_ONLY  515ms
+stdout | tests/performance/performance.test.ts > ARC-PERF-001 performance baselines > keeps classifyFile within the beta baseline
+[perf] classifyFile: median=0.01ms p95=0.052ms mean=0.04ms min=0.003ms max=11.012ms iterations=2000
+
+stdout | tests/performance/performance.test.ts > ARC-PERF-001 performance baselines > keeps evaluateRules within the beta baseline
+[perf] evaluateRules: median=0.001ms p95=0.003ms mean=0.004ms min=0ms max=5.838ms iterations=2000
+
+stdout | tests/performance/performance.test.ts > ARC-PERF-001 performance baselines > keeps the model-evaluation harness within the beta baseline
+[perf] evaluateModelHarness: median=0.001ms p95=0.004ms mean=0.002ms min=0.001ms max=0.075ms iterations=500
+
+stdout | tests/performance/performance.test.ts > ARC-PERF-001 performance baselines > keeps explicit-save assessSave within the beta baseline
+[perf] assessSave: median=2.546ms p95=15.765ms mean=4.028ms min=0.524ms max=18.062ms iterations=60
+
+ ✓ tests/performance/performance.test.ts (4 tests) 449ms
+ ✓ tests/e2e/phase6.7-pilot.test.ts (1 test) 621ms
+   ✓ Phase 6.7 pilot > exports a local-only Vault-ready bundle with explicit validation and no save-path dependency  617ms
+ ✓ tests/governance/taskBoard.test.ts (11 tests) 161ms
+ ✓ tests/governance/arcxtUxClarity.test.ts (14 tests) 97ms
+ ✓ tests/governance/mktRem001-vsixPackaging.test.ts (10 tests) 148ms
+ ✓ tests/unit/governanceProposalRegistry.test.ts (9 tests) 119ms
+ ✓ tests/governance/policy.test.ts (26 tests) 98ms
+ ✓ tests/governance/arcUi001a-uiFoundation.test.ts (14 tests) 58ms
+ ✓ tests/unit/routerPolicy.test.ts (11 tests) 86ms
+ ✓ tests/governance/execution-chain.test.ts (3 tests) 56ms
+ ✓ tests/unit/blueprintArtifacts.test.ts (6 tests) 66ms
+ ✓ tests/governance/phase7.9-precisionAndFalsePositive.test.ts (18 tests) 48ms
+ ✓ tests/governance/arcVis001-decisionVisibility.test.ts (18 tests) 51ms
+ ✓ tests/governance/arcUi001c-proofWorkflow.test.ts (19 tests) 54ms
+ ✓ tests/governance/proofStateMessaging.test.ts (16 tests) 69ms
+ ✓ tests/governance/phase7.8-operatorFrictionHardening.test.ts (20 tests) 38ms
+ ✓ tests/governance/phase7.10-pilotReadiness.test.ts (17 tests) 54ms
+ ✓ tests/unit/governanceHandoffService.test.ts (4 tests) 42ms
+ ✓ tests/governance/rel001-releaseReadiness.test.ts (20 tests) 42ms
+ ✓ tests/governance/arcBrand001-logoBranding.test.ts (9 tests) 37ms
+ ✓ tests/governance/welcomeSurface.test.ts (18 tests) 50ms
+ ✓ tests/unit/modelAdapter.test.ts (7 tests) 38ms
+ ✓ tests/governance/mkt001-marketplaceReadiness.test.ts (15 tests) 47ms
+ ✓ tests/unit/executionGovernance.test.ts (11 tests) 21ms
+ ✓ tests/e2e/phase6.6-pilot.test.ts (1 test) 34ms
+ ✓ tests/unit/explanationSynthesizer.test.ts (4 tests) 12ms
+ ✓ tests/governance/phase7.7-triggerVisibility.test.ts (18 tests) 57ms
+ ✓ tests/unit/contextPacket.test.ts (4 tests) 33ms
+ ✓ tests/unit/workspaceMapping.test.ts (2 tests) 26ms
+ ✓ tests/e2e/phase6-pilot.test.ts (1 test) 41ms
+ ✓ tests/unit/fileStateExplainer.test.ts (8 tests) 32ms
+ ✓ tests/unit/workspaceTargeting.test.ts (3 tests) 40ms
+ ✓ tests/unit/governanceFeedbackEvaluator.test.ts (5 tests) 20ms
+ ✓ tests/unit/commitContextAggregator.test.ts (11 tests) 22ms
+ ✓ tests/e2e/phase6.3-pilot.test.ts (1 test) 50ms
+ ✓ tests/unit/classifier.test.ts (4 tests) 21ms
+ ✓ tests/unit/lease.test.ts (5 tests) 14ms
+ ✓ tests/unit/deviationDetector.test.ts (3 tests) 22ms
+ ✓ tests/unit/fileAuditIndicator.test.ts (6 tests) 21ms
+ ✓ tests/unit/runtimeStatus.test.ts (2 tests) 11ms
+ ✓ tests/unit/ruleEngine.test.ts (4 tests) 12ms
+ ✓ tests/unit/conformancePack.test.ts (1 test) 10ms
+ ✓ tests/integration/saveOrchestrator.test.ts (34 tests) 15555ms
+   ✓ save orchestrator > records deviation metadata for RUN observation when runtime policy contract is missing  600ms
+   ✓ save orchestrator > does not flag deviation when RUN observation contract is satisfied  433ms
+   ✓ save orchestrator > attaches governance proposal only when repeated explanation reaches threshold  1852ms
+   ✓ save orchestrator > keeps separate registry records for different proposal types  3032ms
+   ✓ save orchestrator > writes a hash-chained audit entry with blueprint linkage for REQUIRE_PLAN saves  517ms
+   ✓ save orchestrator > records AST fingerprint hash in audit entries when ast fingerprinting is enabled  1299ms
+   ✓ save orchestrator > records deterministic save → run → commit decision lifecycle linkage  1561ms
+   ✓ save orchestrator > records NO_DRIFT when commit fingerprint matches linked save fingerprint  967ms
+   ✓ save orchestrator > records DRIFT_DETECTED when commit fingerprint differs from linked save fingerprint  875ms
+   ✓ save orchestrator > records NO_LINKED_DECISION when commit has no save lifecycle link  471ms
+   ✓ save orchestrator > records FINGERPRINT_UNAVAILABLE when linked save fingerprint is unavailable  844ms
+   ✓ save orchestrator > denies REQUIRE_PLAN saves without a blueprint artifact  523ms
+   ✓ save orchestrator > rejects stale or mismatched blueprint linkage  379ms
+   ✓ save orchestrator > rejects incomplete templates and unsupported shared/team proof modes  525ms
+   ✓ save orchestrator > reuses REQUIRE_PLAN leases only while the linked artifact remains valid  1002ms
+
+ Test Files  69 passed (69)
+      Tests  533 passed (533)
+   Start at  15:52:24
+   Duration  17.66s (transform 3.53s, setup 0ms, collect 30.32s, tests 67.21s, environment 53ms, prepare 19.97s)
+
+
+---
+Timestamp: 2026-04-02T15:52:42+04:00
+Node: v20.20.1
+npm: 11.12.0
+Git: cbcb4bf4594c04c3b9cb296d48df9123f1550a72
+vitest: vitest/3.2.4 linux-x64 node-v20.20.1
