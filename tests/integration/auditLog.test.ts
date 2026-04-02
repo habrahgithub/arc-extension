@@ -31,7 +31,10 @@ describe('sqlite-backed audit log', () => {
     const workspace = makeWorkspace();
     const writer = new AuditLogWriter(workspace);
     const authClassification = classifyFile(fixtureInputs.auth, DEFAULT_RULES);
-    const schemaClassification = classifyFile(fixtureInputs.schema, DEFAULT_RULES);
+    const schemaClassification = classifyFile(
+      fixtureInputs.schema,
+      DEFAULT_RULES,
+    );
 
     const first = writer.append(
       authClassification,
@@ -51,10 +54,14 @@ describe('sqlite-backed audit log', () => {
     const workspace = makeWorkspace();
     const writer = new AuditLogWriter(workspace);
     const authClassification = classifyFile(fixtureInputs.auth, DEFAULT_RULES);
-    writer.append(authClassification, evaluateRules(authClassification, fixtureInputs.auth));
+    writer.append(
+      authClassification,
+      evaluateRules(authClassification, fixtureInputs.auth),
+    );
 
     const sqlitePath = path.join(workspace, '.arc', 'audit.sqlite3');
-    const tamperSql = "UPDATE audit_events SET hash = 'tampered' WHERE event_id = 1;";
+    const tamperSql =
+      "UPDATE audit_events SET hash = 'tampered' WHERE event_id = 1;";
     execFileSync('sqlite3', [sqlitePath, tamperSql], { encoding: 'utf8' });
 
     expect(writer.verifyChain()).toBe(false);
@@ -105,28 +112,37 @@ describe('sqlite-backed audit log', () => {
 
     const initial = writer.append(authClassification, baseDecision);
 
-    expect(() =>
-      writer.append(
-        {
-          ...authClassification,
-          matchedRuleIds: ['rule-auth-path', 'rule-auth-path'],
-        },
-        baseDecision,
-      ),
-    ).toThrowError();
+    // Expected to throw due to UNIQUE constraint on duplicate rule insert
+    // SQLite stderr output is intentional (testing rollback behavior)
+    // eslint-disable-next-line no-console
+    const originalError = console.error;
+    console.error = () => {}; // Suppress expected SQLite error stderr
+    try {
+      expect(() =>
+        writer.append(
+          {
+            ...authClassification,
+            matchedRuleIds: ['rule-auth-path', 'rule-auth-path'],
+          },
+          baseDecision,
+        ),
+      ).toThrowError();
+    } finally {
+      console.error = originalError;
+    }
 
     const sqlitePath = path.join(workspace, '.arc', 'audit.sqlite3');
     const eventCount = execFileSync(
       'sqlite3',
       [sqlitePath, 'SELECT COUNT(*) FROM audit_events;'],
-      { encoding: 'utf8' },
+      { encoding: 'utf8', stdio: ['pipe', 'pipe', 'ignore'] },
     )
       .toString()
       .trim();
     const ruleCount = execFileSync(
       'sqlite3',
       [sqlitePath, 'SELECT COUNT(*) FROM audit_event_rules;'],
-      { encoding: 'utf8' },
+      { encoding: 'utf8', stdio: ['pipe', 'pipe', 'ignore'] },
     )
       .toString()
       .trim();
@@ -139,9 +155,15 @@ describe('sqlite-backed audit log', () => {
   it('writes SQLite as primary while keeping JSONL as derived export shape', () => {
     const workspace = makeWorkspace();
     const writer = new AuditLogWriter(workspace);
-    const schemaClassification = classifyFile(fixtureInputs.schema, DEFAULT_RULES);
+    const schemaClassification = classifyFile(
+      fixtureInputs.schema,
+      DEFAULT_RULES,
+    );
 
-    writer.append(schemaClassification, evaluateRules(schemaClassification, fixtureInputs.schema));
+    writer.append(
+      schemaClassification,
+      evaluateRules(schemaClassification, fixtureInputs.schema),
+    );
 
     const sqlitePath = path.join(workspace, '.arc', 'audit.sqlite3');
     const sqliteCount = execFileSync(
@@ -155,7 +177,10 @@ describe('sqlite-backed audit log', () => {
     expect(sqliteCount).toBe('1');
 
     writer.exportJsonlFromSqlite();
-    const jsonl = fs.readFileSync(path.join(workspace, '.arc', 'audit.jsonl'), 'utf8');
+    const jsonl = fs.readFileSync(
+      path.join(workspace, '.arc', 'audit.jsonl'),
+      'utf8',
+    );
     const exported = JSON.parse(jsonl.trim()) as Record<string, unknown>;
     expect(exported.event_type).toBe('SAVE');
     expect(typeof exported.decision_id).toBe('string');
