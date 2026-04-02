@@ -180,6 +180,8 @@ Treat `package.json` as high-risk:
 
 **Effect:** Saving `package.json` requires linking a blueprint proof (directive ID).
 
+**Operator SOP:** Before retrying the save, follow `docs/PLAN-LINKED-SAVE-SOP.md` — Governed Root → Config → Change ID → Blueprint → Save Blueprint → Re-save Governed File → Review.
+
 ---
 
 ### Example 5: Multiple Rules with UI Segments

@@ -178,13 +178,23 @@ Team-wide environment variable conventions:
 
 - [ ] Install ARC XT extension (Marketplace or VSIX)
 - [ ] Verify extension activation (`ARC XT:` commands visible)
+- [ ] Confirm the intended governed root before testing enforcement
 - [ ] Configure `.arc/router.json` (if using shared config)
 - [ ] Configure `.arc/workspace-map.json` (if using custom rules)
+- [ ] Review `docs/PLAN-LINKED-SAVE-SOP.md` before testing any `REQUIRE_PLAN` flow
 - [ ] Install and start Ollama (if using local model)
 - [ ] Pull required model: `ollama pull llama3.2:3b`
 - [ ] Run test save on governed file (e.g., `auth.ts`)
 - [ ] Review welcome guide (`ARC XT: Show Welcome Guide`)
 - [ ] Review team governance docs (directive IDs, blueprint conventions)
+
+### Plan-linked save note
+
+For any save that resolves to `REQUIRE_PLAN`, the operator workflow is:
+
+**Governed Root → Config → Change ID → Blueprint → Save Blueprint → Re-save Governed File → Review**
+
+`workspace-map.json` does not satisfy proof by itself. The save also requires a valid local blueprint artifact at `.arc/blueprints/<CHANGE-ID>.md`.
 
 ### Verification Commands
 

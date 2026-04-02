@@ -20,9 +20,10 @@ import type {
   DirectiveProofInput,
   FallbackCause,
   GovernanceProposalRecord,
+  PerformanceEntry,
   SaveInput,
   SaveOutcome,
-} from '../contracts/types';
+} from '../contracts/types.js';
 import { AuditLogWriter } from '../core/auditLog';
 import {
   BlueprintArtifactStore,
@@ -623,7 +624,7 @@ export class SaveOrchestrator {
 
     try {
       const modelDecision = await measureAsync(
-        (entry) => this.performanceRecorder.record(entry),
+        (entry: PerformanceEntry) => this.performanceRecorder.record(entry),
         'evaluate_model',
         () => modelAdapter.evaluate(context),
         {

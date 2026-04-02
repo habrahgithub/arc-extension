@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import type { Decision } from '../contracts/types';
+import type { Decision } from '../contracts/types.js';
 
 /**
  * Status Bar Item — Passive Enforcement Indicator

@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
-import { buildCSPWithNonce, generateNonce } from '../ui/csp';
-import { LocalReviewSurfaceService } from './reviewSurfaces';
+import { buildCSPWithNonce, generateNonce } from '../ui/csp.js';
+import { LocalReviewSurfaceService } from './reviewSurfaces.js';
 
 /**
  * Task Board View Provider — Left Sidebar Task Board (ARC-UX-002)
