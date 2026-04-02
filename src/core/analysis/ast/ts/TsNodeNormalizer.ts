@@ -1,4 +1,4 @@
-import ts from 'typescript';
+// import ts from 'typescript'; // Removed to enable lazy loading
 
 export interface NormalizedAstNode {
   kind: string;
@@ -49,10 +49,11 @@ const KIND_ALLOWLIST = new Set<string>([
   'JsxFragment',
 ]);
 
-export function normalizeTsAst(sourceFile: ts.SourceFile): NormalizedAstNode {
+export function normalizeTsAst(sourceFile: any): NormalizedAstNode {
+  const ts = require('typescript'); // Lazy load
   const children = sourceFile.statements
-    .map((statement) => normalizeNode(statement))
-    .filter((entry): entry is NormalizedAstNode => entry !== undefined);
+    .map((statement: any) => normalizeNode(statement, ts))
+    .filter((entry: any): entry is NormalizedAstNode => entry !== undefined);
 
   return {
     kind: 'SourceFile',
@@ -60,7 +61,7 @@ export function normalizeTsAst(sourceFile: ts.SourceFile): NormalizedAstNode {
   };
 }
 
-function normalizeNode(node: ts.Node): NormalizedAstNode | undefined {
+function normalizeNode(node: any, ts: any): NormalizedAstNode | undefined {
   const kind = ts.SyntaxKind[node.kind];
   if (!KIND_ALLOWLIST.has(kind)) {
     return undefined;
@@ -68,8 +69,8 @@ function normalizeNode(node: ts.Node): NormalizedAstNode | undefined {
 
   const descendants = node
     .getChildren()
-    .map((child) => normalizeNode(child))
-    .filter((entry): entry is NormalizedAstNode => entry !== undefined);
+    .map((child: any) => normalizeNode(child, ts))
+    .filter((entry: any): entry is NormalizedAstNode => entry !== undefined);
 
   return descendants.length > 0 ? { kind, children: descendants } : { kind };
 }

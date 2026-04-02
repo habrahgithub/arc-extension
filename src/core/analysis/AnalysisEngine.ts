@@ -18,14 +18,31 @@ export interface AnalysisResult {
 
 export class AnalysisEngine {
   private readonly astFingerprintingEnabled: boolean;
-  private readonly astParser: TsAstParser;
+  private astParser: TsAstParser | null = null;
 
   constructor(options: AnalysisEngineOptions = {}) {
     this.astFingerprintingEnabled = options.astFingerprintingEnabled ?? false;
-    this.astParser = options.astParser ?? new TsAstParser();
+    if (options.astParser) {
+      this.astParser = options.astParser;
+    }
   }
 
-  runAnalysis(classification: Classification, input: SaveInput): AnalysisResult {
+  private getAstParser(): TsAstParser | null {
+    if (this.astParser) {
+      return this.astParser;
+    }
+    try {
+      this.astParser = new TsAstParser();
+      return this.astParser;
+    } catch {
+      return null;
+    }
+  }
+
+  runAnalysis(
+    classification: Classification,
+    input: SaveInput,
+  ): AnalysisResult {
     const findings: Finding[] = [
       ...classification.riskFlags.map((flag) => ({
         source: 'RULE' as const,
@@ -39,7 +56,18 @@ export class AnalysisEngine {
       return { findings };
     }
 
-    const parsed = this.astParser.parse(input.filePath, input.text);
+    const parser = this.getAstParser();
+    if (!parser) {
+      findings.push({
+        source: 'AST',
+        code: 'AST_PARSER_UNAVAILABLE',
+        severity: 'LOW',
+        detail: 'AST fingerprinting skipped due to parser unavailability.',
+      });
+      return { findings };
+    }
+
+    const parsed = parser.parse(input.filePath, input.text);
     if (!parsed.ok) {
       findings.push({
         source: 'AST',
@@ -50,19 +78,29 @@ export class AnalysisEngine {
       return { findings };
     }
 
-    const normalized = normalizeTsAst(parsed.sourceFile);
-    const fingerprints = buildTsFingerprint(normalized);
+    try {
+      const normalized = normalizeTsAst(parsed.sourceFile);
+      const fingerprints = buildTsFingerprint(normalized);
 
-    findings.push({
-      source: 'AST',
-      code: 'AST_FINGERPRINTED',
-      severity: 'LOW',
-      detail: 'AST fingerprint generated from normalized structure.',
-    });
+      findings.push({
+        source: 'AST',
+        code: 'AST_FINGERPRINTED',
+        severity: 'LOW',
+        detail: 'AST fingerprint generated from normalized structure.',
+      });
 
-    return {
-      findings,
-      fingerprints,
-    };
+      return {
+        findings,
+        fingerprints,
+      };
+    } catch {
+      findings.push({
+        source: 'AST',
+        code: 'AST_NORMALIZE_FAILED',
+        severity: 'LOW',
+        detail: 'AST fingerprinting skipped due to normalization failure.',
+      });
+      return { findings };
+    }
   }
 }

@@ -1,15 +1,19 @@
-import ts from 'typescript';
+// import ts from 'typescript'; // Removed to enable lazy loading
 
 export const DEFAULT_MAX_AST_INPUT_BYTES = 512 * 1024;
 
 export interface TsAstParseSuccess {
   ok: true;
-  sourceFile: ts.SourceFile;
+  sourceFile: any; // ts.SourceFile - using any to avoid compile-time dependency
 }
 
 export interface TsAstParseFailure {
   ok: false;
-  reason: 'UNSUPPORTED_EXTENSION' | 'INPUT_TOO_LARGE' | 'PARSE_FAILED';
+  reason:
+    | 'UNSUPPORTED_EXTENSION'
+    | 'INPUT_TOO_LARGE'
+    | 'PARSE_FAILED'
+    | 'TYPESCRIPT_UNAVAILABLE';
 }
 
 export type TsAstParseResult = TsAstParseSuccess | TsAstParseFailure;
@@ -25,7 +29,20 @@ export class TsAstParser {
     this.maxInputBytes = options.maxInputBytes ?? DEFAULT_MAX_AST_INPUT_BYTES;
   }
 
+  private getTs() {
+    try {
+      return require('typescript');
+    } catch {
+      return null;
+    }
+  }
+
   parse(filePath: string, sourceText: string): TsAstParseResult {
+    const ts = this.getTs();
+    if (!ts) {
+      return { ok: false, reason: 'TYPESCRIPT_UNAVAILABLE' };
+    }
+
     if (!isSupportedTsPath(filePath)) {
       return { ok: false, reason: 'UNSUPPORTED_EXTENSION' };
     }
@@ -47,7 +64,9 @@ export class TsAstParser {
       );
       const diagnostics =
         (
-          sourceFile as unknown as { parseDiagnostics?: readonly ts.Diagnostic[] }
+          sourceFile as unknown as {
+            parseDiagnostics?: readonly any[];
+          }
         ).parseDiagnostics ?? [];
       if (diagnostics.length > 0) {
         return { ok: false, reason: 'PARSE_FAILED' };
