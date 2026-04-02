@@ -133,7 +133,7 @@ private execSqlJson<T>(sqlStatement: string): T[] {
 - Added `"type": "module"` to `package.json`
 - Enables ESM module support for vitest/vite compatibility
 - `npm run test` now runs successfully in all environments
-- All 533 tests passing
+- All 534 tests passing
 
 **Classification:**
 
@@ -147,7 +147,7 @@ private execSqlJson<T>(sqlStatement: string): T[] {
 
 - [x] ESM module support enabled
 - [x] `npm run test` runs without ERR_REQUIRE_ESM
-- [x] All 533 tests passing
+- [x] All 534 tests passing
 - [ ] Sentinel independent verification (pending)
 
 **Target:** ✅ Closed — Stage 3 gate satisfied
