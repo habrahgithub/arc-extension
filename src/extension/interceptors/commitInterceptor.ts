@@ -5,6 +5,7 @@ import {
   aggregateCommitContext,
   formatCommitContextMessage,
 } from './commitContextAggregator';
+import { ARCOutputChannel } from '../ARCOutputChannel';
 
 interface GitApiV1 {
   repositories: GitRepository[];
@@ -25,9 +26,7 @@ interface GitExtensionExports {
 export class CommitInterceptor implements vscode.Disposable {
   private readonly subscriptions: vscode.Disposable[] = [];
   private readonly headByRepo = new Map<string, string | undefined>();
-  private readonly outputChannel = vscode.window.createOutputChannel(
-    'ARC Output Channel',
-  );
+  private readonly outputChannel = ARCOutputChannel.getInstance();
 
   constructor(
     private readonly orchestratorFor: (filePath?: string) => SaveOrchestrator,
@@ -39,14 +38,15 @@ export class CommitInterceptor implements vscode.Disposable {
   }
 
   dispose(): void {
-    this.outputChannel.dispose();
+    // Don't dispose shared ARCOutputChannel - only remove from subscriptions
     while (this.subscriptions.length > 0) {
       this.subscriptions.pop()?.dispose();
     }
   }
 
   private initialize(): void {
-    const gitExtension = vscode.extensions.getExtension<GitExtensionExports>('vscode.git');
+    const gitExtension =
+      vscode.extensions.getExtension<GitExtensionExports>('vscode.git');
     if (!gitExtension) {
       return;
     }
@@ -70,7 +70,8 @@ export class CommitInterceptor implements vscode.Disposable {
               return;
             }
 
-            const activeFilePath = vscode.window.activeTextEditor?.document.uri.fsPath;
+            const activeFilePath =
+              vscode.window.activeTextEditor?.document.uri.fsPath;
             const observedPath = activeFilePath ?? repoRoot;
             const observedText =
               activeFilePath && vscode.window.activeTextEditor

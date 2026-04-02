@@ -23,6 +23,7 @@ import { RunCommandInterceptor } from './extension/interceptors/runCommandInterc
 import { renderDecisionTimeline } from './extension/decisionTimeline';
 import { explainFileState } from './extension/fileStateExplainer';
 import { resolveFileAuditState } from './extension/fileAuditState';
+import { ARCOutputChannel } from './extension/ARCOutputChannel';
 // ARC-UI-001a — Internal Review Surface Upgrade (UI layer)
 import { registerUiCommands } from './ui';
 // ARCXT-UX-CLARITY-001 — Minimal config template creation commands
@@ -204,7 +205,7 @@ export function activate(context: vscode.ExtensionContext): void {
   const reviewSurfaces = new Map<string, LocalReviewSurfaceService>();
   const welcomeSurface = new WelcomeSurfaceService(context);
   const statusBarItem = new StatusBarItemService();
-  const timelineOutput = vscode.window.createOutputChannel('ARC Output Channel');
+  const timelineOutput = ARCOutputChannel.getInstance();
   const fileAuditIndicator = new FileAuditIndicator();
   context.subscriptions.push(statusBarItem);
   context.subscriptions.push(fileAuditIndicator);
@@ -222,9 +223,8 @@ export function activate(context: vscode.ExtensionContext): void {
   // P9-001 — trigger 1: active editor change (file open / tab switch)
   context.subscriptions.push(
     vscode.window.onDidChangeActiveTextEditor((editor) => {
-      fileAuditIndicator.updateForFile(
-        editor?.document.uri.fsPath,
-        (f) => orchestratorFor(f).queryFileAuditState(f),
+      fileAuditIndicator.updateForFile(editor?.document.uri.fsPath, (f) =>
+        orchestratorFor(f).queryFileAuditState(f),
       );
     }),
   );
@@ -692,7 +692,12 @@ export function activate(context: vscode.ExtensionContext): void {
               'Cancel',
             );
 
-            controller.finalizeSave(assessment, choice === 'Continue', undefined, actor);
+            controller.finalizeSave(
+              assessment,
+              choice === 'Continue',
+              undefined,
+              actor,
+            );
             statusBarItem.updateFromDecision(
               assessment.decision.decision,
               choice !== 'Continue',
