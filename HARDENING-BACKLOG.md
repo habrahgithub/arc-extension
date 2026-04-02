@@ -348,19 +348,20 @@ Per Axis decision 2026-04-02, the following must be formalized before Stage 3:
 
 - **Severity:** High (governance risk)
 - **Owner:** Forge
-- **Stage 3 Gate:** Required documentation
+- **Stage 3 Gate:** ✅ Documentation COMPLETE
 - **Issue:** Sentinel cannot independently run test suite (ERR_REQUIRE_ESM)
 - **Mitigation:** Committed test evidence artifacts (H-006 precedent)
+- **Documentation:** `docs/H-007-TEST-INFRASTRUCTURE-GAP.md`
 
 ---
 
 ## Next Review
 
 **Trigger:** Stage 3 rollout request  
-**Required Closures:** H-006, H-007  
+**Required Closures:** H-006 ✅, H-007 ✅ (documentation)  
 **Optional:** H-001, H-002
 
 ---
 
 **Last Updated:** 2026-04-02  
-**Audit Point:** `23b45d3` (lintel) / pending (workspace)
+**Audit Point:** `0baab42` (lintel) / `0f6bcc4` (workspace)
