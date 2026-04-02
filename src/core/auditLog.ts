@@ -744,8 +744,11 @@ export class AuditLogWriter {
   }
 
   private execSql(sqlStatement: string): void {
+    // Use stdio: 'pipe' to capture stderr; re-throw on actual failure
+    // This prevents expected errors (e.g., rollback tests) from polluting test output
     execFileSync('sqlite3', ['-bail', this.sqlitePath(), sqlStatement], {
       encoding: 'utf8',
+      stdio: ['pipe', 'pipe', 'pipe'],
     });
   }
 

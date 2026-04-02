@@ -113,23 +113,16 @@ describe('sqlite-backed audit log', () => {
     const initial = writer.append(authClassification, baseDecision);
 
     // Expected to throw due to UNIQUE constraint on duplicate rule insert
-    // SQLite stderr output is intentional (testing rollback behavior)
-    // eslint-disable-next-line no-console
-    const originalError = console.error;
-    console.error = () => {}; // Suppress expected SQLite error stderr
-    try {
-      expect(() =>
-        writer.append(
-          {
-            ...authClassification,
-            matchedRuleIds: ['rule-auth-path', 'rule-auth-path'],
-          },
-          baseDecision,
-        ),
-      ).toThrowError();
-    } finally {
-      console.error = originalError;
-    }
+    // This tests transactional rollback behavior
+    expect(() =>
+      writer.append(
+        {
+          ...authClassification,
+          matchedRuleIds: ['rule-auth-path', 'rule-auth-path'],
+        },
+        baseDecision,
+      ),
+    ).toThrowError();
 
     const sqlitePath = path.join(workspace, '.arc', 'audit.sqlite3');
     const eventCount = execFileSync(
