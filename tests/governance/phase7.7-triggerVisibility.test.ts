@@ -276,6 +276,7 @@ describe('Phase 7.7 — Trigger Visibility Governance', () => {
           'blueprints',
           '.gitignore',
           'audit.jsonl',
+          'audit.sqlite3', // SQLite primary store (runtime artifact, gitignored)
           'perf.jsonl',
         ];
         const unexpectedFiles = files.filter(
