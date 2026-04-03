@@ -37,7 +37,7 @@
 | Display Name | `ARC XT — Audit Ready Core` |
 | Version      | `0.1.11`                    |
 | Publisher    | `swd` (internal)            |
-| License      | `UNLICENSED`                |
+| License      | `Apache-2.0`                |
 | Private      | `true`                      |
 
 **Trust-Sensitive Fields Review (WRD-0088):**
