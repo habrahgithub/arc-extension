@@ -63,6 +63,7 @@ Reference: `docs/PLAN-LINKED-SAVE-SOP.md`
 | U13 | LATER | P2 | Blocked-save recovery | Add a direct blocked-save recovery path such as “Open Current Blueprint” / “Resume SOP” from the save failure flow. | Derived from current operator friction during `REQUIRE_PLAN` saves. |
 | U14 | LATER | P2 | Task Board guidance | Show active Change ID / blueprint and next required operator action directly in the Task Board. | Helps operators understand why saves are blocked and what to do next. |
 | U15 | WATCH | P2 | TS6 migration | Plan a real TypeScript 6+ module-resolution migration package instead of silencing the deprecation warning. | Do **not** add `ignoreDeprecations: "6.0"` while repo is pinned to TS 5.9.3. |
+| U16 | NOW | P1 | Documentation / evidence flow | Establish a pristine documentation flow and a canonical evidence pack for next-day review/demo readiness. | Must leave a truthful trail of what was built, verified, authorized, and still open. |
 
 ---
 
@@ -76,6 +77,7 @@ These are discussion-derived ideas worth retaining, but not yet accepted as imme
 | N02 | LATER | P3 | Task Board progress summary (`x/y tasks complete`) once blueprint task parsing lands. | Gives a clearer execution picture without making tasks authoritative. |
 | N03 | LATER | P3 | “Create from template, then open for edit” blueprint bootstrap shortcut. | Reduces first-run friction while preserving explicit confirmation. |
 | N04 | WATCH | P3 | Distinguish “wrong root” empty state from “no blueprint yet” empty state. | Avoids misleading new users when blueprint artifacts exist in a nested root. |
+| N05 | LATER | P3 | Auto-generate a compact evidence index from blueprint, build, test, and release state. | Reduces documentation drift and improves review readiness. |
 
 ---
 

@@ -112,10 +112,12 @@ Maintenance rule:
 - [ ] U13 — Add blocked-save recovery shortcuts such as “Open Current Blueprint” / “Resume SOP”.
 - [ ] U14 — Show active Change ID / blueprint and next required operator action directly in the Task Board.
 - [ ] U15 — Stage a real TypeScript 6+ module-resolution migration package instead of a silencing patch.
+- [ ] U16 — Establish a pristine documentation flow and a canonical evidence pack for next-day review/demo readiness.
 - [ ] N01 — Consider persisting local active-task selection across reloads in a bounded local ARC state file or equivalent store.
 - [ ] N02 — Consider Task Board progress summaries (`x/y tasks complete`) once task parsing lands.
 - [ ] N03 — Consider a “create from template, then open for edit” bootstrap shortcut.
 - [ ] N04 — Distinguish wrong-root empty state from true no-blueprint empty state.
+- [ ] N05 — Consider auto-generating a compact evidence index from blueprint, build, test, and release state.
 
 ## Tasks
 
@@ -128,8 +130,9 @@ Maintenance rule:
 - [ ] T7 — Fix Task Board root rebinding and empty-state CTA flow.
 - [ ] T8 — Define and implement blueprint-backed task/todo parsing.
 - [ ] T9 — Add bounded active-task context injection for local model evaluation.
-- [ ] T10 — Implement selected workflow-friction follow-ups retained in the todo ledger.
-- [ ] T11 — Re-verify that all follow-on work preserves local-only, fail-closed, non-authorizing governance boundaries.
+- [ ] T10 — Establish the documentation/evidence flow and prepare a canonical evidence pack for review readiness.
+- [ ] T11 — Implement selected workflow-friction follow-ups retained in the todo ledger.
+- [ ] T12 — Re-verify that all follow-on work preserves local-only, fail-closed, non-authorizing governance boundaries.
 
 ## Evidence
 
