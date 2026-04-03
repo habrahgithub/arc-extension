@@ -303,7 +303,7 @@ private execSqlJson<T>(sqlStatement: string): T[] {
 | **Stage 1** | Internal pilot only                         | ✅ Complete       | WARDEN approval ✅           |
 | **Stage 2** | Explicit-save path only (`LOCAL_PREFERRED`) | ✅ **AUTHORIZED** | H-003 ✅, H-004 ✅, H-005 ✅ |
 | **Stage 3** | Limited operator cohort                     | ✅ **READY**      | H-006 ✅, H-007 ✅           |
-| **Stage 4** | Broader rollout                             | ⏳ Pending        | H-001 closed                 |
+| **Stage 4 | Broader rollout | ⏳ Pending | All gates closed closed                 |
 
 **Note:** H-006 + H-007 CLOSED 2026-04-02 — Stage 3 gates complete.
 

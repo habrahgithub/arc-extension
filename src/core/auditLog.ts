@@ -758,6 +758,7 @@ export class AuditLogWriter {
       ['-json', this.sqlitePath(), sqlStatement],
       {
         encoding: 'utf8',
+        stdio: ['pipe', 'pipe', 'pipe'],
       },
     ).trim();
     if (!output) {
