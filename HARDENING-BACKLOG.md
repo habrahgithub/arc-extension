@@ -148,7 +148,7 @@ private execSqlJson<T>(sqlStatement: string): T[] {
 - [x] ESM module support enabled
 - [x] `npm run test` runs without ERR_REQUIRE_ESM
 - [x] All 534 tests passing
-- [ ] Sentinel independent verification (pending)
+- [ ] Sentinel independent verification: ESM fix enables npm run test in all environments
 
 **Target:** ✅ Closed — Stage 3 gate satisfied
 
