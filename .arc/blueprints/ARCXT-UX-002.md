@@ -11,6 +11,7 @@
 Align the current ARC XT plan-linked save workflow to the extension's actual enforcement behavior, then preserve the remaining thread-audited UX, onboarding, and task-led workflow gaps in one active local blueprint so no discussed work is lost between execution slices.
 
 This directive exists because the thread audit showed a mismatch between operator expectation and current enforcement truth:
+
 - the save prompt was starting at Change ID without making root/config prerequisites explicit
 - the Task Board can remain pinned to the wrong governed root in nested-repo layouts
 - empty-state flows are too dead-end for first-run operators
@@ -22,6 +23,7 @@ This directive exists because the thread audit showed a mismatch between operato
 This directive covers the current local UX/SOP correction package in `projects/lintel` and the follow-on thread-audited work items that remain open.
 
 Current slice includes:
+
 - `src/extension.ts` — plan-linked save prompt/help alignment
 - `src/ui/webview/GuidedProofWorkflow.ts` — workflow reordered to match current SOP
 - `tests/governance/arcUi001c-proofWorkflow.test.ts` — governance coverage for SOP order
@@ -31,6 +33,7 @@ Current slice includes:
 - `docs/records/ARC-BLUEPRINT-001-INTEGRATED-ROADMAP-REFERENCE.md` — retained future ARC roadmap reference
 
 Follow-on work tracked under this blueprint includes:
+
 - first-run bootstrap and governed-root selection
 - Task Board root rebinding and empty-state improvements
 - safe config/bootstrap guidance for new users
@@ -80,9 +83,11 @@ Reference: `docs/PLAN-LINKED-SAVE-SOP.md`
 ## Maintained Todo Ledger
 
 Canonical discussion-derived backlog:
+
 - `docs/records/ARCXT-UX-002-TODO-LEDGER.md`
 
 Maintenance rule:
+
 - new materially discussed work items must be recorded in the todo ledger and reflected here before they are considered part of the active governed package
 - the todo ledger is operational context only; it does not authorize saves
 
@@ -101,6 +106,7 @@ Maintenance rule:
 ## Thread Audit — Detailed Carry-Forward Work
 
 ### Root-aware onboarding and first-run bootstrap
+
 - [ ] U01 — Detect first-run / misconfigured-root conditions and surface a bounded bootstrap entry point.
 - [ ] U02 — Detect candidate governed roots and require explicit choice when ambiguous.
 - [ ] U03 — Let the Task Board and review surfaces rebind to the correct active governed root.
@@ -109,6 +115,7 @@ Maintenance rule:
 - [ ] U06 — Generalize first blueprint creation for new users instead of assuming LINTEL-specific naming.
 
 ### Blueprint-backed todo / task workflow
+
 - [ ] U07 — Define a canonical `## Tasks` blueprint convention that can be parsed safely.
 - [ ] U08 — Parse blueprint tasks/todos into extension-visible task state and Task Board summaries.
 - [ ] U09 — Allow bounded active-task selection for operator context.
@@ -116,6 +123,7 @@ Maintenance rule:
 - [ ] U11 — Add tests proving todo/task features stay local-only, non-authorizing, and fail-closed.
 
 ### Workflow friction and follow-up ideas retained from discussion
+
 - [ ] U12 — Improve commit linkage when no active file is open or when a commit spans multiple files.
 - [ ] U13 — Add blocked-save recovery shortcuts such as “Open Current Blueprint” / “Resume SOP”.
 - [ ] U14 — Show active Change ID / blueprint and next required operator action directly in the Task Board.
@@ -125,6 +133,20 @@ Maintenance rule:
 - [ ] U18 — Reconcile `ARC-BLUEPRINT-001` future architecture direction with current local-only Lintel scope before any control-plane expansion.
 - [ ] U19 — Define how future Vercel/Railway infrastructure boundaries could align with current Lintel behavior without premature coupling.
 - [ ] U20 — Map roadmap concepts such as plan artifacts, execution tokens, run board, and modes to existing Lintel primitives.
+
+### ARC-BLUEPRINT-001 Reconciliation Tracks (Axis 2026-04-03)
+
+- [ ] U21 — Map roadmap threat model to implementation plan; define concrete test cases for ARC threat surface.
+- [ ] U22 — Define integrity-state model for anti-tamper hardening; map current audit chain to trust boundary requirements.
+- [ ] U23 — Reconcile `.arc/plans/` vs `.arc/blueprints/` paths; define canonical artifact location for future Plan-as-Code.
+- [ ] U24 — Map Guardian HUD / event architecture to current UX surfaces (Task Board, review home, output channels).
+- [ ] U25 — Map protected surfaces to current rule engine; define default policy pack for future expansion.
+- [ ] U26 — Review emergency "Save Anyway (Logged)" vs current fail-closed posture; requires Axis/Warden policy review.
+- [ ] U27 — Reconcile adaptive governance tiers with current rule-first Lintel behavior; prevent ARC from becoming a chat tool.
+- [ ] U28 — Define Vercel/Railway boundary package for future expansion; capture current local-only baseline for contrast.
+
+**Reconciliation reference:** `docs/records/ARC-BLUEPRINT-001-RECONCILIATION-MATRIX.md`
+
 - [ ] N01 — Consider persisting local active-task selection across reloads in a bounded local ARC state file or equivalent store.
 - [ ] N02 — Consider Task Board progress summaries (`x/y tasks complete`) once task parsing lands.
 - [ ] N03 — Consider a “create from template, then open for edit” bootstrap shortcut.
@@ -160,4 +182,3 @@ Maintenance rule:
 - Evidence-flow record retained at `docs/records/ARCXT-STAGE3-EVIDENCE-FLOW.md`
 - Roadmap reference retained at `docs/records/ARC-BLUEPRINT-001-INTEGRATED-ROADMAP-REFERENCE.md`
 - Open hardening items retained in `HARDENING-BACKLOG.md`
-
