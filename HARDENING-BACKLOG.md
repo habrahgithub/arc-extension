@@ -313,7 +313,7 @@ private execSqlJson<T>(sqlStatement: string): T[] {
 
 | Item  | Priority | Status           | Stage 2 Gate    | Stage 3 Gate   |
 | ----- | -------- | ---------------- | --------------- | -------------- |
-| H-001 | Medium   | 🟡 Carry-Forward | Advisory        | Required       |
+| H-001 | Medium   | ✅ CLOSED        | Stage 4 CLEARED | —              |       |
 | H-002 | Low      | ⏳ Open          | Optional        | Optional       |
 | H-003 | High     | ✅ **CLOSED**    | **Required** ✅ | —              |
 | H-004 | High     | ✅ **CLOSED**    | **Required** ✅ | —              |
@@ -323,7 +323,7 @@ private execSqlJson<T>(sqlStatement: string): T[] {
 
 **Stage 2 Authorization:** ✅ **AUTHORIZED** (Axis 2026-04-02) — All required gates (H-003, H-004, H-005) closed.
 
-**Stage 3 Status:** ✅ **READY** — All gates (H-006, H-007) cleared. Awaiting Sentinel verification.
+**Stage 3 Status: ✅ AUTHORIZED (Axis 2026-04-03) — H-001 CLOSED, Stage 4 authorized** — All gates (H-006, H-007) cleared. Awaiting Sentinel verification.
 
 ---
 

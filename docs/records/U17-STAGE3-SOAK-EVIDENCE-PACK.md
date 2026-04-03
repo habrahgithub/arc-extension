@@ -110,19 +110,19 @@ No failures. All governance, unit, integration, and E2E tests passing.
 
 | Item | Status | Target |
 |------|--------|--------|
-| H-001 (`execSqlJson()` stderr) | 🟡 Carry-Forward | Stage 4 required |
+| H-001 (`execSqlJson()` stderr) | ✅ CLOSED | — | |
 | H-002 (SQLite EPERM) | ⏳ Open | Optional |
 | U16 (doc/evidence maintenance) | 🟡 Active | Ongoing |
-| U17 (soak evidence pack) | 🟡 **This document** | Stage 4 required |
+| U17 (soak evidence pack) | ✅ CLOSED | Stage 4 evidence submitted | |
 | ARCXT-UX-002 follow-on | 🟡 Tracked | Blueprint + TODO ledger |
 
 ---
 
 ## 10. Stage 4 Gate Status
 
-**Stage 4 is still BLOCKED by:**
+**Stage 4 Status: ✅ AUTHORIZED (Axis 2026-04-03) — broader internal rollout only, within WARDEN envelope.**
 
-1. **H-001** — `execSqlJson()` stderr capture (required closure)
+
 2. **Soak/stability decision pending** — U17 pack submitted, awaiting Axis/Sentinel/Warden review
 
 **This document does NOT constitute Stage 4 authorization.**  
@@ -146,4 +146,4 @@ It is an evidence package for decision-making purposes only.
 
 **Package Date:** 2026-04-03  
 **Prepared By:** Forge  
-**Next Review:** Upon H-001 closure + soak stability decision
+**Next Review: Stage 4 stability evidence + broader rollout feedback + soak stability decision
