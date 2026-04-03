@@ -123,9 +123,9 @@ No failures. All governance, unit, integration, and E2E tests passing.
 **Stage 4 Status: ✅ AUTHORIZED (Axis 2026-04-03) — broader internal rollout only, within WARDEN envelope.**
 
 
-2. **Soak/stability decision pending** — U17 pack submitted, awaiting Axis/Sentinel/Warden review
+2. **Soak/stability decision: U17 pack submitted and accepted (Axis 2026-04-03)
 
-**This document does NOT constitute Stage 4 authorization.**  
+This document was created as an evidence package; Stage 4 broader internal rollout was subsequently authorized (Axis 2026-04-03).  
 It is an evidence package for decision-making purposes only.
 
 ---

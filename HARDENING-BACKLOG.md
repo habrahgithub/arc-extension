@@ -302,8 +302,8 @@ private execSqlJson<T>(sqlStatement: string): T[] {
 | ----------- | ------------------------------------------- | ----------------- | ---------------------------- |
 | **Stage 1** | Internal pilot only                         | ✅ Complete       | WARDEN approval ✅           |
 | **Stage 2** | Explicit-save path only (`LOCAL_PREFERRED`) | ✅ **AUTHORIZED** | H-003 ✅, H-004 ✅, H-005 ✅ |
-| **Stage 3** | Limited operator cohort                     | ✅ **READY**      | H-006 ✅, H-007 ✅           |
-| **Stage 4 | Broader rollout | ⏳ Pending | All gates closed closed                 |
+| **Stage 3** | Limited operator cohort                     | ✅ **AUTHORIZED** | H-006 ✅, H-007 ✅           |
+| **Stage 4** | Broader internal rollout                    | ✅ **AUTHORIZED** | All gates cleared            |
 
 **Note:** H-006 + H-007 CLOSED 2026-04-02 — Stage 3 gates complete.
 
@@ -311,26 +311,26 @@ private execSqlJson<T>(sqlStatement: string): T[] {
 
 ## Hardening Summary
 
-| Item  | Priority | Status           | Stage 2 Gate    | Stage 3 Gate   |
-| ----- | -------- | ---------------- | --------------- | -------------- |
-| H-001 | Medium   | ✅ CLOSED        | Stage 4 CLEARED | —              |       |
-| H-002 | Low      | ⏳ Open          | Optional        | Optional       |
-| H-003 | High     | ✅ **CLOSED**    | **Required** ✅ | —              |
-| H-004 | High     | ✅ **CLOSED**    | **Required** ✅ | —              |
-| H-005 | Medium   | ✅ **CLOSED**    | Optional ✅     | —              |
-| H-006 | Low      | ✅ **CLOSED**    | Advisory        | ✅ **CLEARED** |
-| H-007 | High     | ✅ **CLOSED**    | Documented      | ✅ **CLEARED** |
+| Item | Priority | Status | Stage 2 Gate | Stage 3 Gate | Stage 4 Gate |
+|------|----------|--------|--------------|--------------|--------------|
+| H-001 | Medium | ✅ **CLOSED** | Advisory | — | ✅ **CLEARED** |
+| H-002 | Low | ⏳ Open | Optional | Optional | Optional |
+| H-003 | High | ✅ **CLOSED** | **Required** ✅ | — | — |
+| H-004 | High | ✅ **CLOSED** | **Required** ✅ | — | — |
+| H-005 | Medium | ✅ **CLOSED** | Optional ✅ | — | — |
+| H-006 | Low | ✅ **CLOSED** | Advisory | ✅ **CLEARED** | — |
+| H-007 | High | ✅ **CLOSED** | Documented | ✅ **CLEARED** | — |
 
 **Stage 2 Authorization:** ✅ **AUTHORIZED** (Axis 2026-04-02) — All required gates (H-003, H-004, H-005) closed.
 
-**Stage 3 Status: ✅ AUTHORIZED (Axis 2026-04-03) — H-001 CLOSED, Stage 4 authorized** — All gates (H-006, H-007) cleared. Awaiting Sentinel verification.
+**Stage 3 Status: ✅ **AUTHORIZED** (Axis 2026-04-03)
 
 ---
 
 ## Standing Conditions (WARDEN)
 
 1. **Local-Only Scope** — No cloud-lane without new WARDEN gate
-2. **execSqlJson() Advisory** — Track for next cycle (H-001)
+2. **execSqlJson() Stderr Capture — **CLOSED** (H-001)
 3. **Route Policy Configuration** — `enabledByDefault = false` unchanged
 
 ---
