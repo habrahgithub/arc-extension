@@ -4,7 +4,7 @@
 
 > Status: ACTIVE
 > Audit Basis: Thread audit — 2026-04-02 through 2026-04-03
-> Current Focus: Plan-linked save SOP alignment, root-aware onboarding, and blueprint-backed todo workflow capture
+> Current Focus: Plan-linked save SOP alignment, root-aware onboarding, blueprint-backed todo workflow capture, and retained roadmap reconciliation
 
 ## Objective
 
@@ -27,6 +27,8 @@ Current slice includes:
 - `tests/governance/arcUi001c-proofWorkflow.test.ts` — governance coverage for SOP order
 - `docs/PLAN-LINKED-SAVE-SOP.md` — current operator workflow of record
 - `docs/records/ARCXT-UX-002-TODO-LEDGER.md` — maintained discussion-derived todo ledger
+- `docs/records/ARCXT-STAGE3-EVIDENCE-FLOW.md` — documentation/evidence flow of record for Stage 3
+- `docs/records/ARC-BLUEPRINT-001-INTEGRATED-ROADMAP-REFERENCE.md` — retained future ARC roadmap reference
 
 Follow-on work tracked under this blueprint includes:
 - first-run bootstrap and governed-root selection
@@ -35,6 +37,7 @@ Follow-on work tracked under this blueprint includes:
 - blueprint task/todo extraction for operator workflow
 - bounded task-context injection for local model use
 - discussion-derived workflow improvements that remain local-only and non-authorizing
+- roadmap-derived future architecture reconciliation work that remains planning-only until separately approved
 
 ## Constraints
 
@@ -45,6 +48,7 @@ Follow-on work tracked under this blueprint includes:
 - No lane enablement by default.
 - No shared/team blueprint handling in this package.
 - No task/todo feature may bypass rule floors, route policy, audit requirements, or WARDEN standing conditions.
+- The retained roadmap reference is non-authoritative for current Stage 3 scope and must not be used to justify backend/cloud/control-plane expansion without a new reviewed package.
 - H-001 and H-002 remain hardening backlog items and are not closed by this directive.
 
 ## Acceptance Criteria
@@ -89,6 +93,10 @@ Maintenance rule:
 - [x] Guided Proof Workflow now reflects the real SOP order.
 - [x] The current operator SOP is documented in `docs/PLAN-LINKED-SAVE-SOP.md`.
 - [x] A maintained discussion-derived todo ledger now exists in `docs/records/ARCXT-UX-002-TODO-LEDGER.md`.
+- [x] The documentation/evidence flow is recorded in `docs/records/ARCXT-STAGE3-EVIDENCE-FLOW.md`.
+- [x] `docs/RELEASE-READINESS.md` and `docs/H-007-TEST-INFRASTRUCTURE-GAP.md` were reconciled to current Stage 3 truth.
+- [x] `docs/records/ARC-BLUEPRINT-001-INTEGRATED-ROADMAP-REFERENCE.md` retains the integrated ARC roadmap as future reference without widening Stage 3 authority.
+- [x] Roadmap-derived future alignment items are now tracked in the todo ledger and this blueprint.
 
 ## Thread Audit — Detailed Carry-Forward Work
 
@@ -112,12 +120,18 @@ Maintenance rule:
 - [ ] U13 — Add blocked-save recovery shortcuts such as “Open Current Blueprint” / “Resume SOP”.
 - [ ] U14 — Show active Change ID / blueprint and next required operator action directly in the Task Board.
 - [ ] U15 — Stage a real TypeScript 6+ module-resolution migration package instead of a silencing patch.
-- [ ] U16 — Establish a pristine documentation flow and a canonical evidence pack for next-day review/demo readiness.
+- [ ] U16 — Maintain the documentation/evidence flow so blueprint, release, and evidence docs stay aligned to current truth.
+- [ ] U17 — Prepare the exact minimum Stage 3 soak evidence pack Sentinel expects before next gate escalation.
+- [ ] U18 — Reconcile `ARC-BLUEPRINT-001` future architecture direction with current local-only Lintel scope before any control-plane expansion.
+- [ ] U19 — Define how future Vercel/Railway infrastructure boundaries could align with current Lintel behavior without premature coupling.
+- [ ] U20 — Map roadmap concepts such as plan artifacts, execution tokens, run board, and modes to existing Lintel primitives.
 - [ ] N01 — Consider persisting local active-task selection across reloads in a bounded local ARC state file or equivalent store.
 - [ ] N02 — Consider Task Board progress summaries (`x/y tasks complete`) once task parsing lands.
 - [ ] N03 — Consider a “create from template, then open for edit” bootstrap shortcut.
 - [ ] N04 — Distinguish wrong-root empty state from true no-blueprint empty state.
 - [ ] N05 — Consider auto-generating a compact evidence index from blueprint, build, test, and release state.
+- [ ] N06 — Consider how roadmap run-board states could map to current review/task-board surfaces without premature orchestration UI.
+- [ ] N07 — Consider how roadmap modes (`Inspect`, `Plan`, `Act`, `Review` and `ORGANIZE/CLEAN/REFACTOR/BUILD`) could map to current ARC XT workflows.
 
 ## Tasks
 
@@ -130,9 +144,12 @@ Maintenance rule:
 - [ ] T7 — Fix Task Board root rebinding and empty-state CTA flow.
 - [ ] T8 — Define and implement blueprint-backed task/todo parsing.
 - [ ] T9 — Add bounded active-task context injection for local model evaluation.
-- [ ] T10 — Establish the documentation/evidence flow and prepare a canonical evidence pack for review readiness.
-- [ ] T11 — Implement selected workflow-friction follow-ups retained in the todo ledger.
-- [ ] T12 — Re-verify that all follow-on work preserves local-only, fail-closed, non-authorizing governance boundaries.
+- [x] T10 — Establish the documentation/evidence flow record for Stage 3 review readiness.
+- [ ] T11 — Prepare the canonical Stage 3 soak evidence pack / summary record.
+- [ ] T12 — Reconcile the retained ARC roadmap reference with current Lintel scope and future package boundaries.
+- [ ] T13 — Map roadmap primitives and infrastructure-boundary concepts to current Lintel capabilities without widening scope.
+- [ ] T14 — Implement selected workflow-friction follow-ups retained in the todo ledger.
+- [ ] T15 — Re-verify that all follow-on work preserves local-only, fail-closed, non-authorizing governance boundaries.
 
 ## Evidence
 
@@ -140,5 +157,7 @@ Maintenance rule:
 - Work order retained at `docs/work-orders/WO-ARC-XT-M4-001-first-run-bootstrap-and-root-aware-blueprint-onboarding.md`
 - Current SOP retained at `docs/PLAN-LINKED-SAVE-SOP.md`
 - Maintained todo ledger retained at `docs/records/ARCXT-UX-002-TODO-LEDGER.md`
+- Evidence-flow record retained at `docs/records/ARCXT-STAGE3-EVIDENCE-FLOW.md`
+- Roadmap reference retained at `docs/records/ARC-BLUEPRINT-001-INTEGRATED-ROADMAP-REFERENCE.md`
 - Open hardening items retained in `HARDENING-BACKLOG.md`
 

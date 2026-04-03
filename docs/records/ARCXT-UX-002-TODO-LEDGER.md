@@ -63,7 +63,11 @@ Reference: `docs/PLAN-LINKED-SAVE-SOP.md`
 | U13 | LATER | P2 | Blocked-save recovery | Add a direct blocked-save recovery path such as “Open Current Blueprint” / “Resume SOP” from the save failure flow. | Derived from current operator friction during `REQUIRE_PLAN` saves. |
 | U14 | LATER | P2 | Task Board guidance | Show active Change ID / blueprint and next required operator action directly in the Task Board. | Helps operators understand why saves are blocked and what to do next. |
 | U15 | WATCH | P2 | TS6 migration | Plan a real TypeScript 6+ module-resolution migration package instead of silencing the deprecation warning. | Do **not** add `ignoreDeprecations: "6.0"` while repo is pinned to TS 5.9.3. |
-| U16 | NOW | P1 | Documentation / evidence flow | Establish a pristine documentation flow and a canonical evidence pack for next-day review/demo readiness. | Must leave a truthful trail of what was built, verified, authorized, and still open. |
+| U16 | NOW | P1 | Documentation / evidence flow | Establish and maintain a pristine documentation flow for review/demo readiness. | Evidence-flow record exists; remaining work is keeping release/readiness, blueprint, and evidence docs aligned to current truth. |
+| U17 | NOW | P1 | Stage 3 soak evidence pack | Prepare the exact minimum evidence pack Sentinel expects for Stage 3 soak submission. | Must include HEADs, authorization boundary, build/test proof, VSIX/version, and explicit open-item truth. |
+| U18 | WATCH | P1 | ARC roadmap reconciliation | Retain `ARC-BLUEPRINT-001` as a future architecture reference and reconcile it with current local-only Lintel scope before any control-plane expansion. | Vercel/Railway/cloud items are not current Stage 3 authority and require separate Axis/Warden gating. |
+| U19 | WATCH | P2 | Infrastructure boundary alignment | Define how future Vercel control endpoints and Railway authority services could align with current Lintel behavior without creating premature backend coupling. | Planning only until a new reviewed package opens control-plane expansion. |
+| U20 | NEXT | P2 | Roadmap primitive mapping | Map roadmap concepts such as plan artifacts, execution tokens, run board, and modes to existing Lintel primitives. | Must stay descriptive first and avoid widening current runtime or authority scope. |
 
 ---
 
@@ -78,6 +82,8 @@ These are discussion-derived ideas worth retaining, but not yet accepted as imme
 | N03 | LATER | P3 | “Create from template, then open for edit” blueprint bootstrap shortcut. | Reduces first-run friction while preserving explicit confirmation. |
 | N04 | WATCH | P3 | Distinguish “wrong root” empty state from “no blueprint yet” empty state. | Avoids misleading new users when blueprint artifacts exist in a nested root. |
 | N05 | LATER | P3 | Auto-generate a compact evidence index from blueprint, build, test, and release state. | Reduces documentation drift and improves review readiness. |
+| N06 | LATER | P3 | Run board alignment | Explore how roadmap run-board states could map to current review/task-board surfaces without inventing premature orchestration UI. | Keeps future UX direction visible while preserving current bounded scope. |
+| N07 | LATER | P3 | Mode-system alignment | Explore how roadmap modes (`Inspect`, `Plan`, `Act`, `Review` and task modes like `ORGANIZE/CLEAN/REFACTOR/BUILD`) could map to current ARC XT workflows. | Preserves architecture direction without making mode claims before implementation. |
 
 ---
 
@@ -89,15 +95,19 @@ These are discussion-derived ideas worth retaining, but not yet accepted as imme
 | D02 | DONE | `docs/PLAN-LINKED-SAVE-SOP.md` created as canonical operator workflow of record. |
 | D03 | DONE | Active blueprint `ARCXT-UX-002` created to hold thread-audited follow-on work. |
 | D04 | DONE | Work order `WO-ARC-XT-M4-001` issued for first-run bootstrap and root-aware onboarding. |
+| D05 | DONE | `docs/records/ARCXT-STAGE3-EVIDENCE-FLOW.md` created as the documentation/evidence flow of record. |
+| D06 | DONE | `docs/RELEASE-READINESS.md` and `docs/H-007-TEST-INFRASTRUCTURE-GAP.md` reconciled to current Stage 3 truth. |
+| D07 | DONE | `docs/records/ARC-BLUEPRINT-001-INTEGRATED-ROADMAP-REFERENCE.md` retained the integrated ARC roadmap as future reference without widening Stage 3 authority. |
+| D08 | DONE | Roadmap-derived future alignment items were captured in the todo ledger and active blueprint instead of being left only in thread history. |
 
 ---
 
 ## D. Suggested Execution Order
 
 1. **U01–U06** — root-aware onboarding/bootstrap package (`WO-ARC-XT-M4-001`)
-2. **U07–U11** — blueprint-backed task/todo layer
-3. **U12–U14** — workflow friction reductions and visibility improvements
-4. **U15 / N01–N04** — technical follow-up and quality-of-life refinements
+2. **U16–U17** — documentation/evidence hygiene and Stage 3 soak pack readiness
+3. **U07–U11** — blueprint-backed task/todo layer
+4. **U12–U20 / N01–N07** — workflow friction, roadmap reconciliation, infrastructure planning, and quality-of-life refinements
 
 ---
 
@@ -107,4 +117,6 @@ These are discussion-derived ideas worth retaining, but not yet accepted as imme
 - Work order: `docs/work-orders/WO-ARC-XT-M4-001-first-run-bootstrap-and-root-aware-blueprint-onboarding.md`
 - Current SOP: `docs/PLAN-LINKED-SAVE-SOP.md`
 - Stage hardening ledger: `HARDENING-BACKLOG.md`
+- Evidence-flow record: `docs/records/ARCXT-STAGE3-EVIDENCE-FLOW.md`
+- Roadmap reference: `docs/records/ARC-BLUEPRINT-001-INTEGRATED-ROADMAP-REFERENCE.md`
 
