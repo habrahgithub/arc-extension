@@ -252,7 +252,7 @@ describe('LINTEL-REL-001 — Release Readiness Governance', () => {
       // Should have checkmarks for each field
       expect(releaseDoc).toContain('✅');
       expect(releaseDoc).toContain('private: true');
-      expect(releaseDoc).toContain('license: UNLICENSED');
+      expect(releaseDoc).toContain('license: Apache-2.0');
     });
   });
 
