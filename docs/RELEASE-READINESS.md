@@ -312,7 +312,7 @@ No automatic update checks are implemented (internal release posture).
 - [ ] Audit continuity preserved (if upgrading)
 - [ ] Governance tests pass (`npm run test:governance`)
 - [ ] No marketplace/public-release wording in docs
-- [ ] package.json truthfulness verified (private, license, publisher)
+- [x] package.json truthfulness verified (private, license, publisher)
 - [ ] Known limitations documented
 - [ ] Rollback path documented and tested
 - [ ] Evidence artifacts retained by path reference
