@@ -24,6 +24,7 @@ import { renderDecisionTimeline } from './extension/decisionTimeline';
 import { explainFileState } from './extension/fileStateExplainer';
 import { resolveFileAuditState } from './extension/fileAuditState';
 import { ARCOutputChannel } from './extension/ARCOutputChannel';
+import { FirstRunBootstrapService } from './extension/firstRunBootstrap';
 // ARC-UI-001a — Internal Review Surface Upgrade (UI layer)
 import { registerUiCommands } from './ui';
 // ARCXT-UX-CLARITY-001 — Minimal config template creation commands
@@ -364,6 +365,19 @@ export function activate(context: vscode.ExtensionContext): void {
   if (welcomeSurface.shouldShowWelcome()) {
     void welcomeSurface.showWelcome();
     void welcomeSurface.markWelcomeShown();
+  }
+
+  // U01–U06: First-run bootstrap for new operators (local-only, fail-closed)
+  const firstRunBootstrap = new FirstRunBootstrapService(context);
+  const firstTargetRoot = targetFor(
+    vscode.window.activeTextEditor?.document.uri.fsPath,
+  ).effectiveRoot;
+
+  if (firstRunBootstrap.shouldShowBootstrap(firstTargetRoot)) {
+    void firstRunBootstrap.showBootstrap(
+      firstTargetRoot,
+      vscode.window.activeTextEditor?.document.uri.fsPath,
+    );
   }
 
   for (const document of vscode.workspace.textDocuments) {

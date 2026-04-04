@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { buildCSPWithNonce, generateNonce } from '../ui/csp.js';
 import { LocalReviewSurfaceService } from './reviewSurfaces.js';
+import { detectFirstRunState } from '../core/firstRunDetection';
 
 /**
  * Task Board View Provider — Left Sidebar Task Board (ARC-UX-002)
@@ -12,11 +13,10 @@ import { LocalReviewSurfaceService } from './reviewSurfaces.js';
  *
  * This is a passive display only — it does not authorize, modify, or bypass enforcement.
  *
- * ARC-UX-002 CORRECTION: Reuses canonical derived Task Board state from
- * LocalReviewSurfaceService.renderTaskBoard() for consistency with Review Home.
+ * U01–U04: Root-aware empty-state with bounded next actions.
+ * The Task Board can rebind to the correct active governed root when appropriate.
  *
  * WARDEN HARDENING: CSP nonce applied, no inline scripts without nonce.
- * ARC-BRAND-001: Logo integration with scoped localResourceRoots.
  */
 
 export class TaskBoardViewProvider implements vscode.WebviewViewProvider {
@@ -24,13 +24,29 @@ export class TaskBoardViewProvider implements vscode.WebviewViewProvider {
   private _view?: vscode.WebviewView;
   private _reviewService: LocalReviewSurfaceService;
   private _workspaceRoot: string;
+  private _effectiveRoot: string;
 
   constructor(
     private readonly _extensionUri: vscode.Uri,
     workspaceRoot: string,
   ) {
     this._workspaceRoot = workspaceRoot;
+    this._effectiveRoot = workspaceRoot;
     this._reviewService = new LocalReviewSurfaceService(workspaceRoot);
+  }
+
+  /**
+   * Rebind the Task Board to a different governed root.
+   * Used when the operator selects a different root during first-run flow.
+   */
+  public rebindToRoot(newRoot: string): void {
+    this._effectiveRoot = newRoot;
+    this._reviewService = new LocalReviewSurfaceService(newRoot);
+    this.refresh();
+  }
+
+  public get effectiveRoot(): string {
+    return this._effectiveRoot;
   }
 
   public resolveWebviewView(webviewView: vscode.WebviewView): void {
@@ -60,6 +76,15 @@ export class TaskBoardViewProvider implements vscode.WebviewViewProvider {
           case 'openRuntimeStatus':
             await vscode.commands.executeCommand('arc.showRuntimeStatus');
             break;
+          case 'reviewGovernedRoot':
+            await vscode.commands.executeCommand('arc.showRuntimeStatus');
+            break;
+          case 'createArcConfig':
+          case 'createFirstBlueprint':
+          case 'useExistingConfig':
+            // Delegate to first-run bootstrap flow
+            await vscode.commands.executeCommand('arc.showRuntimeStatus');
+            break;
         }
       },
     );
@@ -74,7 +99,13 @@ export class TaskBoardViewProvider implements vscode.WebviewViewProvider {
   private _getHtmlForWebview(webview: vscode.Webview): string {
     // Use canonical derived Task Board state from LocalReviewSurfaceService
     const taskBoardMarkdown = this._reviewService.renderTaskBoard();
-    const workspaceRoot = this._workspaceRoot;
+    const effectiveRoot = this._effectiveRoot;
+
+    // Detect first-run state for bounded empty-state actions (U01–U04)
+    const firstRunState = detectFirstRunState(effectiveRoot);
+    const isEmpty =
+      taskBoardMarkdown.trim() === '' ||
+      taskBoardMarkdown.includes('No task board');
 
     // Generate CSP nonce for security hardening
     const nonce = generateNonce();
@@ -87,6 +118,40 @@ export class TaskBoardViewProvider implements vscode.WebviewViewProvider {
       'ARC-ICON-1024.png',
     );
     const logoUri = webview.asWebviewUri(logoPath).toString();
+
+    // Bounded empty-state actions (U04)
+    const emptyStateActions = isEmpty
+      ? `
+  <div class="section">
+    <h3>No Blueprint Artifacts Found</h3>
+    <p class="empty">No local blueprints exist for the current governed root.</p>
+    <div class="empty-actions">
+      <button class="action-btn" onclick="sendMessage('reviewGovernedRoot')">🔍 Review Governed Root</button>
+      <button class="action-btn" onclick="sendMessage('createArcConfig')">⚙️ Create Minimal ARC Config</button>
+      <button class="action-btn" onclick="sendMessage('createFirstBlueprint')">📄 Create First Blueprint</button>
+      <button class="action-btn" onclick="sendMessage('useExistingConfig')">📂 Use Existing ARC Config</button>
+    </div>
+  </div>`
+      : '';
+
+    // Root info section
+    const rootInfo = `
+  <div class="section">
+    <div class="row">
+      <span class="label">Governed Root:</span>
+      <span class="value" title="${effectiveRoot}">${this._truncatePath(effectiveRoot)}</span>
+    </div>
+    <div class="row">
+      <span class="label">ARC Config:</span>
+      <span class="badge ${firstRunState.hasArcConfig ? 'success' : 'warning'}">${firstRunState.hasArcConfig ? 'Present' : 'Missing'}</span>
+    </div>
+    <div class="row">
+      <span class="label">Blueprints:</span>
+      <span class="badge ${firstRunState.hasBlueprints ? 'success' : 'warning'}">${firstRunState.hasBlueprints ? 'Present' : 'None'}</span>
+    </div>
+    <button class="clickable" onclick="sendMessage('openFullTaskBoard')">Open Full Board</button>
+    <button class="clickable" onclick="sendMessage('openRuntimeStatus')">Runtime Status</button>
+  </div>`;
 
     return `<!DOCTYPE html>
 <html lang="en">
@@ -134,6 +199,9 @@ export class TaskBoardViewProvider implements vscode.WebviewViewProvider {
     .markdown-body blockquote { border-left: 3px solid #569cd6; padding-left: 8px; margin: 4px 0; color: #858585; }
     .markdown-body strong { color: var(--vscode-foreground); }
     .empty { color: #858585; font-style: italic; padding: 4px 0; }
+    .empty-actions { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+    .action-btn { cursor: pointer; color: #569cd6; font-size: 11px; border: 1px solid #569cd6; background: none; padding: 4px 8px; border-radius: 3px; text-align: left; }
+    .action-btn:hover { background-color: #569cd622; }
   </style>
 </head>
 <body>
@@ -142,17 +210,11 @@ export class TaskBoardViewProvider implements vscode.WebviewViewProvider {
     <h2>ARC XT Task Board</h2>
   </div>
 
-  <div class="section">
-    <div class="row">
-      <span class="label">Workspace:</span>
-      <span class="value" title="${workspaceRoot}">${this._truncatePath(workspaceRoot)}</span>
-    </div>
-    <button class="clickable" onclick="sendMessage('openFullTaskBoard')">Open Full Board</button>
-    <button class="clickable" onclick="sendMessage('openRuntimeStatus')">Runtime Status</button>
-  </div>
+  ${rootInfo}
+  ${emptyStateActions}
 
   <div class="section markdown-body">
-    ${this._markdownToHtml(taskBoardMarkdown)}
+    ${isEmpty ? '<p class="empty">No task board content available. Use the actions above to get started.</p>' : this._markdownToHtml(taskBoardMarkdown)}
   </div>
 
   <script nonce="${nonce}">

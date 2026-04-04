@@ -199,6 +199,7 @@ describe('Phase 7.8 — Operator Friction Hardening Governance', () => {
       // Note: execution* files added via Phase 7.11 execution governance chain
       const expectedCoreFiles = [
         'analysis', // Phase 7.11 — AST analysis layer
+        'arcBootstrap.ts', // U01-U06 — first-run bootstrap
         'auditLog.ts',
         'auditVisibility.ts',
         'blueprintArtifacts.ts',
@@ -213,6 +214,7 @@ describe('Phase 7.8 — Operator Friction Hardening Governance', () => {
         'executionStore.ts', // Phase 7.11 — execution governance chain
         'explanationSynthesizer.ts', // added via main (Codex PRs)
         'falsePositiveScorer.ts', // Phase 7.11 — AST analysis layer
+        'firstRunDetection.ts', // U01-U06 — first-run detection
         'governanceFeedbackEvaluator.ts', // added via main (Codex PRs)
         'governanceProposalRegistry.ts', // added via Codex PR #7
         'governanceHandoffService.ts', // added via Codex PR #7
