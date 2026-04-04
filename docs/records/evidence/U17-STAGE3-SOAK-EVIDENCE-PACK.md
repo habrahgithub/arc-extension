@@ -135,9 +135,9 @@ It is an evidence package for decision-making purposes only.
 | Artifact | Path |
 |----------|------|
 | Active blueprint | `.arc/blueprints/ARCXT-UX-002.md` |
-| TODO ledger | `docs/records/ARCXT-UX-002-TODO-LEDGER.md` |
+| TODO ledger | `docs/records/directives/ARCXT-UX-002-TODO-LEDGER.md` |
 | Release readiness | `docs/RELEASE-READINESS.md` |
-| Roadmap reference | `docs/records/ARC-BLUEPRINT-001-INTEGRATED-ROADMAP-REFERENCE.md` |
+| Roadmap reference | `docs/records/strategy/ARC-BLUEPRINT-001-roadmap-reference.md` |
 | H-007 documentation | `docs/H-007-TEST-INFRASTRUCTURE-GAP.md` |
 | Hardening backlog | `HARDENING-BACKLOG.md` |
 | WARDEN finding | `governance/records/WARDEN-LINTEL-001.md` (workspace) |

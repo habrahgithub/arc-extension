@@ -3,7 +3,7 @@
 **Project:** lintel (ARC XT)  
 **WARDEN Finding:** WARDEN-LINTEL-001  
 **Date Opened:** 2026-04-02  
-**Status:** Open — Internal Pilot Phase
+**Status:** Open — Stage 4 Internal Rollout Monitoring
 
 ---
 
@@ -16,42 +16,26 @@ Per WARDEN standing conditions and Axis recommendations.
 ### H-001: execSqlJson() Stderr Capture
 
 **Priority:** Medium  
-**Status:** 🟡 **CARRY-FORWARD** (Advisory, Non-Blocking)  
+**Status:** ✅ **CLOSED** (2026-04-03)  
 **WARDEN Reference:** Standing Condition #2  
-**Stage 2 Impact:** None — test output cleanliness only
+**Stage 4 Impact:** ✅ **CLEARED**
 
-**Issue:** `execSqlJson()` at `auditLog.ts:755` does not have `stdio: 'pipe'` for stderr capture. While SELECT queries rarely produce stderr noise, this is a gap in the hardening posture.
+**Issue:** `execSqlJson()` previously did not capture stderr, leaving a hardening gap relative to `execSql()`.
 
-**Classification:**
+**Fix Implemented:**
 
-- **Runtime Impact:** None — affects test output only
-- **Security Impact:** None — SELECT queries don't produce stderr
-- **Stage 2 Blocker:** No — advisory only
-
-**Fix Required:**
-
-```typescript
-private execSqlJson<T>(sqlStatement: string): T[] {
-  const output = execFileSync(
-    'sqlite3',
-    ['-json', this.sqlitePath(), sqlStatement],
-    {
-      encoding: 'utf8',
-      stdio: ['pipe', 'pipe', 'pipe'], // Add stderr capture
-    },
-  ).trim();
-  // ...
-}
-```
-
-**Target:** Next release cycle (post-internal pilot)
+- `src/core/auditLog.ts` updated so `execSqlJson()` uses:
+  - `stdio: ['pipe', 'pipe', 'pipe']`
+- Closure verified during Stage 4 gate review.
 
 **Verification:**
 
-- Run `npm run test` — no stderr output
-- Verify JSON parsing still works correctly
+- `npm run test` passing after fix
+- Stage 4 authorization accepted with H-001 closed
+- Remaining posture: non-blocking historical record only
 
-**Owner:** Forge
+**Owner:** Forge  
+**Closure Commit:** `cd073cd`
 
 ---
 
@@ -330,14 +314,14 @@ private execSqlJson<T>(sqlStatement: string): T[] {
 ## Standing Conditions (WARDEN)
 
 1. **Local-Only Scope** — No cloud-lane without new WARDEN gate
-2. **execSqlJson() Stderr Capture — **CLOSED** (H-001)
+2. **execSqlJson() Stderr Capture** — CLOSED (H-001)
 3. **Route Policy Configuration** — `enabledByDefault = false` unchanged
 
 ---
 
-## Mandatory Carry-Forward (Axis Directive)
+## Historical Gate Notes
 
-Per Axis decision 2026-04-02, the following must be formalized before Stage 3:
+Retained for audit continuity. The Stage 3 gates below are already closed.
 
 ### H-006: Duplicate Output Channel
 
@@ -359,11 +343,10 @@ Per Axis decision 2026-04-02, the following must be formalized before Stage 3:
 
 ## Next Review
 
-**Trigger:** Stage 3 rollout request  
-**Required Closures:** H-006 ✅, H-007 ✅ (documentation)  
-**Optional:** H-001, H-002
+**Trigger:** Stage 4 monitoring, scope expansion request, or any WARDEN standing-condition deviation  
+**Required Closures:** None for current Stage 4 internal rollout  
+**Carry-Forward:** H-002 and active `ARCXT-UX-002` follow-on work
 
 ---
 
-**Last Updated:** 2026-04-02  
-**Audit Point:** `e549720` (lintel) / pending (workspace)
+**Last Updated:** 2026-04-04

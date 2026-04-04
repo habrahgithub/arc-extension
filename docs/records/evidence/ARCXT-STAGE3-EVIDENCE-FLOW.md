@@ -24,7 +24,7 @@ It must preserve ARC XT's local-only, fail-closed, and blueprint-backed governan
 
 ### 1. Active proof and execution scope
 - Active blueprint: `.arc/blueprints/ARCXT-UX-002.md`
-- Maintained todo ledger: `docs/records/ARCXT-UX-002-TODO-LEDGER.md`
+- Maintained todo ledger: `docs/records/directives/ARCXT-UX-002-TODO-LEDGER.md`
 - First-run/onboarding work order: `docs/work-orders/WO-ARC-XT-M4-001-first-run-bootstrap-and-root-aware-blueprint-onboarding.md`
 
 ### 2. Operational workflow canon
@@ -149,7 +149,7 @@ Create or refresh a concise Stage 3 evidence summary before the next review cont
 ## References
 
 - `.arc/blueprints/ARCXT-UX-002.md`
-- `docs/records/ARCXT-UX-002-TODO-LEDGER.md`
+- `docs/records/directives/ARCXT-UX-002-TODO-LEDGER.md`
 - `HARDENING-BACKLOG.md`
 - `docs/RELEASE-READINESS.md`
 - `governance/project-registry.yml`

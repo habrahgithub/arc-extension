@@ -6,13 +6,14 @@
 **Version:** 0.1.11
 **Release Posture:** CONTROLLED INTERNAL RELEASE
 **Date:** 2026-04-03
-**Stage 3 Authorization:** ✅ AUTHORIZED (Axis 2026-04-03 — limited operator cohort)
+**Last Canon Review:** 2026-04-04
+**Stage 4 Authorization:** ✅ AUTHORIZED (Axis 2026-04-03 — broader internal rollout)
 
 ---
 
 ## Release Status
 
-**Status:** CONTROLLED INTERNAL RELEASE READY
+**Status:** CONTROLLED INTERNAL RELEASE READY (STAGE 4 BROADER INTERNAL ROLLOUT)
 
 **Certified For:**
 
@@ -229,6 +230,12 @@ npm run pack
 sha256sum arc-audit-ready-core-0.1.11.vsix  # Record for verification
 ```
 
+**Canonical internal-rollout artifact:**
+
+- Path: `arc-audit-ready-core-0.1.11.vsix`
+- SHA256: `fc775d00c4772ddde7377a02a8ba0f59f4cbc73bb9af28afdbea79b0999157a2`
+- Authority note: distribute only within the current WARDEN envelope (local-only, `enabledByDefault = false`, operator-configured route policy)
+
 ### Update Notification
 
 For internal deployments, update notification occurs via:
@@ -257,6 +264,7 @@ No automatic update checks are implemented (internal release posture).
 ### Release-Readiness Evidence
 
 - **This Document:** `docs/RELEASE-READINESS.md` (by path reference)
+- **Records Canon:** `docs/records/README.md` (sectioned authority / evidence / reference map)
 - **UAT Scenarios:** `docs/PHASE-7.10-UAT-SCENARIOS.md` (by path reference)
 - **Rollback Drill:** `docs/PHASE-7.10-ROLLBACK-DRILL.md` (by path reference)
 
@@ -301,6 +309,41 @@ No automatic update checks are implemented (internal release posture).
 - All documentation states "internal release" or "controlled release"
 - No "production-ready", "marketplace-ready", or "public release" claims
 - Capability statements are bounded to actual implemented features
+
+---
+
+## Future Public / Enterprise Gate (Not Current Release)
+
+The current release remains an **internal Stage 4 rollout only**.
+
+Any future public marketplace or regulated-enterprise package requires a **separate reviewed gate** covering at minimum:
+
+1. **Public asset alignment**
+   - Marketplace, landing, and public docs use a concrete, plain-language value statement
+   - Open VSX install path is explicit where relevant
+   - "Blueprint Proof" / plan-linking is explained in plain operator language
+
+2. **ARC-specific trust pages**
+   - ARC-specific security, privacy, and DPA/procurement pages exist
+   - DocSmith/payroll-oriented trust pages are not reused as ARC trust posture
+
+3. **Telemetry contract**
+   - explicit no-code / no-prompt / no-content telemetry contract published
+   - any event metadata remains opt-in and privacy-safe
+
+4. **Enterprise distribution posture**
+   - signed release / checksum discipline documented
+   - private marketplace / rehost / offline distribution guidance documented
+   - procurement pack boundaries defined
+
+5. **Evaluation and retention proof**
+   - first-run / 10-minute evaluation path exists
+   - privacy-safe retention and engagement metrics are defined
+
+6. **Override / dispute policy**
+   - override-with-reason and rule-dispute workflow reviewed against fail-closed posture
+
+These are **future release-gate prerequisites**, not current Stage 4 claims.
 
 ---
 
