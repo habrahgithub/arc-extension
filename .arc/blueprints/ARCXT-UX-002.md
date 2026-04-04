@@ -121,12 +121,12 @@ Maintenance rule:
 
 ### Root-aware onboarding and first-run bootstrap
 
-- [ ] U01 — Detect first-run / misconfigured-root conditions and surface a bounded bootstrap entry point.
-- [ ] U02 — Detect candidate governed roots and require explicit choice when ambiguous.
-- [ ] U03 — Let the Task Board and review surfaces rebind to the correct active governed root.
-- [ ] U04 — Upgrade the Task Board empty state with bounded recovery actions.
-- [ ] U05 — Add safe, explicit config bootstrap for `.arc/router.json` and `.arc/workspace-map.json`.
-- [ ] U06 — Generalize first blueprint creation for new users instead of assuming LINTEL-specific naming.
+- [x] U01 — Detect first-run / misconfigured-root conditions and surface a bounded bootstrap entry point.
+- [x] U02 — Detect candidate governed roots and require explicit choice when ambiguous.
+- [x] U03 — Let the Task Board and review surfaces rebind to the correct active governed root.
+- [x] U04 — Upgrade the Task Board empty state with bounded recovery actions.
+- [x] U05 — Add safe, explicit config bootstrap for `.arc/router.json` and `.arc/workspace-map.json`.
+- [x] U06 — Generalize first blueprint creation for new users instead of assuming LINTEL-specific naming.
 
 ### Blueprint-backed todo / task workflow
 
@@ -204,8 +204,8 @@ Maintenance rule:
 - [x] T3 — Record the current SOP in a canonical local doc for operators.
 - [x] T4 — Save a new active blueprint that captures the incomplete work from the thread audit.
 - [x] T5 — Create and maintain a canonical todo ledger for discussion-derived unfinished work and new ideas.
-- [ ] T6 — Execute `WO-ARC-XT-M4-001` first-run bootstrap and governed-root selection package.
-- [ ] T7 — Fix Task Board root rebinding and empty-state CTA flow.
+- [x] T6 — Execute `WO-ARC-XT-M4-001` first-run bootstrap and governed-root selection package.
+- [x] T7 — Fix Task Board root rebinding and empty-state CTA flow.
 - [ ] T8 — Define and implement blueprint-backed task/todo parsing.
 - [ ] T9 — Add bounded active-task context injection for local model evaluation.
 - [x] T10 — Establish the documentation/evidence flow record for Stage 3 review readiness.

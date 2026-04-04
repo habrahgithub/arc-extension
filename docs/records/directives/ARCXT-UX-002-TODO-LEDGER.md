@@ -53,12 +53,12 @@ Reference: `docs/PLAN-LINKED-SAVE-SOP.md`
 
 | ID  | Status | Priority | Theme                             | Description                                                                                                                                                     | Notes / Exit Signal                                                                                                              |
 | --- | ------ | -------: | --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| U01 | NOW    |       P1 | First-run bootstrap               | Detect first-run / misconfigured-root conditions and surface a bounded bootstrap entry point.                                                                   | New users should not land in an empty or misleading state with no guided next action.                                            |
-| U02 | NOW    |       P1 | Governed-root selection           | Detect candidate governed roots (workspace root, nested repo root, active-file root) and require explicit choice when ambiguous.                                | No silent root switching. Must remain transparent and local-only.                                                                |
-| U03 | NOW    |       P1 | Task Board rebinding              | Let the Task Board and review surfaces rebind to the correct active governed root instead of staying pinned to initial activation root.                         | Fixes empty-board-in-monorepo failure mode seen in current workflow.                                                             |
-| U04 | NOW    |       P1 | Empty-state recovery              | Upgrade Task Board empty state with bounded actions: Review Governed Root, Create Minimal ARC Config, Create First Blueprint, Use Existing ARC Config.          | Empty state should guide, not dead-end.                                                                                          |
-| U05 | NOW    |       P1 | Safe config bootstrap             | Add explicit, non-destructive creation flow for `.arc/router.json` and `.arc/workspace-map.json` with fail-closed defaults.                                     | Must preserve `RULE_ONLY`, `local_lane_enabled=false`, `cloud_lane_enabled=false`.                                               |
-| U06 | NOW    |       P1 | First blueprint setup             | Generalize first blueprint creation for new users instead of assuming LINTEL-specific naming.                                                                   | Suggested IDs may use workspace/project slug patterns.                                                                           |
+| U01 | DONE   |       P1 | First-run bootstrap               | Detect first-run / misconfigured-root conditions and surface a bounded bootstrap entry point.                                                                   | New users should not land in an empty or misleading state with no guided next action.                                            |
+| U02 | DONE   |       P1 | Governed-root selection           | Detect candidate governed roots (workspace root, nested repo root, active-file root) and require explicit choice when ambiguous.                                | No silent root switching. Must remain transparent and local-only.                                                                |
+| U03 | DONE   |       P1 | Task Board rebinding              | Let the Task Board and review surfaces rebind to the correct active governed root instead of staying pinned to initial activation root.                         | Fixes empty-board-in-monorepo failure mode seen in current workflow.                                                             |
+| U04 | DONE   |       P1 | Empty-state recovery              | Upgrade Task Board empty state with bounded actions: Review Governed Root, Create Minimal ARC Config, Create First Blueprint, Use Existing ARC Config.          | Empty state should guide, not dead-end.                                                                                          |
+| U05 | DONE   |       P1 | Safe config bootstrap             | Add explicit, non-destructive creation flow for `.arc/router.json` and `.arc/workspace-map.json` with fail-closed defaults.                                     | Must preserve `RULE_ONLY`, `local_lane_enabled=false`, `cloud_lane_enabled=false`.                                               |
+| U06 | DONE   |       P1 | First blueprint setup             | Generalize first blueprint creation for new users instead of assuming LINTEL-specific naming.                                                                   | Suggested IDs may use workspace/project slug patterns.                                                                           |
 | U07 | NEXT   |       P1 | Blueprint task schema             | Define a canonical `## Tasks` blueprint convention that the extension can parse safely.                                                                         | Must be blueprint-backed and optional until adopted.                                                                             |
 | U08 | NEXT   |       P1 | Task parsing                      | Parse blueprint tasks/todos into extension-visible task state and Task Board summaries.                                                                         | Task list must remain advisory; blueprint remains proof authority.                                                               |
 | U09 | NEXT   |       P1 | Active task selection             | Allow bounded active-task selection for operator context.                                                                                                       | Selection must be local-only and never authorize saves on its own.                                                               |
@@ -143,7 +143,7 @@ These are discussion-derived ideas worth retaining, but not yet accepted as imme
 
 ## D. Suggested Execution Order
 
-1. **U01–U06** — root-aware onboarding/bootstrap package (`WO-ARC-XT-M4-001`)
+1. **U16/U29–U32/U36** — documentation/evidence hygiene and next execution slice (`WO-ARC-XT-M4-001`)
 2. **U16 / U29–U32 / U36** — documentation, public asset clarity, telemetry contract, quick-evaluation flow, and privacy-safe metric design
 3. **U37–U38 / U24 / U27 / U39–U42 / U45–U46** — coherence, shared evaluation contract, HUD/event behavior, and security-control-plane reconciliation
 4. **U07–U11** — blueprint-backed task/todo layer
@@ -163,3 +163,16 @@ These are discussion-derived ideas worth retaining, but not yet accepted as imme
 - Security reference: `docs/records/strategy/ARC-BLUEPRINT-SECURITY-001-reference.md`
 - Deep research review: `docs/records/reviews/ARC-DEEP-RESEARCH-AXIS-REVIEW.md`
 - System coherence record: `docs/records/strategy/ARC-SYS-COHERENCE-001.md`
+
+---
+
+## U01–U06 Closure Record (2026-04-04)
+
+All 6 items closed. WO-ARC-XT-M4-001 accepted by Axis after 3 review rounds.
+
+Gaps closed:
+- Gap 1: Workspace folder root handoff from targeting logic
+- Gap 2: Truthful Workspace Root item wording
+- Gap 3: AC5/AC7 placeholder tests replaced with source-inspection assertions
+
+Axis verdict: APPROVED WITH CONDITIONS (conditions satisfied)
