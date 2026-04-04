@@ -41,12 +41,18 @@ export class FirstRunBootstrapService {
   /**
    * Show the first-run bootstrap flow.
    * Returns the selected governed root, or null if skipped.
+   *
+   * @param workspaceRoot — the effective root passed from targeting logic
+   * @param activeFilePath — current active file path (optional)
+   * @param actualWorkspaceFolderRoot — the real VS Code workspace folder root
    */
   async showBootstrap(
     workspaceRoot: string,
     activeFilePath?: string,
+    actualWorkspaceFolderRoot?: string,
   ): Promise<BootstrapResult> {
     const state = detectFirstRunState(workspaceRoot, activeFilePath);
+    const workspaceFolderRoot = actualWorkspaceFolderRoot ?? workspaceRoot;
 
     // Step 1: Welcome message
     const welcomeChoice = await vscode.window.showInformationMessage(
@@ -71,6 +77,7 @@ export class FirstRunBootstrapService {
     let selectedRoot = state.governedRoot;
     const rootChoices = this._buildRootSelectionItems(
       state,
+      workspaceFolderRoot,
       workspaceRoot,
       activeFilePath,
     );
@@ -86,12 +93,12 @@ export class FirstRunBootstrapService {
       }
     }
 
-    // Step 3: Config bootstrap
+    // Step 3: Config bootstrap (with exact-path confirmation)
     let configCreated = false;
     if (!state.hasArcConfig) {
       const configChoice = await vscode.window.showInformationMessage(
         `ARC XT — Minimal Configuration\n\n` +
-          `Create default ARC config in ${selectedRoot}/.arc/\n\n` +
+          `Create default ARC config in:\n${selectedRoot}/.arc/router.json\n${selectedRoot}/.arc/workspace-map.json\n\n` +
           `Defaults: RULE_ONLY mode, local lane disabled, cloud lane disabled.`,
         { modal: true },
         'Create Config',
@@ -117,31 +124,32 @@ export class FirstRunBootstrapService {
       }
     }
 
-    // Step 4: Blueprint bootstrap
+    // Step 4: Blueprint bootstrap (with exact-path confirmation)
     let blueprintCreated: string | null = null;
     if (!state.hasBlueprints) {
+      const directiveId = generateBlueprintDirectiveId(
+        path.basename(selectedRoot),
+      );
+      const projectName = path.basename(selectedRoot);
+      const bpFileName = `${directiveId.toLowerCase()}.md`;
+      const blueprintsDir = ensureArcBlueprintsDir(selectedRoot);
+      const bpPath = path.join(blueprintsDir, bpFileName);
+
       const bpChoice = await vscode.window.showInformationMessage(
         `ARC XT — First Blueprint\n\n` +
-          `No blueprint artifacts found. Create a first blueprint template?`,
+          `Create blueprint at:\n${bpPath}\n\n` +
+          `This blueprint will be a template — replace placeholder content before use.`,
         { modal: true },
         'Create Blueprint',
         'Skip Blueprint',
       );
 
       if (bpChoice === 'Create Blueprint') {
-        const directiveId = generateBlueprintDirectiveId(
-          path.basename(selectedRoot),
-        );
-        const projectName = path.basename(selectedRoot);
         const template = generateBlueprintTemplate(
           selectedRoot,
           directiveId,
           projectName,
         );
-
-        const blueprintsDir = ensureArcBlueprintsDir(selectedRoot);
-        const bpFileName = `${directiveId.toLowerCase()}.md`;
-        const bpPath = path.join(blueprintsDir, bpFileName);
 
         if (!fs.existsSync(bpPath)) {
           fs.writeFileSync(bpPath, template, 'utf8');
@@ -179,10 +187,14 @@ export class FirstRunBootstrapService {
   /**
    * Build root selection items that present workspace-root / active-file-root / nested-root choices.
    * Per WO-ARC-XT-M4-001: operator must be shown bounded choices when multiple plausible roots exist.
+   *
+   * @param workspaceFolderRoot — the actual VS Code workspace folder root (always shown as "Workspace Root")
+   * @param effectiveRoot — the current effective root from targeting logic
    */
   private _buildRootSelectionItems(
     state: ReturnType<typeof detectFirstRunState>,
-    workspaceRoot: string,
+    workspaceFolderRoot: string,
+    effectiveRoot: string,
     activeFilePath?: string,
   ): Array<{
     label: string;
@@ -197,18 +209,23 @@ export class FirstRunBootstrapService {
       rootPath: string;
     }> = [];
 
-    // Always offer workspace folder root
+    // Always offer the actual workspace folder root as "Workspace Root"
     items.push({
       label: `📁 Workspace Root`,
-      description: workspaceRoot,
-      detail: state.hasArcConfig ? 'ARC config exists' : 'No ARC config',
-      rootPath: workspaceRoot,
+      description: workspaceFolderRoot,
+      detail:
+        workspaceFolderRoot === effectiveRoot
+          ? state.hasArcConfig
+            ? 'ARC config exists'
+            : 'No ARC config'
+          : 'Current effective root',
+      rootPath: workspaceFolderRoot,
     });
 
     // Offer active file root if different from workspace root
     if (activeFilePath) {
       const activeRoot = path.dirname(activeFilePath);
-      if (activeRoot !== workspaceRoot) {
+      if (activeRoot !== workspaceFolderRoot) {
         const candidate = state.candidates.find((c) => c.path === activeRoot);
         items.push({
           label: `📄 Active File Root`,
@@ -222,7 +239,7 @@ export class FirstRunBootstrapService {
     // Offer nested project roots (those with .git or package.json markers)
     for (const candidate of state.candidates) {
       if (
-        candidate.path !== workspaceRoot &&
+        candidate.path !== workspaceFolderRoot &&
         candidate.markers.includes('.git')
       ) {
         const exists = items.some((i) => i.rootPath === candidate.path);
@@ -243,6 +260,7 @@ export class FirstRunBootstrapService {
   /**
    * Execute a bounded bootstrap action from the Task Board empty-state.
    * Returns the selected root if config/blueprint was created, or null if skipped.
+   * Includes exact-path confirmation per WO-ARC-XT-M4-001.
    */
   async executeBootstrapAction(
     action: 'create-config' | 'create-blueprint' | 'use-existing',
@@ -259,6 +277,27 @@ export class FirstRunBootstrapService {
     }
 
     if (action === 'create-config') {
+      const routerPath = path.join(workspaceRoot, '.arc', 'router.json');
+      const mapPath = path.join(workspaceRoot, '.arc', 'workspace-map.json');
+
+      const confirmChoice = await vscode.window.showInformationMessage(
+        `ARC XT — Confirm Config Creation\n\n` +
+          `Files to create:\n• ${routerPath}\n• ${mapPath}\n\n` +
+          `Defaults: RULE_ONLY, local lane disabled, cloud lane disabled.`,
+        { modal: true },
+        'Confirm',
+        'Cancel',
+      );
+
+      if (confirmChoice !== 'Confirm') {
+        return {
+          selectedRoot: null,
+          configCreated: false,
+          blueprintCreated: null,
+          skipped: true,
+        };
+      }
+
       const result = createMinimalArcConfig({
         workspaceRoot,
         overwriteExisting: false,
@@ -289,14 +328,33 @@ export class FirstRunBootstrapService {
       const directiveId = generateBlueprintDirectiveId(
         path.basename(workspaceRoot),
       );
+      const blueprintsDir = ensureArcBlueprintsDir(workspaceRoot);
+      const bpFileName = `${directiveId.toLowerCase()}.md`;
+      const bpPath = path.join(blueprintsDir, bpFileName);
+
+      const confirmChoice = await vscode.window.showInformationMessage(
+        `ARC XT — Confirm Blueprint Creation\n\n` +
+          `File to create:\n${bpPath}\n\n` +
+          `This will be a template — replace placeholder content before use.`,
+        { modal: true },
+        'Confirm',
+        'Cancel',
+      );
+
+      if (confirmChoice !== 'Confirm') {
+        return {
+          selectedRoot: null,
+          configCreated: false,
+          blueprintCreated: null,
+          skipped: true,
+        };
+      }
+
       const template = generateBlueprintTemplate(
         workspaceRoot,
         directiveId,
         path.basename(workspaceRoot),
       );
-      const blueprintsDir = ensureArcBlueprintsDir(workspaceRoot);
-      const bpFileName = `${directiveId.toLowerCase()}.md`;
-      const bpPath = path.join(blueprintsDir, bpFileName);
 
       if (!fs.existsSync(bpPath)) {
         fs.writeFileSync(bpPath, template, 'utf8');
