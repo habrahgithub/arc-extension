@@ -24,7 +24,7 @@ Align all documentation, evidence, and rollout records to a single source of tru
 - **Blueprint (ARCXT-UX-002):** U01-U06 marked [x], T6/T7 marked [x] ✅
 
 ### 2. Evidence Records
-- **U17 Soak Pack:** Created at `docs/evidence/U17-STAGE3-SOAK-EVIDENCE-PACK.md` ✅
+- **U17 Soak Pack:** Created at `docs/records/evidence/...-STAGE3-SOAK-EVIDENCE-PACK.md` ✅
 - **Handoff Manifest:** Latest at `artifacts/handoffs/handoff-*/HANDOFF-MANIFEST.md` ✅
 
 ### 3. Public-Facing Claims

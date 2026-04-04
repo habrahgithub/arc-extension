@@ -16,29 +16,22 @@ ARC (Audit Layer)
 Git / PR / CI
 ```
 
-## Beta Status
+## Status
 
-**Status:** Public beta candidate  
-**Channels:** Visual Studio Marketplace + Open VSX  
-**Feedback:** GitHub Issues / invited tester feedback
+**Status:** Controlled internal release (Stage 4)
+**Distribution:** Direct VSIX transfer to authorized operators
+**Feedback:** Internal pilot channels
 
 Current product posture:
 
 - local-first by default
 - cloud lanes disabled by default
-- suitable for developer testing and workflow feedback
-- still evolving in wording, heuristics, and operator polish
+- suitable for authorized developer testing and workflow feedback
+- not authorized for public marketplace or broad external distribution
 
 ## Quick Start
 
 ### Install
-
-#### From Marketplace
-
-1. Open the Extensions view in VS Code
-2. Search for **ARC XT — Audit Ready Core**
-3. Install the extension
-4. Reload VS Code when prompted
 
 #### From VSIX
 
@@ -56,12 +49,12 @@ Current product posture:
 
 ## What ARC XT Does
 
-| Decision | When | Action Required |
-| --- | --- | --- |
-| **ALLOW** | Low-risk changes such as UI components or tests | None — save proceeds |
-| **WARN** | Medium-risk changes such as config or schema edits | Acknowledge risk before save |
-| **REQUIRE_PLAN** | High-risk changes such as auth or core logic | Link to governance blueprint proof |
-| **BLOCK** | Critical-risk violations | Save blocked — address the risk first |
+| Decision         | When                                               | Action Required                       |
+| ---------------- | -------------------------------------------------- | ------------------------------------- |
+| **ALLOW**        | Low-risk changes such as UI components or tests    | None — save proceeds                  |
+| **WARN**         | Medium-risk changes such as config or schema edits | Acknowledge risk before save          |
+| **REQUIRE_PLAN** | High-risk changes such as auth or core logic       | Link to governance blueprint proof    |
+| **BLOCK**        | Critical-risk violations                           | Save blocked — address the risk first |
 
 ## Key Features
 
@@ -90,25 +83,25 @@ ARC XT works out of the box with sensible defaults. Optional configuration lives
 }
 ```
 
-| Setting | Default | Description |
-| --- | --- | --- |
-| `mode` | `RULE_ONLY` | Enforcement mode (`RULE_ONLY`, `LOCAL_PREFERRED`, `CLOUD_ASSISTED`) |
-| `localLaneEnabled` | `false` | Enable local AI model evaluation |
-| `cloudLaneEnabled` | `false` | Enable cloud fallback only after explicit approval |
+| Setting            | Default     | Description                                                         |
+| ------------------ | ----------- | ------------------------------------------------------------------- |
+| `mode`             | `RULE_ONLY` | Enforcement mode (`RULE_ONLY`, `LOCAL_PREFERRED`, `CLOUD_ASSISTED`) |
+| `localLaneEnabled` | `false`     | Enable local AI model evaluation                                    |
+| `cloudLaneEnabled` | `false`     | Enable cloud fallback only after explicit approval                  |
 
 ## Commands
 
-| Command | Description |
-| --- | --- |
-| `ARC XT: Review Home` | Open the main ARC XT review surface |
-| `ARC XT: Decision Feed` | View recent enforcement decisions |
-| `ARC XT: Audit Timeline` | Inspect chronological audit entries |
-| `ARC XT: Why Panel` | Explain the current or recent decision |
-| `ARC XT: Review Audit Log` | Inspect recent save decisions |
-| `ARC XT: Show Active Workspace Status` | View current workspace targeting and route posture |
-| `ARC XT: Review Blueprint Proofs` | Review linked governance blueprints |
-| `ARC XT: Review False-Positive Candidates` | Advisory review of potential false positives |
-| `ARC XT: Show Welcome Guide` | Display onboarding information |
+| Command                                    | Description                                        |
+| ------------------------------------------ | -------------------------------------------------- |
+| `ARC XT: Review Home`                      | Open the main ARC XT review surface                |
+| `ARC XT: Decision Feed`                    | View recent enforcement decisions                  |
+| `ARC XT: Audit Timeline`                   | Inspect chronological audit entries                |
+| `ARC XT: Why Panel`                        | Explain the current or recent decision             |
+| `ARC XT: Review Audit Log`                 | Inspect recent save decisions                      |
+| `ARC XT: Show Active Workspace Status`     | View current workspace targeting and route posture |
+| `ARC XT: Review Blueprint Proofs`          | Review linked governance blueprints                |
+| `ARC XT: Review False-Positive Candidates` | Advisory review of potential false positives       |
+| `ARC XT: Show Welcome Guide`               | Display onboarding information                     |
 
 ## Limitations
 

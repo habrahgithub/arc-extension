@@ -23,7 +23,7 @@ Create a guided first-run demo / quick evaluation path that shows **WARN → REQ
 - Operator can explain how ARC XT differs from a linter.
 
 ## UX Principles
-- **Show Value Before Asking for Proof:** Initial evaluation should demonstrate protection without requiring complex setup.
+- **Show Value Before Asking for Proof:** Evaluation path explicitly demonstrates WARN (acknowledge risk), REQUIRE_PLAN (link blueprint), and BLOCK (stop critical change) flows.
 - **No Hidden Friction:** Warnings and blocks should have clear "Why?" explanations and next steps.
 - **Safe Environment:** Evaluation mode should not mutate or corrupt existing user projects.
 
