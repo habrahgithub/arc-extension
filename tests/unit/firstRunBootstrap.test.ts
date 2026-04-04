@@ -12,6 +12,7 @@ import {
 } from '../../src/core/arcBootstrap';
 
 const workspaces: string[] = [];
+const projectRoot = path.resolve(__dirname, '..', '..');
 
 function makeWorkspace(): string {
   const workspace = fs.mkdtempSync(path.join(os.tmpdir(), 'lintel-bootstrap-'));
@@ -280,12 +281,34 @@ describe('WO-ARC-XT-M4-001 — Work order acceptance criteria', () => {
     expect(template).not.toContain('LINTEL');
   });
 
-  it('AC5: root-rebinding support exists — FirstRunBootstrapService returns selectedRoot', () => {
-    // Verified by code review of src/extension/firstRunBootstrap.ts:
-    // - showBootstrap returns BootstrapResult with selectedRoot field
-    // - src/extension.ts calls taskBoardProvider.rebindToRoot(bootstrapResult.selectedRoot)
-    // - TaskBoardViewProvider.rebindToRoot creates new LocalReviewSurfaceService with new root
-    expect(true).toBe(true); // Structural verification by code review
+  it('AC5: root-rebinding support — showBootstrap returns selectedRoot and extension wires rebindToRoot', () => {
+    // Source-inspection test: verify BootstrapResult interface has selectedRoot field
+    const bootstrapSource = fs.readFileSync(
+      path.join(projectRoot, 'src', 'extension', 'firstRunBootstrap.ts'),
+      'utf8',
+    );
+
+    // Verify BootstrapResult includes selectedRoot
+    expect(bootstrapSource).toContain('selectedRoot: string | null');
+
+    // Verify showBootstrap returns BootstrapResult with selectedRoot
+    expect(bootstrapSource).toMatch(/return\s*\{\s*selectedRoot/);
+
+    // Verify extension.ts wires rebindToRoot with bootstrapResult.selectedRoot
+    const extensionSource = fs.readFileSync(
+      path.join(projectRoot, 'src', 'extension.ts'),
+      'utf8',
+    );
+    expect(extensionSource).toContain(
+      'taskBoardProvider.rebindToRoot(bootstrapResult.selectedRoot)',
+    );
+
+    // Verify TaskBoardViewProvider has rebindToRoot method
+    const taskBoardSource = fs.readFileSync(
+      path.join(projectRoot, 'src', 'extension', 'taskBoardView.ts'),
+      'utf8',
+    );
+    expect(taskBoardSource).toContain('public rebindToRoot(newRoot: string)');
   });
 
   it('AC6: no silent mutation — createMinimalArcConfig respects overwriteExisting=false', () => {
@@ -310,11 +333,25 @@ describe('WO-ARC-XT-M4-001 — Work order acceptance criteria', () => {
     expect(config.mode).toBe('CUSTOM');
   });
 
-  it('AC7: exact-path confirmation is built into BootstrapResult', () => {
-    // Verified by code review:
-    // - BootstrapResult includes configCreated and blueprintCreated fields
-    // - executeBootstrapAction shows exact paths before creation
-    // - firstRunBootstrap.ts shows full file paths in confirmation dialogs
-    expect(true).toBe(true); // Structural verification by code review
+  it('AC7: exact-path confirmation — executeBootstrapAction shows full paths before creation', () => {
+    // Source-inspection test: verify executeBootstrapAction shows exact file paths
+    const bootstrapSource = fs.readFileSync(
+      path.join(projectRoot, 'src', 'extension', 'firstRunBootstrap.ts'),
+      'utf8',
+    );
+
+    // Verify config creation shows exact paths for router.json and workspace-map.json
+    expect(bootstrapSource).toContain('router.json');
+    expect(bootstrapSource).toContain('workspace-map.json');
+    expect(bootstrapSource).toMatch(/\$\{.*routerPath/);
+
+    // Verify blueprint creation shows exact blueprint path
+    expect(bootstrapSource).toContain('Confirm Blueprint Creation');
+    expect(bootstrapSource).toContain('File to create');
+    expect(bootstrapSource).toContain('bpPath');
+
+    // Verify modal confirmation is required before creation
+    expect(bootstrapSource).toContain('{ modal: true }');
+    expect(bootstrapSource).toContain("'Confirm'");
   });
 });

@@ -210,15 +210,13 @@ export class FirstRunBootstrapService {
     }> = [];
 
     // Always offer the actual workspace folder root as "Workspace Root"
+    const workspaceHasArc = fs.existsSync(
+      path.join(workspaceFolderRoot, '.arc', 'router.json'),
+    );
     items.push({
       label: `📁 Workspace Root`,
       description: workspaceFolderRoot,
-      detail:
-        workspaceFolderRoot === effectiveRoot
-          ? state.hasArcConfig
-            ? 'ARC config exists'
-            : 'No ARC config'
-          : 'Current effective root',
+      detail: workspaceHasArc ? 'ARC config exists' : 'No ARC config',
       rootPath: workspaceFolderRoot,
     });
 

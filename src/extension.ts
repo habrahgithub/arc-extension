@@ -442,12 +442,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
   // U01–U06: First-run bootstrap for new operators (local-only, fail-closed)
   const firstRunBootstrap = new FirstRunBootstrapService(context);
-  const firstTargetResolution = targetFor(
-    activeEditorFilePath(),
-  );
-  const actualWorkspaceRoot =
-    vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ??
-    context.globalStorageUri.fsPath;
+  const firstTargetResolution = targetFor(activeEditorFilePath());
 
   if (
     firstRunBootstrap.shouldShowBootstrap(firstTargetResolution.effectiveRoot)
@@ -456,7 +451,7 @@ export function activate(context: vscode.ExtensionContext): void {
       const bootstrapResult = await firstRunBootstrap.showBootstrap(
         firstTargetResolution.effectiveRoot,
         activeEditorFilePath(),
-        actualWorkspaceRoot,
+        firstTargetResolution.workspaceFolderRoot,
       );
 
       // U03: Rebind Task Board to the selected governed root
