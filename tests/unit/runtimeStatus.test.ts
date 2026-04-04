@@ -70,4 +70,34 @@ describe('renderRuntimeStatusMarkdown', () => {
     );
     expect(markdown).toContain(RUNTIME_STATUS_CLOUD_NOTICE);
   });
+
+  it('describes a retained governed root truthfully when no active file is open', () => {
+    const markdown = renderRuntimeStatusMarkdown({
+      target: {
+        filePath: undefined,
+        workspaceFolderRoot: '/workspace',
+        effectiveRoot: '/workspace/platform/arc-serena-adapter/m2',
+        reason: 'RETAINED_ROOT',
+        markers: ['.arc', 'package.json'],
+      },
+      autoSaveMode: 'off',
+      routePolicy: {
+        status: 'LOADED',
+        config: {
+          mode: 'RULE_ONLY',
+          localLaneEnabled: false,
+          cloudLaneEnabled: false,
+          cloudDataClass: 'LOCAL_ONLY',
+        },
+        reason: 'Route policy loaded.',
+        policyHash: 'abc123',
+      },
+    });
+
+    expect(markdown).toContain('Active file: `n/a`');
+    expect(markdown).toContain('/workspace/platform/arc-serena-adapter/m2');
+    expect(markdown).toContain(
+      'Retained governed root from the last file-backed or explicitly selected local context',
+    );
+  });
 });

@@ -3,6 +3,7 @@ import path from 'node:path';
 
 export type WorkspaceTargetReason =
   | 'NESTED_BOUNDARY'
+  | 'RETAINED_ROOT'
   | 'WORKSPACE_FOLDER'
   | 'GLOBAL_FALLBACK';
 
@@ -12,6 +13,10 @@ export interface WorkspaceTargetResolution {
   effectiveRoot: string;
   reason: WorkspaceTargetReason;
   markers: string[];
+}
+
+export interface ResolveWorkspaceTargetOptions {
+  retainedRoot?: string;
 }
 
 function isWithin(parent: string, child: string): boolean {
@@ -39,8 +44,25 @@ export function resolveWorkspaceTarget(
   filePath: string | undefined,
   workspaceFolderRoots: string[],
   fallbackRoot: string,
+  options: ResolveWorkspaceTargetOptions = {},
 ): WorkspaceTargetResolution {
   if (!filePath) {
+    if (options.retainedRoot && shouldReuseRetainedRoot(options.retainedRoot, workspaceFolderRoots)) {
+      const workspaceFolderRoot = resolveWorkspaceFolderRoot(
+        options.retainedRoot,
+        workspaceFolderRoots,
+        fallbackRoot,
+      );
+
+      return {
+        filePath,
+        workspaceFolderRoot,
+        effectiveRoot: options.retainedRoot,
+        reason: 'RETAINED_ROOT',
+        markers: hasBoundaryMarker(options.retainedRoot),
+      };
+    }
+
     const root = workspaceFolderRoots[0] ?? fallbackRoot;
     return {
       filePath,
@@ -97,4 +119,31 @@ export function resolveWorkspaceTarget(
     reason: 'WORKSPACE_FOLDER',
     markers: hasBoundaryMarker(workspaceFolderRoot),
   };
+}
+
+function resolveWorkspaceFolderRoot(
+  candidateRoot: string,
+  workspaceFolderRoots: string[],
+  fallbackRoot: string,
+): string {
+  const containingRoots = workspaceFolderRoots
+    .filter((root) => isWithin(root, candidateRoot))
+    .sort((left, right) => right.length - left.length);
+
+  return containingRoots[0] ?? fallbackRoot;
+}
+
+function shouldReuseRetainedRoot(
+  retainedRoot: string,
+  workspaceFolderRoots: string[],
+): boolean {
+  if (!fs.existsSync(retainedRoot)) {
+    return false;
+  }
+
+  if (workspaceFolderRoots.length === 0) {
+    return true;
+  }
+
+  return workspaceFolderRoots.some((root) => isWithin(root, retainedRoot));
 }

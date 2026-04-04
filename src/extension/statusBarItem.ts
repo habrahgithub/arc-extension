@@ -13,11 +13,11 @@ import type { Decision } from '../contracts/types.js';
  */
 
 export type EnforcementStatus =
-  | 'READY' // Extension active, enforcement enabled
+  | 'READY' // Active file posture is allow / no blocking state shown
   | 'AUTO_SAVE' // Auto-save detected (reduced guarantee mode)
-  | 'BLOCKED' // Last save was blocked
-  | 'WARNED' // Last save required acknowledgment
-  | 'REQUIRE_PLAN' // Last save required blueprint proof
+  | 'BLOCKED' // Current file posture is blocked
+  | 'WARNED' // Current file posture is warn
+  | 'REQUIRE_PLAN' // Current file posture requires blueprint proof
   | 'ERROR'; // Extension encountered an error; enforcement may be degraded;
 
 const STATUS_CONFIG: Record<
@@ -26,7 +26,7 @@ const STATUS_CONFIG: Record<
 > = {
   READY: {
     text: '$(shield-check) ARC XT',
-    tooltip: 'ARC XT — Audit Ready Core: Enforcement active (explicit save)',
+    tooltip: 'ARC XT — Current file posture: allow',
     color: '#00ff00',
   },
   AUTO_SAVE: {
@@ -37,18 +37,17 @@ const STATUS_CONFIG: Record<
   },
   BLOCKED: {
     text: '$(stop) ARC XT',
-    tooltip: 'ARC XT — Last save blocked: High-risk change requires review',
+    tooltip: 'ARC XT — Current file posture: block',
     color: '#ff0000',
   },
   WARNED: {
     text: '$(alert) ARC XT',
-    tooltip: 'ARC XT — Last save required acknowledgment: Medium-risk change',
+    tooltip: 'ARC XT — Current file posture: warn',
     color: '#ffa500',
   },
   REQUIRE_PLAN: {
     text: '$(link) ARC XT',
-    tooltip:
-      'ARC XT — Last save required blueprint proof: High-risk change linked to governance directive',
+    tooltip: 'ARC XT — Current file posture: requires blueprint proof',
     color: '#007acc',
   },
   ERROR: {
@@ -99,7 +98,9 @@ export class StatusBarItemService {
   }
 
   /**
-   * Update status based on last save decision.
+   * Update status based on an enforcement decision for the current file context.
+   * When a save is reverted/cancelled, the indicator remains blocked until a
+   * fresh current-file assessment replaces it.
    */
   updateFromDecision(decision: Decision, reverted: boolean = false): void {
     if (reverted) {
@@ -107,6 +108,14 @@ export class StatusBarItemService {
       return;
     }
 
+    this.applyDecisionStatus(decision);
+  }
+
+  updateFromAssessment(decision: Decision): void {
+    this.applyDecisionStatus(decision);
+  }
+
+  private applyDecisionStatus(decision: Decision): void {
     switch (decision) {
       case 'BLOCK':
         this.updateStatus('BLOCKED');
@@ -129,7 +138,7 @@ export class StatusBarItemService {
             | 'afterDelay'
             | 'onFocusChange'
             | 'onWindowChange',
-        );
+          );
         break;
       }
     }

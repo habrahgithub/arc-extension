@@ -61,6 +61,8 @@ function describeReason(reason: WorkspaceTargetResolution['reason']): string {
   switch (reason) {
     case 'NESTED_BOUNDARY':
       return 'Nearest nested project boundary inside the active VS Code workspace';
+    case 'RETAINED_ROOT':
+      return 'Retained governed root from the last file-backed or explicitly selected local context';
     case 'GLOBAL_FALLBACK':
       return 'Extension fallback root because no matching workspace folder was found';
     case 'WORKSPACE_FOLDER':

@@ -47,4 +47,24 @@ describe('resolveWorkspaceTarget', () => {
     expect(target.effectiveRoot).toBe(fallback);
     expect(target.reason).toBe('GLOBAL_FALLBACK');
   });
+
+  it('retains the last governed root when no active file is available', () => {
+    const workspace = fs.mkdtempSync(path.join(os.tmpdir(), 'lintel-target-'));
+    const nested = path.join(workspace, 'platform', 'arc-serena-adapter', 'm2');
+    fs.mkdirSync(path.join(nested, '.arc'), { recursive: true });
+    fs.writeFileSync(path.join(nested, 'package.json'), '{}\n', 'utf8');
+
+    const target = resolveWorkspaceTarget(
+      undefined,
+      [workspace],
+      path.join(workspace, '.fallback'),
+      { retainedRoot: nested },
+    );
+
+    expect(target.workspaceFolderRoot).toBe(workspace);
+    expect(target.effectiveRoot).toBe(nested);
+    expect(target.reason).toBe('RETAINED_ROOT');
+    expect(target.markers).toContain('.arc');
+    expect(target.markers).toContain('package.json');
+  });
 });

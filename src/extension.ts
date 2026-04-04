@@ -276,40 +276,102 @@ export function activate(context: vscode.ExtensionContext): void {
   const statusBarItem = new StatusBarItemService();
   const timelineOutput = ARCOutputChannel.getInstance();
   const fileAuditIndicator = new FileAuditIndicator();
+  let statusRefreshGeneration = 0;
   context.subscriptions.push(statusBarItem);
   context.subscriptions.push(fileAuditIndicator);
   context.subscriptions.push(timelineOutput);
   context.subscriptions.push(new RunCommandInterceptor(orchestratorFor));
   context.subscriptions.push(
     new CommitInterceptor(orchestratorFor, () => {
-      const fp = vscode.window.activeTextEditor?.document.uri.fsPath;
+      const fp = activeEditorFilePath();
       fileAuditIndicator.updateForFile(fp, (f) =>
         orchestratorFor(f).queryFileAuditState(f),
       );
     }),
   );
 
+  function editorFilePath(editor?: vscode.TextEditor): string | undefined {
+    if (!editor || editor.document.uri.scheme !== 'file') {
+      return undefined;
+    }
+
+    const filePath = editor.document.uri.fsPath;
+    return filePath.length > 0 ? filePath : undefined;
+  }
+
+  function activeEditorFilePath(): string | undefined {
+    return editorFilePath(vscode.window.activeTextEditor);
+  }
+
+  async function refreshStatusBarForEditor(
+    editor: vscode.TextEditor | undefined,
+  ): Promise<void> {
+    const generation = ++statusRefreshGeneration;
+    const filePath = editorFilePath(editor);
+
+    if (!filePath || !editor) {
+      statusBarItem.refresh();
+      return;
+    }
+
+    try {
+      const assessment = await controllerFor(filePath).prepareSave({
+        filePath,
+        fileName: path.basename(filePath),
+        text: editor.document.getText(),
+        saveMode: 'EXPLICIT',
+        autoSaveMode: autoSaveMode(),
+        selectionText: selectionText(editor.document),
+      });
+
+      if (generation !== statusRefreshGeneration) {
+        return;
+      }
+
+      statusBarItem.updateFromAssessment(assessment.decision.decision);
+    } catch {
+      if (generation !== statusRefreshGeneration) {
+        return;
+      }
+
+      statusBarItem.updateError();
+    }
+  }
+
   // P9-001 — trigger 1: active editor change (file open / tab switch)
   context.subscriptions.push(
     vscode.window.onDidChangeActiveTextEditor((editor) => {
-      fileAuditIndicator.updateForFile(editor?.document.uri.fsPath, (f) =>
+      const filePath = editorFilePath(editor);
+      fileAuditIndicator.updateForFile(filePath, (f) =>
         orchestratorFor(f).queryFileAuditState(f),
       );
+
+      if (filePath) {
+        const target = targetFor(filePath);
+        if (taskBoardProvider.effectiveRoot !== target.effectiveRoot) {
+          taskBoardProvider.rebindToRoot(target.effectiveRoot);
+        }
+      }
+
+      void refreshStatusBarForEditor(editor);
     }),
   );
 
   // Prime indicator for the file open at activation time
   {
-    const fp = vscode.window.activeTextEditor?.document.uri.fsPath;
+    const fp = activeEditorFilePath();
     fileAuditIndicator.updateForFile(fp, (f) =>
       orchestratorFor(f).queryFileAuditState(f),
     );
   }
 
   // ARC-UX-002 — Register Task Board View Provider (left sidebar)
-  const targetForFirstFile = targetFor(
-    vscode.window.activeTextEditor?.document.uri.fsPath,
+  const targetForFirstFile = resolveWorkspaceTarget(
+    activeEditorFilePath(),
+    workspaceFolderRoots,
+    fallbackRoot,
   );
+  let retainedRoot = targetForFirstFile.effectiveRoot;
   const taskBoardProvider = new TaskBoardViewProvider(
     context.extensionUri,
     targetForFirstFile.effectiveRoot,
@@ -322,7 +384,18 @@ export function activate(context: vscode.ExtensionContext): void {
   );
 
   function targetFor(filePath?: string) {
-    return resolveWorkspaceTarget(filePath, workspaceFolderRoots, fallbackRoot);
+    const target = resolveWorkspaceTarget(
+      filePath,
+      workspaceFolderRoots,
+      fallbackRoot,
+      filePath ? undefined : { retainedRoot },
+    );
+
+    if (filePath) {
+      retainedRoot = target.effectiveRoot;
+    }
+
+    return target;
   }
 
   function orchestratorFor(filePath?: string): SaveOrchestrator {
@@ -370,7 +443,7 @@ export function activate(context: vscode.ExtensionContext): void {
   // U01–U06: First-run bootstrap for new operators (local-only, fail-closed)
   const firstRunBootstrap = new FirstRunBootstrapService(context);
   const firstTargetResolution = targetFor(
-    vscode.window.activeTextEditor?.document.uri.fsPath,
+    activeEditorFilePath(),
   );
   const actualWorkspaceRoot =
     vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ??
@@ -382,7 +455,7 @@ export function activate(context: vscode.ExtensionContext): void {
     void (async () => {
       const bootstrapResult = await firstRunBootstrap.showBootstrap(
         firstTargetResolution.effectiveRoot,
-        vscode.window.activeTextEditor?.document.uri.fsPath,
+        activeEditorFilePath(),
         actualWorkspaceRoot,
       );
 
@@ -391,6 +464,7 @@ export function activate(context: vscode.ExtensionContext): void {
         bootstrapResult.selectedRoot &&
         bootstrapResult.selectedRoot !== firstTargetResolution.effectiveRoot
       ) {
+        retainedRoot = bootstrapResult.selectedRoot;
         taskBoardProvider.rebindToRoot(bootstrapResult.selectedRoot);
       }
     })();
@@ -405,6 +479,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
   const mode = autoSaveMode();
   statusBarItem.updateAutoSaveMode(mode);
+  void refreshStatusBarForEditor(vscode.window.activeTextEditor);
   if (mode === 'afterDelay' || mode === 'onFocusChange') {
     void vscode.window.showInformationMessage(
       `[ARC XT] Reduced-guarantee auto-save mode detected (${mode}). Explicit save remains the preferred path.`,
@@ -417,7 +492,7 @@ export function activate(context: vscode.ExtensionContext): void {
       await welcomeSurface.showWelcome();
     }),
     vscode.commands.registerCommand('arc.showDecisionTimeline', () => {
-      const activeFile = vscode.window.activeTextEditor?.document.uri.fsPath;
+      const activeFile = activeEditorFilePath();
       if (!activeFile) {
         void vscode.window.showWarningMessage(
           'ARC: No decision timeline available for this file',
@@ -436,7 +511,7 @@ export function activate(context: vscode.ExtensionContext): void {
     }),
     // P9-002 — Inline Context On-Demand Explanation
     vscode.commands.registerCommand('arc.explainCurrentFileState', () => {
-      const activeFile = vscode.window.activeTextEditor?.document.uri.fsPath;
+      const activeFile = activeEditorFilePath();
       let state: import('./extension/fileAuditState').FileAuditState;
       try {
         const row = activeFile
@@ -453,14 +528,14 @@ export function activate(context: vscode.ExtensionContext): void {
       timelineOutput.show(true);
     }),
     vscode.commands.registerCommand('arc.reviewAudit', async () => {
-      const filePath = vscode.window.activeTextEditor?.document.uri.fsPath;
+      const filePath = activeEditorFilePath();
       await openMarkdownPreview(
         'ARC XT — Audit Review',
         reviewSurfaceFor(filePath).renderAuditReview(),
       );
     }),
     vscode.commands.registerCommand('arc.showRuntimeStatus', async () => {
-      const filePath = vscode.window.activeTextEditor?.document.uri.fsPath;
+      const filePath = activeEditorFilePath();
       const target = targetFor(filePath);
       const routePolicy = new RoutePolicyStore(target.effectiveRoot).load();
 
@@ -494,8 +569,7 @@ export function activate(context: vscode.ExtensionContext): void {
         | undefined;
 
       if (lastAudit && !auditReadError) {
-        const activeFilePath =
-          vscode.window.activeTextEditor?.document.uri.fsPath;
+        const activeFilePath = activeEditorFilePath();
         const lastDecisionTs = new Date(lastAudit.ts).getTime();
         const nowTs = Date.now();
         const timeDiff = nowTs - lastDecisionTs;
@@ -550,14 +624,14 @@ export function activate(context: vscode.ExtensionContext): void {
       );
     }),
     vscode.commands.registerCommand('arc.reviewBlueprints', async () => {
-      const filePath = vscode.window.activeTextEditor?.document.uri.fsPath;
+      const filePath = activeEditorFilePath();
       await openMarkdownPreview(
         'ARC XT — Blueprint Proof Review',
         reviewSurfaceFor(filePath).renderBlueprintReview(),
       );
     }),
     vscode.commands.registerCommand('arc.reviewFalsePositives', async () => {
-      const filePath = vscode.window.activeTextEditor?.document.uri.fsPath;
+      const filePath = activeEditorFilePath();
       await openMarkdownPreview(
         'ARC XT — False-Positive Review',
         reviewSurfaceFor(filePath).renderFalsePositiveReview(),
@@ -570,14 +644,14 @@ export function activate(context: vscode.ExtensionContext): void {
       await welcomeSurface.showWelcome();
     }),
     vscode.commands.registerCommand('lintel.reviewAudit', async () => {
-      const filePath = vscode.window.activeTextEditor?.document.uri.fsPath;
+      const filePath = activeEditorFilePath();
       await openMarkdownPreview(
         'ARC XT — Audit Review',
         reviewSurfaceFor(filePath).renderAuditReview(),
       );
     }),
     vscode.commands.registerCommand('lintel.showRuntimeStatus', async () => {
-      const filePath = vscode.window.activeTextEditor?.document.uri.fsPath;
+      const filePath = activeEditorFilePath();
       const target = targetFor(filePath);
       const routePolicy = new RoutePolicyStore(target.effectiveRoot).load();
 
@@ -611,8 +685,7 @@ export function activate(context: vscode.ExtensionContext): void {
         | undefined;
 
       if (lastAudit && !auditReadError) {
-        const activeFilePath =
-          vscode.window.activeTextEditor?.document.uri.fsPath;
+        const activeFilePath = activeEditorFilePath();
         const lastDecisionTs = new Date(lastAudit.ts).getTime();
         const nowTs = Date.now();
         const timeDiff = nowTs - lastDecisionTs;
@@ -667,14 +740,14 @@ export function activate(context: vscode.ExtensionContext): void {
       );
     }),
     vscode.commands.registerCommand('lintel.reviewBlueprints', async () => {
-      const filePath = vscode.window.activeTextEditor?.document.uri.fsPath;
+      const filePath = activeEditorFilePath();
       await openMarkdownPreview(
         'ARC XT — Blueprint Review',
         reviewSurfaceFor(filePath).renderBlueprintReview(),
       );
     }),
     vscode.commands.registerCommand('lintel.reviewFalsePositives', async () => {
-      const filePath = vscode.window.activeTextEditor?.document.uri.fsPath;
+      const filePath = activeEditorFilePath();
       await openMarkdownPreview(
         'ARC XT — False-Positive Review',
         reviewSurfaceFor(filePath).renderFalsePositiveReview(),
