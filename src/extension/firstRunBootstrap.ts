@@ -1,57 +1,51 @@
 import * as vscode from 'vscode';
 import fs from 'node:fs';
 import path from 'node:path';
-import { detectFirstRunState, type CandidateRoot } from '../core/firstRunDetection';
+import { detectFirstRunState } from '../core/firstRunDetection';
 import {
   createMinimalArcConfig,
   ensureArcBlueprintsDir,
   generateBlueprintTemplate,
-  generateGuidedRootId,
   generateBlueprintDirectiveId,
 } from '../core/arcBootstrap';
 
-export interface BootstrapStep {
-  id: string;
-  title: string;
-  description: string;
-  action: 'skip' | 'config' | 'blueprint' | 'root-select' | 'use-existing';
+export interface BootstrapResult {
+  selectedRoot: string | null;
+  configCreated: boolean;
+  blueprintCreated: string | null;
+  skipped: boolean;
 }
 
 export class FirstRunBootstrapService {
   private _showedWelcome = false;
 
   constructor(private readonly _context: vscode.ExtensionContext) {
-    // Track whether we've already shown the bootstrap flow
     this._showedWelcome =
-      this._context.globalState.get<boolean>('arc.showedFirstRunBootstrap', false) ?? false;
+      this._context.globalState.get<boolean>(
+        'arc.showedFirstRunBootstrap',
+        false,
+      ) ?? false;
   }
 
-  /**
-   * Check if we should show the first-run bootstrap flow.
-   * Returns true if this is the first activation AND no .arc config exists.
-   */
   shouldShowBootstrap(workspaceRoot: string): boolean {
     if (this._showedWelcome) return false;
     const state = detectFirstRunState(workspaceRoot);
     return state.isFirstRun;
   }
 
-  /**
-   * Mark that we've shown the bootstrap flow so we don't show it again.
-   */
-  markBootstrapShowned(): void {
+  markBootstrapShown(): void {
     this._showedWelcome = true;
     void this._context.globalState.update('arc.showedFirstRunBootstrap', true);
   }
 
   /**
    * Show the first-run bootstrap flow.
-   * This guides the operator through:
-   * 1. Reviewing the detected governed root
-   * 2. Creating minimal ARC config (optional)
-   * 3. Creating first blueprint (optional)
+   * Returns the selected governed root, or null if skipped.
    */
-  async showBootstrap(workspaceRoot: string, activeFilePath?: string): Promise<void> {
+  async showBootstrap(
+    workspaceRoot: string,
+    activeFilePath?: string,
+  ): Promise<BootstrapResult> {
     const state = detectFirstRunState(workspaceRoot, activeFilePath);
 
     // Step 1: Welcome message
@@ -64,31 +58,36 @@ export class FirstRunBootstrapService {
     );
 
     if (welcomeChoice !== 'Set Up ARC XT') {
-      this.markBootstrapShowned();
-      return;
+      this.markBootstrapShown();
+      return {
+        selectedRoot: null,
+        configCreated: false,
+        blueprintCreated: null,
+        skipped: true,
+      };
     }
 
-    // Step 2: Root selection if multiple candidates exist
+    // Step 2: Root selection — present workspace-root / active-file-root / nested-root choices
     let selectedRoot = state.governedRoot;
-    if (state.candidates.length > 1) {
-      const rootItems = state.candidates.map((c) => ({
-        label: `${path.basename(c.path)} (${c.markers.join(', ')})`,
-        description: c.path,
-        detail: c.hasArc ? 'ARC config exists' : 'No ARC config',
-        candidate: c,
-      }));
+    const rootChoices = this._buildRootSelectionItems(
+      state,
+      workspaceRoot,
+      activeFilePath,
+    );
 
-      const rootChoice = await vscode.window.showQuickPick(rootItems, {
+    if (rootChoices.length > 1) {
+      const rootChoice = await vscode.window.showQuickPick(rootChoices, {
         placeHolder: 'Select the governed root for this workspace',
         title: 'ARC XT — Governed Root Selection',
       });
 
       if (rootChoice) {
-        selectedRoot = rootChoice.candidate.path;
+        selectedRoot = rootChoice.rootPath;
       }
     }
 
     // Step 3: Config bootstrap
+    let configCreated = false;
     if (!state.hasArcConfig) {
       const configChoice = await vscode.window.showInformationMessage(
         `ARC XT — Minimal Configuration\n\n` +
@@ -106,16 +105,20 @@ export class FirstRunBootstrapService {
         });
 
         if (result.success) {
+          configCreated = true;
           vscode.window.showInformationMessage(
             `ARC XT config created: ${result.filesCreated.map((f) => path.basename(f)).join(', ')}`,
           );
         } else {
-          vscode.window.showErrorMessage(`ARC XT config failed: ${result.error}`);
+          vscode.window.showErrorMessage(
+            `ARC XT config failed: ${result.error}`,
+          );
         }
       }
     }
 
     // Step 4: Blueprint bootstrap
+    let blueprintCreated: string | null = null;
     if (!state.hasBlueprints) {
       const bpChoice = await vscode.window.showInformationMessage(
         `ARC XT — First Blueprint\n\n` +
@@ -126,9 +129,15 @@ export class FirstRunBootstrapService {
       );
 
       if (bpChoice === 'Create Blueprint') {
-        const directiveId = generateBlueprintDirectiveId(path.basename(selectedRoot));
+        const directiveId = generateBlueprintDirectiveId(
+          path.basename(selectedRoot),
+        );
         const projectName = path.basename(selectedRoot);
-        const template = generateBlueprintTemplate(selectedRoot, directiveId, projectName);
+        const template = generateBlueprintTemplate(
+          selectedRoot,
+          directiveId,
+          projectName,
+        );
 
         const blueprintsDir = ensureArcBlueprintsDir(selectedRoot);
         const bpFileName = `${directiveId.toLowerCase()}.md`;
@@ -136,6 +145,7 @@ export class FirstRunBootstrapService {
 
         if (!fs.existsSync(bpPath)) {
           fs.writeFileSync(bpPath, template, 'utf8');
+          blueprintCreated = bpPath;
 
           // Open the blueprint for editing
           const doc = await vscode.workspace.openTextDocument(bpPath);
@@ -146,13 +156,15 @@ export class FirstRunBootstrapService {
               `Replace placeholder content before using for plan-linked saves.`,
           );
         } else {
-          vscode.window.showWarningMessage(`Blueprint already exists: ${bpFileName}`);
+          vscode.window.showWarningMessage(
+            `Blueprint already exists: ${bpFileName}`,
+          );
         }
       }
     }
 
     // Mark that we've shown the bootstrap flow
-    this.markBootstrapShowned();
+    this.markBootstrapShown();
 
     // Final confirmation
     vscode.window.showInformationMessage(
@@ -160,5 +172,165 @@ export class FirstRunBootstrapService {
         `Mode: RULE_ONLY (local-only, fail-closed)\n` +
         `Governed root: ${selectedRoot}`,
     );
+
+    return { selectedRoot, configCreated, blueprintCreated, skipped: false };
+  }
+
+  /**
+   * Build root selection items that present workspace-root / active-file-root / nested-root choices.
+   * Per WO-ARC-XT-M4-001: operator must be shown bounded choices when multiple plausible roots exist.
+   */
+  private _buildRootSelectionItems(
+    state: ReturnType<typeof detectFirstRunState>,
+    workspaceRoot: string,
+    activeFilePath?: string,
+  ): Array<{
+    label: string;
+    description: string;
+    detail: string;
+    rootPath: string;
+  }> {
+    const items: Array<{
+      label: string;
+      description: string;
+      detail: string;
+      rootPath: string;
+    }> = [];
+
+    // Always offer workspace folder root
+    items.push({
+      label: `📁 Workspace Root`,
+      description: workspaceRoot,
+      detail: state.hasArcConfig ? 'ARC config exists' : 'No ARC config',
+      rootPath: workspaceRoot,
+    });
+
+    // Offer active file root if different from workspace root
+    if (activeFilePath) {
+      const activeRoot = path.dirname(activeFilePath);
+      if (activeRoot !== workspaceRoot) {
+        const candidate = state.candidates.find((c) => c.path === activeRoot);
+        items.push({
+          label: `📄 Active File Root`,
+          description: activeRoot,
+          detail: candidate?.hasArc ? 'ARC config exists' : 'No ARC config',
+          rootPath: activeRoot,
+        });
+      }
+    }
+
+    // Offer nested project roots (those with .git or package.json markers)
+    for (const candidate of state.candidates) {
+      if (
+        candidate.path !== workspaceRoot &&
+        candidate.markers.includes('.git')
+      ) {
+        const exists = items.some((i) => i.rootPath === candidate.path);
+        if (!exists) {
+          items.push({
+            label: `🔧 Nested Project: ${path.basename(candidate.path)}`,
+            description: candidate.path,
+            detail: candidate.hasArc ? 'ARC config exists' : 'No ARC config',
+            rootPath: candidate.path,
+          });
+        }
+      }
+    }
+
+    return items;
+  }
+
+  /**
+   * Execute a bounded bootstrap action from the Task Board empty-state.
+   * Returns the selected root if config/blueprint was created, or null if skipped.
+   */
+  async executeBootstrapAction(
+    action: 'create-config' | 'create-blueprint' | 'use-existing',
+    workspaceRoot: string,
+  ): Promise<BootstrapResult> {
+    if (action === 'use-existing') {
+      this.markBootstrapShown();
+      return {
+        selectedRoot: workspaceRoot,
+        configCreated: false,
+        blueprintCreated: null,
+        skipped: false,
+      };
+    }
+
+    if (action === 'create-config') {
+      const result = createMinimalArcConfig({
+        workspaceRoot,
+        overwriteExisting: false,
+      });
+      if (result.success) {
+        vscode.window.showInformationMessage(
+          `ARC XT config created: ${result.filesCreated.map((f) => path.basename(f)).join(', ')}`,
+        );
+        this.markBootstrapShown();
+        return {
+          selectedRoot: workspaceRoot,
+          configCreated: true,
+          blueprintCreated: null,
+          skipped: false,
+        };
+      } else {
+        vscode.window.showErrorMessage(`ARC XT config failed: ${result.error}`);
+        return {
+          selectedRoot: null,
+          configCreated: false,
+          blueprintCreated: null,
+          skipped: true,
+        };
+      }
+    }
+
+    if (action === 'create-blueprint') {
+      const directiveId = generateBlueprintDirectiveId(
+        path.basename(workspaceRoot),
+      );
+      const template = generateBlueprintTemplate(
+        workspaceRoot,
+        directiveId,
+        path.basename(workspaceRoot),
+      );
+      const blueprintsDir = ensureArcBlueprintsDir(workspaceRoot);
+      const bpFileName = `${directiveId.toLowerCase()}.md`;
+      const bpPath = path.join(blueprintsDir, bpFileName);
+
+      if (!fs.existsSync(bpPath)) {
+        fs.writeFileSync(bpPath, template, 'utf8');
+        const doc = await vscode.workspace.openTextDocument(bpPath);
+        await vscode.window.showTextDocument(doc);
+        vscode.window.showInformationMessage(
+          `ARC XT blueprint created: ${bpFileName}\n\n` +
+            `Replace placeholder content before using for plan-linked saves.`,
+        );
+        this.markBootstrapShown();
+        return {
+          selectedRoot: workspaceRoot,
+          configCreated: false,
+          blueprintCreated: bpPath,
+          skipped: false,
+        };
+      } else {
+        vscode.window.showWarningMessage(
+          `Blueprint already exists: ${bpFileName}`,
+        );
+        return {
+          selectedRoot: workspaceRoot,
+          configCreated: false,
+          blueprintCreated: null,
+          skipped: false,
+        };
+      }
+    }
+
+    return {
+      selectedRoot: null,
+      configCreated: false,
+      blueprintCreated: null,
+      skipped: true,
+    };
   }
 }

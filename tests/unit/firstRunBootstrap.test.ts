@@ -134,7 +134,10 @@ describe('U04 — Safe config bootstrap', () => {
     const routerPath = path.join(ws, '.arc', 'router.json');
     expect(fs.existsSync(routerPath)).toBe(true);
 
-    const config = JSON.parse(fs.readFileSync(routerPath, 'utf8'));
+    const config = JSON.parse(fs.readFileSync(routerPath, 'utf8')) as Record<
+      string,
+      unknown
+    >;
     expect(config.mode).toBe('RULE_ONLY');
     expect(config.local_lane_enabled).toBe(false);
     expect(config.cloud_lane_enabled).toBe(false);
@@ -152,7 +155,10 @@ describe('U04 — Safe config bootstrap', () => {
     const mapPath = path.join(ws, '.arc', 'workspace-map.json');
     expect(fs.existsSync(mapPath)).toBe(true);
 
-    const map = JSON.parse(fs.readFileSync(mapPath, 'utf8'));
+    const map = JSON.parse(fs.readFileSync(mapPath, 'utf8')) as Record<
+      string,
+      unknown
+    >;
     expect(map.mode).toBe('LOCAL_ONLY');
   });
 
@@ -175,7 +181,7 @@ describe('U04 — Safe config bootstrap', () => {
     expect(result.filesSkipped.length).toBeGreaterThan(0);
     const config = JSON.parse(
       fs.readFileSync(path.join(arcDir, 'router.json'), 'utf8'),
-    );
+    ) as Record<string, unknown>;
     expect(config.mode).toBe('CUSTOM_MODE'); // Original preserved
   });
 });
@@ -227,7 +233,10 @@ describe('U06 — Fail-closed defaults preservation', () => {
     createMinimalArcConfig({ workspaceRoot: ws, overwriteExisting: false });
 
     const routerPath = path.join(ws, '.arc', 'router.json');
-    const config = JSON.parse(fs.readFileSync(routerPath, 'utf8'));
+    const config = JSON.parse(fs.readFileSync(routerPath, 'utf8')) as Record<
+      string,
+      unknown
+    >;
 
     expect(config.local_lane_enabled).toBe(false);
     expect(config.cloud_lane_enabled).toBe(false);

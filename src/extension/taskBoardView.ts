@@ -77,13 +77,16 @@ export class TaskBoardViewProvider implements vscode.WebviewViewProvider {
             await vscode.commands.executeCommand('arc.showRuntimeStatus');
             break;
           case 'reviewGovernedRoot':
-            await vscode.commands.executeCommand('arc.showRuntimeStatus');
+            await vscode.commands.executeCommand('arc.reviewGovernedRoot');
             break;
           case 'createArcConfig':
+            await vscode.commands.executeCommand('arc.createArcConfig');
+            break;
           case 'createFirstBlueprint':
+            await vscode.commands.executeCommand('arc.createFirstBlueprint');
+            break;
           case 'useExistingConfig':
-            // Delegate to first-run bootstrap flow
-            await vscode.commands.executeCommand('arc.showRuntimeStatus');
+            await vscode.commands.executeCommand('arc.useExistingConfig');
             break;
         }
       },

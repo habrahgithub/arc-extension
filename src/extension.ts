@@ -374,10 +374,20 @@ export function activate(context: vscode.ExtensionContext): void {
   ).effectiveRoot;
 
   if (firstRunBootstrap.shouldShowBootstrap(firstTargetRoot)) {
-    void firstRunBootstrap.showBootstrap(
-      firstTargetRoot,
-      vscode.window.activeTextEditor?.document.uri.fsPath,
-    );
+    void (async () => {
+      const bootstrapResult = await firstRunBootstrap.showBootstrap(
+        firstTargetRoot,
+        vscode.window.activeTextEditor?.document.uri.fsPath,
+      );
+
+      // U03: Rebind Task Board to the selected governed root
+      if (
+        bootstrapResult.selectedRoot &&
+        bootstrapResult.selectedRoot !== firstTargetRoot
+      ) {
+        taskBoardProvider.rebindToRoot(bootstrapResult.selectedRoot);
+      }
+    })();
   }
 
   for (const document of vscode.workspace.textDocuments) {
@@ -679,6 +689,39 @@ export function activate(context: vscode.ExtensionContext): void {
     ),
     vscode.commands.registerCommand('arc.createMinimalArcConfig', async () => {
       await createMinimalArcConfig();
+    }),
+
+    // U04: Bounded empty-state actions from Task Board
+    vscode.commands.registerCommand('arc.reviewGovernedRoot', async () => {
+      await vscode.commands.executeCommand('arc.showRuntimeStatus');
+    }),
+    vscode.commands.registerCommand('arc.createArcConfig', async () => {
+      const currentRoot = taskBoardProvider.effectiveRoot;
+      const result = await firstRunBootstrap.executeBootstrapAction(
+        'create-config',
+        currentRoot,
+      );
+      if (result.configCreated) {
+        taskBoardProvider.refresh();
+      }
+    }),
+    vscode.commands.registerCommand('arc.createFirstBlueprint', async () => {
+      const currentRoot = taskBoardProvider.effectiveRoot;
+      const result = await firstRunBootstrap.executeBootstrapAction(
+        'create-blueprint',
+        currentRoot,
+      );
+      if (result.blueprintCreated) {
+        taskBoardProvider.refresh();
+      }
+    }),
+    vscode.commands.registerCommand('arc.useExistingConfig', async () => {
+      const currentRoot = taskBoardProvider.effectiveRoot;
+      await firstRunBootstrap.executeBootstrapAction(
+        'use-existing',
+        currentRoot,
+      );
+      taskBoardProvider.refresh();
     }),
 
     vscode.workspace.onDidOpenTextDocument((document) => {
