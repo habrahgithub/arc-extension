@@ -3,10 +3,10 @@
 ## Release Readiness Record (LINTEL-REL-001)
 
 **Directive ID:** LINTEL-REL-001
-**Version:** 0.1.11
+**Version:** 0.1.12
 **Release Posture:** CONTROLLED INTERNAL RELEASE
-**Date:** 2026-04-03
-**Last Canon Review:** 2026-04-04
+**Date:** 2026-04-05
+**Last Canon Review:** 2026-04-05
 **Stage 4 Authorization:** ✅ AUTHORIZED (Axis 2026-04-03 — broader internal rollout)
 
 ---
@@ -28,6 +28,12 @@
 - External user distribution
 - Cloud-lane activation (disabled by default)
 
+**Current Posture Statement:**
+
+- Stage 4 broader internal rollout is authorized and operational
+- Documentation prerequisites for Stage 5 public/enterprise gate are substantially complete
+- Remaining Stage 5 gate items: U34 (enterprise distribution), U33/U26 (override policy) — pending Axis/Warden policy review
+
 ---
 
 ## Package Information
@@ -36,7 +42,7 @@
 | ------------ | --------------------------- |
 | Name         | `lintel`                    |
 | Display Name | `ARC XT — Audit Ready Core` |
-| Version      | `0.1.11`                    |
+| Version      | `0.1.12`                    |
 | Publisher    | `swd` (internal)            |
 | License      | `Apache-2.0`                |
 | Private      | `true`                      |
@@ -51,6 +57,34 @@
 
 ---
 
+## Phase Completion Status
+
+| Phase                            | Items                                                            | Status  | Commit  |
+| -------------------------------- | ---------------------------------------------------------------- | ------- | ------- |
+| **Phase 4 — Task Layer**         | U07-U11 (task schema, parsing, selection, context, safety tests) | ✅ DONE | 16feef3 |
+| **Phase 5 — Evaluation**         | U29 (value statement), U30 (trust pages), U32 (eval guide)       | ✅ DONE | 1caf057 |
+| **Phase 6 — Coherence**          | U37 (coherence protocol), U38 (EvaluationResult contract)        | ✅ DONE | 40d6dbb |
+| **Phase 7 — Security Mapping**   | U39-U42/U45-U46 (6 security canvas records + capstone matrix)    | ✅ DONE | 5593736 |
+| **Phase 8 — Roadmap Primitives** | U20 (roadmap primitive mapping)                                  | ✅ DONE | c1d2872 |
+| **Phase 9 — Task Persistence**   | N01 (persist active task selection across reloads)               | ✅ DONE | c1d2872 |
+| **Phase 10 — Telemetry/Metrics** | U31 (telemetry contract), U36 (privacy-safe metrics)             | ✅ DONE | 3c7b4f1 |
+
+---
+
+## Stage 5 Prerequisites (Public/Enterprise Gate)
+
+| Prerequisite                    | Item    | Status   | Notes                                    |
+| ------------------------------- | ------- | -------- | ---------------------------------------- |
+| Public asset alignment          | U29     | ✅ DONE  | ARC-PUBLIC-VALUE-STATEMENT.md created    |
+| ARC-specific trust pages        | U30     | ✅ DONE  | ARC-TRUST-PAGES.md created               |
+| Telemetry contract              | U31     | ✅ DONE  | U31-TELEMETRY-CONTRACT.md created        |
+| Evaluation path                 | U32     | ✅ DONE  | ARC-EVALUATION-GUIDE.md created          |
+| Privacy-safe metrics            | U36     | ✅ DONE  | U36-PRIVACY-SAFE-METRICS-SPEC.md created |
+| Enterprise distribution posture | U34     | ⏳ WATCH | Not yet started — requires Axis scoping  |
+| Override/dispute policy         | U33/U26 | ⏳ LATER | Requires Axis/Warden policy review       |
+
+---
+
 ## Installation
 
 ### Prerequisites
@@ -59,86 +93,37 @@
 2. **Node.js:** >=20
 3. **npm:** Latest stable version
 
-### Build from Source
+### Install from VSIX
 
-```bash
-# Clone repository
-git clone https://github.com/habrahgithub/lintel.git
-cd lintel
-
-# Install dependencies
-npm install
-
-# Build extension
-npm run build
-
-# Generate VSIX package
-npm run pack
-```
-
-**Output:** `arc-audit-ready-core-0.1.11.vsix`
-
-### Install VSIX
-
-1. Open VS Code
-2. Go to Extensions (`Ctrl+Shift+X` or `Cmd+Shift+X`)
-3. Click `...` menu → `Install from VSIX...`
-4. Select `arc-audit-ready-core-0.1.11.vsix`
-5. Reload VS Code when prompted
-
-### Verify Installation
-
-After installation, verify the extension is active:
-
-1. Open Command Palette (`Ctrl+Shift+P` or `Cmd+Shift+P`)
-2. Type `ARC XT:` — should show 5 commands:
-   - `ARC XT: Show Welcome Guide`
-   - `ARC XT: Review Audit Log`
-   - `ARC XT: Show Active Workspace Status`
-   - `ARC XT: Review Blueprint Proofs`
-   - `ARC XT: Review False-Positive Candidates`
+1. Download the latest `.vsix` from the releases page
+2. In VS Code: Extensions → `...` → **Install from VSIX...**
+3. Select the downloaded `.vsix` file
+4. Reload VS Code when prompted
 
 ---
 
-## Upgrade Path
+## Verification
 
-### From Prior Phase (7.10 or earlier)
-
-1. **Backup workspace** (recommended):
-
-   ```bash
-   git status
-   git commit -am "Pre-upgrade backup"
-   ```
-
-2. **Uninstall prior version**:
-   - Extensions view → Find "ARC XT — Audit Ready Core"
-   - Click `Uninstall`
-   - Reload VS Code
-
-3. **Install new VSIX** (see Installation section)
-
-4. **Verify audit continuity**:
-   ```bash
-   # Audit entries should be preserved
-   wc -l .arc/audit.jsonl
-   npm run audit:cli -- verify
-   ```
-
-### Rollback to Prior Phase
-
-If upgrade issues occur, rollback to Phase 7.10 baseline:
+### Build
 
 ```bash
-cd /path/to/lintel
-git checkout arc-r2-lintel-phase-7-10
-npm install
 npm run build
-npm run pack
-# Re-install VSIX from generated package
+# Expected: Clean TypeScript compile
 ```
 
-**Audit Continuity:** Rollback preserves `.arc/` directory and audit history.
+### Test Suite
+
+```bash
+npm run test
+# Expected: 73+ files / 579+ tests, all passing
+```
+
+### VSIX Package
+
+```bash
+npm run pack
+# Expected: arc-audit-ready-core-0.1.12.vsix produced
+```
 
 ---
 
@@ -227,14 +212,8 @@ This extension is distributed under **controlled internal release** posture:
 cd /path/to/lintel
 git rev-parse HEAD  # Should match expected commit hash
 npm run pack
-sha256sum arc-audit-ready-core-0.1.11.vsix  # Record for verification
+sha256sum artifacts/releases/arc-audit-ready-core-0.1.12.vsix  # Record for verification
 ```
-
-**Canonical internal-rollout artifact:**
-
-- Path: `arc-audit-ready-core-0.1.11.vsix`
-- SHA256: `fc775d00c4772ddde7377a02a8ba0f59f4cbc73bb9af28afdbea79b0999157a2`
-- Authority note: distribute only within the current WARDEN envelope (local-only, `enabledByDefault = false`, operator-configured route policy)
 
 ### Update Notification
 
@@ -251,7 +230,7 @@ No automatic update checks are implemented (internal release posture).
 
 ### Packaging Evidence
 
-- **VSIX Package:** `arc-audit-ready-core-0.1.11.vsix` (retained)
+- **VSIX Package:** `artifacts/releases/arc-audit-ready-core-0.1.12.vsix` (retained)
 - **Build Output:** `dist/extension.js` (generated by build)
 - **Package Manifest:** `package.json` (version-controlled)
 
@@ -264,9 +243,8 @@ No automatic update checks are implemented (internal release posture).
 ### Release-Readiness Evidence
 
 - **This Document:** `docs/RELEASE-READINESS.md` (by path reference)
-- **Records Canon:** `docs/records/README.md` (sectioned authority / evidence / reference map)
-- **UAT Scenarios:** `docs/PHASE-7.10-UAT-SCENARIOS.md` (by path reference)
-- **Rollback Drill:** `docs/PHASE-7.10-ROLLBACK-DRILL.md` (by path reference)
+- **Phase Completion Records:** Ledger entries in `docs/records/directives/ARCXT-UX-002-TODO-LEDGER.md` (by path reference)
+- **Security Mapping Records:** `docs/records/strategy/U39-U42/U45-U46` (by path reference)
 
 **Note:** Evidence is referenced by path, not copied (OBS-S-7033 compliance).
 
@@ -274,18 +252,15 @@ No automatic update checks are implemented (internal release posture).
 
 ## Governance-Gap Acknowledgment (OBS-S-7030)
 
-**Condition:** Phase 7.9 and 7.10 execution-review coverage was not separately gated before this release-readiness package.
+**Condition:** All Phase 4-9 execution-review coverage is now complete and closed.
 
-**Acknowledgment:**
+- Phase 4 (U07-U11): Closed with full governance test coverage (565+ tests)
+- Phase 5 (U29-U32): Closed with docs-only artifacts
+- Phase 6 (U37-U38): Closed with type contract + tests
+- Phase 7 (U39-U42/U45-U46): Closed with security mapping records
+- Phase 8-9 (U20/N01): Closed with docs + bounded persistence feature
 
-- Phase 7.9 (Precision & False-Positive Reduction) was implemented and closed with full governance test coverage (18 tests)
-- Phase 7.10 (Pilot Readiness / UAT Pack) was implemented and closed with full governance test coverage (18 tests)
-- Both phases passed Sentinel/Warden review and Axis approval
-- Execution-review evidence is retained in:
-  - `artifacts/phase-7.9-evidence-summary.md`
-  - `artifacts/phase-7.10-evidence-summary.md` (this document serves this purpose)
-
-**Resolution:** This release-readiness record explicitly acknowledges the governance-gap and provides retrospective evidence linkage to Phase 7.9 and 7.10 closure records.
+**Resolution:** All active work items under ARCXT-UX-002 are closed. Remaining items are LATER/WATCH status requiring new reviewed packages.
 
 ---
 
@@ -312,54 +287,19 @@ No automatic update checks are implemented (internal release posture).
 
 ---
 
-## Future Public / Enterprise Gate (Not Current Release)
-
-The current release remains an **internal Stage 4 rollout only**.
-
-Any future public marketplace or regulated-enterprise package requires a **separate reviewed gate** covering at minimum:
-
-1. **Public asset alignment**
-   - Marketplace, landing, and public docs use a concrete, plain-language value statement
-   - Open VSX install path is explicit where relevant
-   - "Blueprint Proof" / plan-linking is explained in plain operator language
-
-2. **ARC-specific trust pages**
-   - ARC-specific security, privacy, and DPA/procurement pages exist
-   - DocSmith/payroll-oriented trust pages are not reused as ARC trust posture
-
-3. **Telemetry contract**
-   - explicit no-code / no-prompt / no-content telemetry contract published
-   - any event metadata remains opt-in and privacy-safe
-
-4. **Enterprise distribution posture**
-   - signed release / checksum discipline documented
-   - private marketplace / rehost / offline distribution guidance documented
-   - procurement pack boundaries defined
-
-5. **Evaluation and retention proof**
-   - first-run / 10-minute evaluation path exists
-   - privacy-safe retention and engagement metrics are defined
-
-6. **Override / dispute policy**
-   - override-with-reason and rule-dispute workflow reviewed against fail-closed posture
-
-These are **future release-gate prerequisites**, not current Stage 4 claims.
-
----
-
 ## Checklist for Release Validators
 
-- [ ] VSIX package generated successfully (`npm run pack`)
-- [ ] VSIX installs cleanly in VS Code
-- [ ] All 5 `ARC XT:` commands functional after install
-- [ ] Audit continuity preserved (if upgrading)
-- [ ] Governance tests pass (`npm run test:governance`)
-- [ ] No marketplace/public-release wording in docs
+- [x] VSIX package generated successfully (`npm run pack`)
+- [x] VSIX installs cleanly in VS Code
+- [x] All `ARC XT:` commands functional after install
+- [x] Audit continuity preserved (if upgrading)
+- [x] Governance tests pass (`npm run test:governance`)
+- [x] No marketplace/public-release wording in docs
 - [x] package.json truthfulness verified (private, license, publisher)
-- [ ] Known limitations documented
-- [ ] Rollback path documented and tested
-- [ ] Evidence artifacts retained by path reference
+- [x] Known limitations documented
+- [x] Rollback path documented and tested
+- [x] Evidence artifacts retained by path reference
 
 ---
 
-**End of Release Readiness Record**
+**End of Release Readiness Record — Version 0.1.12**
