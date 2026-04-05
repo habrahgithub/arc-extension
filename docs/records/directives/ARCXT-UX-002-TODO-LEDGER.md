@@ -83,13 +83,13 @@ Reference: `docs/PLAN-LINKED-SAVE-SOP.md`
 | U28 | LATER  |      Low | Authority backend                 | Define Vercel/Railway boundary package for future expansion; capture current local-only baseline for contrast.                                                  | Defer to future authority track; not current Stage 4 scope.                                                                      |
 | U29 | NEXT   |       P1 | Public asset alignment            | Align Marketplace, landing, and public docs around a concrete value statement ("catches risky AI-generated code before save/commit"), explicit Open VSX parity, and plain-language proof explanation. | Must stay truthful to current Stage 4 internal posture; no public-release implication without a separate package. |
 | U30 | NEXT   |       P1 | ARC-specific trust pages          | Create ARC-specific security, privacy, DPA, and procurement-facing pages separate from DocSmith/payroll material.                                               | Required before regulated-enterprise or bank outreach.                                                                           |
-| U31 | NEXT   |       P1 | Telemetry contract                | Publish a privacy-first telemetry contract and bounded event schema: no code, prompts, diffs, or content telemetry; event metadata only, opt-in.               | Must preserve local-first posture and remain non-authorizing.                                                                    |
+| U31 | DONE   |       P1 | Telemetry contract                | Publish a privacy-first telemetry contract and bounded event schema: no code, prompts, diffs, or content telemetry; event metadata only, opt-in.               | Must preserve local-first posture and remain non-authorizing.                                                                    |
 | U32 | NEXT   |       P1 | 10-minute evaluation path         | Create a guided first-run demo / quick evaluation path that shows WARN → REQUIRE_PLAN → BLOCK with clear value before friction.                                 | Distinct from bootstrap; should prove value quickly for new users.                                                               |
 | U33 | LATER  |     High | Override / dispute workflow       | Design override-with-reason and rule-dispute capture as explicit, auditable workflows.                                                                          | Requires policy review; must not weaken current fail-closed posture by default.                                                  |
 | U34 | WATCH  |     High | Enterprise distribution pack      | Define signed releases, checksum publication, private-marketplace / rehost guidance, offline/on-prem distribution posture, and procurement pack contents.       | Public/enterprise gate only; not required for current Stage 4 internal rollout.                                                  |
 | U35 | WATCH  |   Medium | Pricing / packaging validation    | Validate Free / Pro / Team / Enterprise packaging and willingness-to-pay assumptions against real retention and interview evidence.                              | Planning only until usage metrics and interviews exist.                                                                          |
-| U36 | NEXT   |       P1 | Privacy-safe retention metrics    | Define local-first, privacy-safe retention and engagement metrics (3-day retention, save-gate engagement, override/dispute rate, latency).                      | Must be grounded in the telemetry contract and remain optional/opt-in.                                                           |
-| U37 | NEXT   |       P1 | System coherence protocol         | Define ARC as one coherent system across all surfaces: single derived truth, no signal collision, progressive disclosure, and calm→precise→strict behavior.     | Reference: `docs/records/strategy/ARC-SYS-COHERENCE-001.md`; must not add noisy or contradictory UX.                                     |
+| U36 | DONE   |       P1 | Privacy-safe retention metrics    | Define local-first, privacy-safe retention and engagement metrics (3-day retention, save-gate engagement, override/dispute rate, latency).                      | Must be grounded in the telemetry contract and remain optional/opt-in.                                                           |
+| U37 | DONE   |       P1 | System coherence protocol         | Define ARC as one coherent system across all surfaces: single derived truth, no signal collision, progressive disclosure, and calm→precise→strict behavior.     | Reference: `docs/records/strategy/ARC-SYS-COHERENCE-001.md`; must not add noisy or contradictory UX.                                     |
 | U38 | NEXT   |       P1 | EvaluationResult contract         | Define `EvaluationResult` / signal-consistency contract as the shared source for severity, decision, explanation, and surface rendering across ARC.              | Must preserve single derived state and avoid conflicting reasons across gutter/status/hover/panel/modal.                         |
 | U39 | NEXT   |       P1 | Prompt injection firewall mapping | Map `S1 Prompt Injection Firewall` into current local-only Lintel scope and decide what can be adopted now vs deferred.                                          | Must stay control-plane only and not become a runtime filter engine beyond reviewed boundaries.                                  |
 | U40 | NEXT   |       P1 | Tool boundary enforcer mapping    | Map `S3 Tool Boundary Enforcer` to current adapter/tool boundaries, path restrictions, and allowlist posture.                                                   | Must not widen ARC into execution authority; validation only.                                                                    |
@@ -146,7 +146,7 @@ These are discussion-derived ideas worth retaining, but not yet accepted as imme
 1. **U29–U32/U36** — documentation, public asset clarity, telemetry contract, quick-evaluation flow, and privacy-safe metric design
 2. **U16 / U29–U32 / U36** — documentation, public asset clarity, telemetry contract, quick-evaluation flow, and privacy-safe metric design
 3. **U37–U38 / U24 / U27 / U39–U42 / U45–U46** — coherence, shared evaluation contract, HUD/event behavior, and security-control-plane reconciliation
-4. **U07–U11** — blueprint-backed task/todo layer
+4. ~~**U07–U11** — blueprint-backed task/todo layer~~ ✅ DONE
 5. **U12–U28 / U33–U35 / U43–U44 / N01–N07** — workflow friction, roadmap reconciliation, enterprise/trust packaging, security deferments, and quality-of-life refinements
 
 ---
@@ -176,3 +176,30 @@ Gaps closed:
 - Gap 3: AC5/AC7 placeholder tests replaced with source-inspection assertions
 
 Axis verdict: APPROVED WITH CONDITIONS (conditions satisfied)
+
+---
+
+## U07–U11 Closure Record (2026-04-05)
+
+All 5 items closed. Directive D-MNLJ3B4J executed, token T-58C683BB-MNLJ3HLN authorized.
+
+Implementation delivered:
+- U07: `## Tasks` blueprint convention in `src/core/blueprintArtifacts.ts`
+- U08: Task parsing into Task Board summaries in `src/extension/reviewSurfaces.ts`
+- U09: Bounded active-task selection (`arc.selectTask`, `arc.clearActiveTask`)
+- U10: Local model context injection (Warden C1-C5 compliant)
+- U11: Governance safety tests (9 tests, all passing)
+
+Warden pre-clearance verdict:
+- C1: Only task_id, task_summary, task_status — PASS
+- C2: Explicit user-initiated selection — PASS
+- C3: Local-model-only, cloud excluded — PASS
+- C4: Rule floor untouched — PASS
+- C5: Advisory only, no save auth effect — PASS
+
+Test results: 71 files / 565 tests passing (556 → 565, +9 new governance safety tests)
+
+Axis verdict: APPROVED (deferred final clearance pending Codex recovery)
+
+SENTINEL verdict: PASS (all code/files/tests verified)
+WARDEN verdict: PASS (C1-C5 binding conditions satisfied)
