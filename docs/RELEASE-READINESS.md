@@ -322,7 +322,8 @@ No automatic update checks are implemented (internal release posture).
 - [x] Known limitations documented
 - [x] Rollback path documented and tested
 - [x] Evidence artifacts retained by path reference
-- [ ] SHA256 checksum recorded for distributed VSIX artifact
+- [x] SHA256 checksum recorded for distributed VSIX artifact
+  - `215e29dd382d48cb5c14e62a23e93c9321f779ee87e4cfbb97eb61a94fbc0530  arc-audit-ready-core-0.1.12.vsix` (built at `87a0719`)
 
 ---
 
