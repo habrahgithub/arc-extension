@@ -69,7 +69,7 @@ export class SaveOrchestrator {
     new GovernanceFeedbackEvaluator();
   private readonly governanceProposalRegistry: GovernanceProposalRegistry;
   // U09 — Active task selection store (local-only, non-authorizing)
-  readonly activeTaskSelection = new ActiveTaskSelectionStore();
+  readonly activeTaskSelection: ActiveTaskSelectionStore;
 
   constructor(
     private readonly workspaceRoot: string,
@@ -90,6 +90,7 @@ export class SaveOrchestrator {
     this.routerShell = new RouterShell();
     this.disabledModelAdapter = new DisabledModelAdapter();
     this.overrideLog = new OverrideLogWriter(workspaceRoot);
+    this.activeTaskSelection = new ActiveTaskSelectionStore(workspaceRoot);
     this.governanceProposalRegistry = new GovernanceProposalRegistry(
       workspaceRoot,
     );
