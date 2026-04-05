@@ -112,9 +112,9 @@ export function registerUiCommands(context: vscode.ExtensionContext): void {
     }),
   );
 
-  // Phase 7.11 — Liquid Shell (ARC-UI-003)
+  // Phase 7.11 — Liquid Shell panel (debug/developer access via Command Palette)
   context.subscriptions.push(
-    vscode.commands.registerCommand('arc.ui.liquidShell', () => {
+    vscode.commands.registerCommand('arc.ui.liquidShell.panel', () => {
       createLiquidShellPanel(context);
     }),
   );

@@ -112,8 +112,17 @@ export class LiquidShellViewProvider implements vscode.WebviewViewProvider {
     );
   }
 
+  /** Focus the sidebar view (show=false gives it focus) */
   public reveal(): void {
-    this._view?.show(true);
+    this._view?.show(false);
+  }
+
+  /** Focus and navigate to a named route within the shell */
+  public navigateTo(route: string): void {
+    if (this._view) {
+      this._view.show(false);
+      void this._view.webview.postMessage({ type: 'routeChanged', route });
+    }
   }
 }
 
@@ -1464,9 +1473,9 @@ function buildLiquidShellHtml(opts: LiquidShellOpts): string {
         execBtn.className = 'btn-execute executing';
         execBtn.textContent = 'EXECUTING…';
 
-        vscode.postMessage({ command: 'executeCommand', commandId: 'arc.showRuntimeStatus' });
+        // Navigate to Runtime view within the shell (no markdown preview)
+        vscode.postMessage({ command: 'navigateRoute', route: 'runtime' });
 
-        // Simulate execution completion (replace with real state machine)
         setTimeout(function() {
           execState = 'ready';
           execBtn.className = 'btn-execute ready';
@@ -1492,17 +1501,17 @@ function buildLiquidShellHtml(opts: LiquidShellOpts): string {
       });
     });
 
-    // ── Topbar icon buttons ──
-    var btnMap = {
-      'btn-terminal':  'arc.showRuntimeStatus',
-      'btn-bugs':     'arc.reviewGovernedRoot',
-      'btn-settings': 'arc.showWelcome'
-    };
-    Object.keys(btnMap).forEach(function(id) {
+    // ── Topbar icon buttons — route within shell, no markdown preview ──
+    var routeMap = { 'btn-terminal': 'runtime', 'btn-bugs': 'review' };
+    Object.keys(routeMap).forEach(function(id) {
       var el = document.getElementById(id);
       if (el) el.addEventListener('click', function() {
-        vscode.postMessage({ command: 'executeCommand', commandId: btnMap[id] });
+        vscode.postMessage({ command: 'navigateRoute', route: routeMap[id] });
       });
+    });
+    var settingsBtn = document.getElementById('btn-settings');
+    if (settingsBtn) settingsBtn.addEventListener('click', function() {
+      vscode.postMessage({ command: 'executeCommand', commandId: 'arc.showWelcome' });
     });
   })();
 </script>

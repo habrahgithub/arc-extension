@@ -394,6 +394,14 @@ export function activate(context: vscode.ExtensionContext): void {
       LiquidShellViewProvider.viewType,
       liquidShellProvider,
     ),
+    // arc.ui.liquidShell → reveal sidebar (not new panel)
+    vscode.commands.registerCommand('arc.ui.liquidShell', () => {
+      liquidShellProvider.reveal();
+    }),
+    // arc.ui.liquidShell.navigate → reveal + switch route inside the shell
+    vscode.commands.registerCommand('arc.ui.liquidShell.navigate', (route: string) => {
+      liquidShellProvider.navigateTo(route);
+    }),
   );
 
   function targetFor(filePath?: string) {

@@ -497,7 +497,7 @@ export function createTaskBoardPanel(
     </div>
     <span class="footer-label mono" style="opacity:0.5">↻ Local_Only</span>
   </div>
-  <div class="footer-version mono">ARC_ENGINE_V0.1.12</div>
+  <div class="footer-version mono">ARC_ENGINE_V0.1.13</div>
 </footer>
 
 <script nonce="${nonce}">
@@ -549,8 +549,8 @@ export function createTaskBoardPanel(
     }) => {
       if (message.command === 'executeCommand' && message.commandId) {
         if (message.commandId === 'arc.ui.liquidShell' && message.route) {
-          // Open Liquid Shell and route to the specific view
-          await vscode.commands.executeCommand('arc.ui.liquidShell');
+          // Reveal sidebar shell and switch to the requested route
+          await vscode.commands.executeCommand('arc.ui.liquidShell.navigate', message.route);
         } else {
           await vscode.commands.executeCommand(message.commandId);
         }
