@@ -61,6 +61,12 @@ jsconfig.*
 # EXCLUDE: Scripts not needed at runtime
 # ===========================================
 scripts/**
+tools/**
+
+# Exclude TypeScript source from node_modules dependencies
+node_modules/**/*.ts
+node_modules/**/*.d.ts
+node_modules/**/*.md
 
 # ===========================================
 # EXCLUDE: Logs and temp files
