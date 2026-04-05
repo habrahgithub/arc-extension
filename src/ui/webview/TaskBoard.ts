@@ -135,8 +135,9 @@ export function createTaskBoardPanel(
     items.length === 0
       ? `<div class="empty-board">
     <div class="empty-icon">◻</div>
-    <div class="empty-title">No Blueprint Artifacts</div>
-    <div class="empty-hint">Add <span class="mono">.arc/blueprints/*.md</span> files to populate the board.</div>
+    <div class="empty-title">No Blueprint Artifacts Yet</div>
+    <div class="empty-hint">ARC XT tracks governed changes through blueprint documents.<br/><br/>To get started:<br/>• Make a governed save (e.g., edit <span class="mono">package.json</span> and save)<br/>• Or run: <strong>ARC XT: Show Welcome Guide</strong></div>
+    <button id="btn-welcome" class="empty-action-btn">Show Welcome Guide</button>
   </div>`
       : '';
 
@@ -346,7 +347,16 @@ export function createTaskBoardPanel(
     }
     .empty-icon { font-size: 40px; opacity: 0.2; }
     .empty-title { font-size: 14px; font-weight: 600; color: var(--text-dim); }
-    .empty-hint { font-size: 11px; color: var(--text-dim); opacity: 0.6; }
+    .empty-hint { font-size: 11px; color: var(--text-dim); opacity: 0.6; line-height: 1.6; }
+    .empty-action-btn {
+      margin-top: 6px;
+      background: var(--primary); color: var(--on-primary);
+      border: none; border-radius: 4px; cursor: pointer;
+      font-size: 11px; font-weight: 700; letter-spacing: 0.04em;
+      padding: 8px 16px; text-transform: uppercase;
+      transition: opacity 0.15s;
+    }
+    .empty-action-btn:hover { opacity: 0.85; }
 
     /* ── Footer ── */
     .footer {
@@ -482,15 +492,28 @@ export function createTaskBoardPanel(
   [
     ['btn-selectTask',  'arc.selectTask'],
     ['btn-clearTask',   'arc.clearActiveTask'],
-    ['btn-runtime',     'arc.showRuntimeStatus'],
-    ['btn-review',      'arc.reviewGovernedRoot'],
-    ['nav-runtime',     'arc.showRuntimeStatus'],
-    ['nav-review',      'arc.reviewGovernedRoot'],
-    ['nav-run',         'arc.showRuntimeStatus'],
+    ['btn-runtime',     'arc.ui.liquidShell'],
+    ['btn-review',      'arc.ui.liquidShell'],
+    ['nav-runtime',     'arc.ui.liquidShell'],
+    ['nav-review',      'arc.ui.liquidShell'],
+    ['nav-run',         'arc.ui.liquidShell'],
+    ['btn-welcome',     'arc.showWelcome'],
   ].forEach(function(pair) {
     var el = document.getElementById(pair[0]);
     if (el) el.addEventListener('click', function() {
-      vscode.postMessage({ command: 'executeCommand', commandId: pair[1] });
+      // For Liquid Shell navigation, also pass the target route
+      var route = null;
+      if (pair[1] === 'arc.ui.liquidShell') {
+        var id = pair[0];
+        if (id.indexOf('runtime') >= 0 || id.indexOf('run') >= 0) route = 'runtime';
+        else if (id.indexOf('review') >= 0) route = 'review';
+        else if (id.indexOf('nav-run') >= 0) route = 'runtime';
+      }
+      if (route) {
+        vscode.postMessage({ command: 'executeCommand', commandId: pair[1], route: route });
+      } else {
+        vscode.postMessage({ command: 'executeCommand', commandId: pair[1] });
+      }
     });
   });
   document.querySelectorAll('.task-row').forEach(function(row) {
@@ -504,9 +527,19 @@ export function createTaskBoardPanel(
 
   // Handle messages from the webview
   panel.webview.onDidReceiveMessage(
-    async (message: { command?: string; commandId?: string; directiveId?: string }) => {
+    async (message: {
+      command?: string;
+      commandId?: string;
+      directiveId?: string;
+      route?: string;
+    }) => {
       if (message.command === 'executeCommand' && message.commandId) {
-        await vscode.commands.executeCommand(message.commandId);
+        if (message.commandId === 'arc.ui.liquidShell' && message.route) {
+          // Open Liquid Shell and route to the specific view
+          await vscode.commands.executeCommand('arc.ui.liquidShell');
+        } else {
+          await vscode.commands.executeCommand(message.commandId);
+        }
       }
     },
   );

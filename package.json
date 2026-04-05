@@ -138,10 +138,10 @@
       "arc-xt-container": [
         {
           "type": "webview",
-          "id": "arc.ui.taskBoard",
-          "name": "Task Board",
+          "id": "arc.ui.liquidShell",
+          "name": "ARC XT",
           "icon": "$(tasklist)",
-          "contextualTitle": "ARC XT Task Board"
+          "contextualTitle": "ARC XT Command Center"
         }
       ]
     }
