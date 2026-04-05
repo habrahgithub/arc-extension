@@ -4,6 +4,8 @@ import type { AuditEntry } from '../contracts/types';
 import {
   BlueprintArtifactStore,
   type BlueprintProofResolution,
+  parseBlueprintTasks,
+  hasTasksSection,
 } from '../core/blueprintArtifacts';
 import { LocalPerformanceRecorder, measureSync } from '../core/performance';
 import {
@@ -382,6 +384,12 @@ export class LocalReviewSurfaceService {
             blueprintMode: 'LOCAL_ONLY',
           });
 
+          // U07/U08: Parse task section if present
+          const taskCount = hasTasksSection(content)
+            ? parseBlueprintTasks(content).length
+            : 0;
+          const taskLabel = taskCount > 0 ? ` (${taskCount} tasks)` : '';
+
           // Path A classification: detect untouched template vs edited-but-incomplete
           const status = deriveTaskStatusPathA(resolution, content);
           const qualityScore = calculateTaskQualityScore(resolution, status);
@@ -393,7 +401,7 @@ export class LocalReviewSurfaceService {
               this.blueprintArtifacts.blueprintPath(directiveId),
             status,
             validationReason: resolution.reason,
-            nextAction: resolution.nextAction,
+            nextAction: resolution.nextAction + taskLabel,
             qualityScore,
           };
         });

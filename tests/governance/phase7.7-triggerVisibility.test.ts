@@ -278,6 +278,8 @@ describe('Phase 7.7 — Trigger Visibility Governance', () => {
           'audit.jsonl',
           'audit.sqlite3', // SQLite primary store (runtime artifact, gitignored)
           'perf.jsonl',
+          'leases.jsonl', // Decision lease runtime artifact
+          'overrides.jsonl', // Override log runtime artifact
         ];
         const unexpectedFiles = files.filter(
           (f) => !expectedFiles.some((e) => f === e || f.startsWith(e)),

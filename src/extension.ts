@@ -7,7 +7,10 @@ import type {
   AuditEntry,
   DirectiveProofInput,
 } from './contracts/types';
-import { isValidDirectiveId } from './core/blueprintArtifacts';
+import {
+  isValidDirectiveId,
+  parseBlueprintTasks,
+} from './core/blueprintArtifacts';
 import { RoutePolicyStore } from './core/routerPolicy';
 import { LocalReviewSurfaceService } from './extension/reviewSurfaces';
 import { renderRuntimeStatusMarkdown } from './extension/runtimeStatus';
@@ -796,6 +799,62 @@ export function activate(context: vscode.ExtensionContext): void {
         currentRoot,
       );
       taskBoardProvider.refresh();
+    }),
+
+    // U09 — Active task selection commands (bounded, local-only, non-authorizing)
+    vscode.commands.registerCommand(
+      'arc.selectTask',
+      async (directiveId: string) => {
+        const orchestrator = orchestratorFor();
+        const tasks = orchestrator.activeTaskSelection;
+        const bpPath =
+          orchestrator.blueprintArtifacts.blueprintPath(directiveId);
+        if (!fs.existsSync(bpPath)) {
+          void vscode.window.showWarningMessage(
+            `[ARC XT] Blueprint not found: ${directiveId}`,
+          );
+          return;
+        }
+        const content = fs.readFileSync(bpPath, 'utf8');
+        const parsedTasks = parseBlueprintTasks(content);
+        if (parsedTasks.length === 0) {
+          void vscode.window.showWarningMessage(
+            `[ARC XT] No tasks found in blueprint: ${directiveId}`,
+          );
+          return;
+        }
+
+        const items = parsedTasks.map((t) => ({
+          label: t.checked ? `✅ ${t.text}` : `⬜ ${t.text}`,
+          description: `Line ${t.lineIndex}`,
+          task: t,
+        }));
+
+        const choice = await vscode.window.showQuickPick(items, {
+          placeHolder: 'Select a task for local model context',
+          title: 'ARC XT — Active Task Selection',
+        });
+
+        if (choice) {
+          tasks.select({
+            taskId: `${directiveId}-task-${choice.task.lineIndex}`,
+            summary: choice.task.text,
+            status: choice.task.checked ? 'DONE' : 'TODO',
+            directiveId,
+            blueprintPath: bpPath,
+          });
+          void vscode.window.showInformationMessage(
+            `[ARC XT] Active task selected: ${choice.task.text}`,
+          );
+        }
+      },
+    ),
+    vscode.commands.registerCommand('arc.clearActiveTask', async () => {
+      const orchestrator = orchestratorFor();
+      orchestrator.activeTaskSelection.clear();
+      void vscode.window.showInformationMessage(
+        '[ARC XT] Active task cleared.',
+      );
     }),
 
     vscode.workspace.onDidOpenTextDocument((document) => {

@@ -130,11 +130,11 @@ Maintenance rule:
 
 ### Blueprint-backed todo / task workflow
 
-- [ ] U07 — Define a canonical `## Tasks` blueprint convention that can be parsed safely.
-- [ ] U08 — Parse blueprint tasks/todos into extension-visible task state and Task Board summaries.
-- [ ] U09 — Allow bounded active-task selection for operator context.
-- [ ] U10 — Inject bounded task context into local model evaluation only after explicit task selection.
-- [ ] U11 — Add tests proving todo/task features stay local-only, non-authorizing, and fail-closed.
+- [x] U07 — Define a canonical `## Tasks` blueprint convention that can be parsed safely.
+- [x] U08 — Parse blueprint tasks/todos into extension-visible task state and Task Board summaries.
+- [x] U09 — Allow bounded active-task selection for operator context.
+- [x] U10 — Inject bounded task context into local model evaluation only after explicit task selection.
+- [x] U11 — Add tests proving todo/task features stay local-only, non-authorizing, and fail-closed.
 
 ### Workflow friction and follow-up ideas retained from discussion
 
@@ -206,8 +206,8 @@ Maintenance rule:
 - [x] T5 — Create and maintain a canonical todo ledger for discussion-derived unfinished work and new ideas.
 - [x] T6 — Execute `WO-ARC-XT-M4-001` first-run bootstrap and governed-root selection package.
 - [x] T7 — Fix Task Board root rebinding and empty-state CTA flow.
-- [ ] T8 — Define and implement blueprint-backed task/todo parsing.
-- [ ] T9 — Add bounded active-task context injection for local model evaluation.
+- [x] T8 — Define and implement blueprint-backed task/todo parsing.
+- [x] T9 — Add bounded active-task context injection for local model evaluation.
 - [x] T10 — Establish the documentation/evidence flow record for Stage 3 review readiness.
 - [x] T11 — Prepare the canonical Stage 3 soak evidence pack / summary record.
 - [ ] T12 — Reconcile the retained ARC roadmap reference with current Lintel scope and future package boundaries.

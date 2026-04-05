@@ -261,3 +261,56 @@ function sectionBody(contents: string, heading: string): string {
 
   return match[1].replace(/\n/g, ' ').trim();
 }
+
+// ============================================================
+// U07 — Canonical ## Tasks blueprint convention
+// U08 — Parse blueprint tasks/todos into extension-visible state
+// ============================================================
+
+const TASK_HEADING = '## Tasks';
+const TASK_LINE_PATTERN = /^\s*[-*]\s+\[([ xX])\]\s+(.+)$/;
+
+export interface ParsedTaskLine {
+  checked: boolean;
+  text: string;
+  lineIndex: number;
+}
+
+export function parseBlueprintTasks(
+  contents: string,
+): ParsedTaskLine[] {
+  const lines = contents.replace(/\r\n/g, '\n').split('\n');
+  const tasks: ParsedTaskLine[] = [];
+  let inTasksSection = false;
+  let lineIndex = 0;
+
+  for (const line of lines) {
+    lineIndex++;
+    if (line.trim() === TASK_HEADING) {
+      inTasksSection = true;
+      continue;
+    }
+
+    // End of Tasks section at next heading
+    if (inTasksSection && line.startsWith('## ')) {
+      break;
+    }
+
+    if (inTasksSection) {
+      const match = line.match(TASK_LINE_PATTERN);
+      if (match) {
+        const checked = match[1].toLowerCase() === 'x';
+        const text = match[2].trim();
+        if (text.length > 0) {
+          tasks.push({ checked, text, lineIndex });
+        }
+      }
+    }
+  }
+
+  return tasks;
+}
+
+export function hasTasksSection(contents: string): boolean {
+  return contents.includes(TASK_HEADING);
+}

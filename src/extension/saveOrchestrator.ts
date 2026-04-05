@@ -34,6 +34,7 @@ import { buildContext } from '../core/contextBuilder';
 import { buildContextPacket } from '../core/contextPacket';
 import { enforceMinimumFloor } from '../core/decisionPolicy';
 import { DecisionLeaseStore } from '../core/decisionLease';
+import { ActiveTaskSelectionStore } from '../core/activeTaskSelection';
 import { OverrideLogWriter } from '../core/overrideLog';
 import {
   LocalPerformanceRecorder,
@@ -55,7 +56,7 @@ import { evaluateRules } from '../core/ruleEngine';
 import { WorkspaceMappingStore } from '../core/workspaceMapping';
 
 export class SaveOrchestrator {
-  private readonly blueprintArtifacts: BlueprintArtifactStore;
+  readonly blueprintArtifacts: BlueprintArtifactStore;
   private readonly workspaceMapping: WorkspaceMappingStore;
   private readonly performanceRecorder: LocalPerformanceRecorder;
   private readonly routePolicy: RoutePolicyStore;
@@ -67,6 +68,8 @@ export class SaveOrchestrator {
   private readonly governanceFeedbackEvaluator =
     new GovernanceFeedbackEvaluator();
   private readonly governanceProposalRegistry: GovernanceProposalRegistry;
+  // U09 — Active task selection store (local-only, non-authorizing)
+  readonly activeTaskSelection = new ActiveTaskSelectionStore();
 
   constructor(
     private readonly workspaceRoot: string,
@@ -459,11 +462,24 @@ export class SaveOrchestrator {
     ruleDecision: DecisionPayload,
     routerShell: ReturnType<RouterShell['resolve']>,
   ): Promise<DecisionPayload> {
+    // U10 — Inject bounded task context into LOCAL model evaluation only
+    // Warden C3: Task context must NOT flow to cloud routes
+    // Warden C2: Only injected if user has explicitly selected a task
+    const taskContext = this.activeTaskSelection.toContextPacket();
+    const localContext = taskContext
+      ? {
+          ...context,
+          task_id: taskContext.task_id,
+          task_summary: taskContext.task_summary,
+          task_status: taskContext.task_status,
+        }
+      : context;
+
     const localDecision = await this.evaluateLane(
       'LOCAL',
       this.localModelAdapterFor(routerShell),
       classification,
-      context,
+      localContext,
       ruleDecision,
     );
 
@@ -471,6 +487,7 @@ export class SaveOrchestrator {
       return this.withRouteMetadata(localDecision, routerShell);
     }
 
+    // Warden C3: Cloud route receives context WITHOUT task context
     const cloudDecision = await this.evaluateLane(
       'CLOUD',
       this.cloudModelAdapterFor(routerShell),

@@ -112,6 +112,14 @@
       {
         "command": "arc.explainCurrentFileState",
         "title": "ARC: Explain Current File State"
+      },
+      {
+        "command": "arc.selectTask",
+        "title": "ARC: Select Active Task"
+      },
+      {
+        "command": "arc.clearActiveTask",
+        "title": "ARC: Clear Active Task"
       }
     ],
     "viewsContainers": {

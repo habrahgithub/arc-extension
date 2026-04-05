@@ -121,10 +121,7 @@ export type GovernanceProposalType =
   | 'REVIEW_CONTRACT'
   | 'REVIEW_POLICY_REQUIREMENT'
   | 'REVIEW_OUTPUT_CONTRACT';
-export type GovernanceReviewStatus =
-  | 'PENDING_REVIEW'
-  | 'APPROVED'
-  | 'REJECTED';
+export type GovernanceReviewStatus = 'PENDING_REVIEW' | 'APPROVED' | 'REJECTED';
 
 export interface GovernanceReviewDecision {
   decidedAt: string;
@@ -306,6 +303,11 @@ export interface ContextPayload {
   last_decision?: Decision;
   excerpt?: string;
   heuristic_only: true;
+  // U10 — Bounded task context (local-model-only, advisory metadata)
+  // Warden C1: Only task_id, task_summary, task_status — no code, diffs, blueprint text
+  task_id?: string;
+  task_summary?: string;
+  task_status?: TaskStatus;
 }
 
 export interface ContextPacket {
@@ -745,4 +747,33 @@ export interface AuditExportBundle {
   };
   bundle_validation: ExportBundleValidationResult;
   warnings: AuditHistoryWarning[];
+}
+
+// ============================================================
+// U07-U11 — Blueprint-backed task/todo layer
+// Local-only, non-authorizing, advisory metadata for task context
+// ============================================================
+
+export type TaskStatus = 'TODO' | 'IN_PROGRESS' | 'DONE';
+
+export interface BlueprintTask {
+  taskId: string;
+  summary: string;
+  status: TaskStatus;
+  directiveId: string;
+  blueprintPath: string;
+}
+
+export interface ActiveTaskSelection {
+  task: BlueprintTask;
+  selectedAt: string; // ISO timestamp
+  userInitiated: true;
+}
+
+// Bounded task context for local model evaluation (U10)
+// Only these three fields may be injected — per Warden C1
+export interface TaskContextPacket {
+  task_id: string;
+  task_summary: string;
+  task_status: TaskStatus;
 }

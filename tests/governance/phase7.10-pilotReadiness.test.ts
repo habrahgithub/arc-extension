@@ -152,7 +152,7 @@ describe('Phase 7.10 — Pilot Readiness Governance', () => {
       const readme = fs.readFileSync(readmePath, 'utf8');
 
       // Public README may state beta posture, but must not overclaim full readiness
-      expect(readme).toContain('Public beta candidate');
+      expect(readme).toContain('Controlled internal release');
       expect(readme).not.toMatch(/production[- ]ready/i);
       expect(readme).not.toMatch(/marketplace[- ]ready/i);
       expect(readme).not.toMatch(/public release is ready/i);

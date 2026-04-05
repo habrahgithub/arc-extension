@@ -206,6 +206,7 @@ describe('Phase 7.8 — Operator Friction Hardening Governance', () => {
         'classifier.ts',
         'contextBuilder.ts',
         'contextPacket.ts',
+        'activeTaskSelection.ts', // U07-U11 — task selection store
         'decisionLease.ts',
         'decisionPolicy.ts',
         'deviationDetector.ts', // added via main (Codex PRs)
