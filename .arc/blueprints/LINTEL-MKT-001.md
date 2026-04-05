@@ -1,4 +1,4 @@
-# LINTEL Blueprint: LINTEL-MKT-001
+# ARC XT Blueprint: LINTEL-MKT-001
 **Directive ID:** LINTEL-MKT-001
 
 ## Objective

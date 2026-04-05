@@ -75,7 +75,7 @@ function getGuidedWorkflowHtml(nonce: string): string {
       step: 3,
       title: 'Enter Change ID',
       content:
-        'When prompted for a plan-linked save, enter the Change ID that links your change to a governance plan (e.g., LINTEL-PH5-001). The Change ID must be in uppercase, hyphenated format.',
+        'When prompted for a plan-linked save, enter the Change ID that links your change to a governance plan (e.g., ARC-101). The Change ID must be in uppercase, hyphenated format.',
     },
     {
       step: 4,

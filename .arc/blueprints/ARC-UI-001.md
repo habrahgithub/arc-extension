@@ -1,4 +1,4 @@
-# LINTEL Blueprint: ARC-UI-001
+# ARC XT Blueprint: ARC-UI-001
 **Directive ID:** ARC-UI-001
 
 > Status: SUPERSEDED

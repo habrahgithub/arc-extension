@@ -1,18 +1,39 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import Ajv from 'ajv';
-import type { RiskRule, WorkspaceMappingConfig, WorkspaceMappingResolution } from '../contracts/types';
+import type {
+  RiskRule,
+  WorkspaceMappingConfig,
+  WorkspaceMappingResolution,
+} from '../contracts/types';
 
 const ajv = new Ajv();
 const validateRiskRule = ajv.compile({
   type: 'object',
-  required: ['id', 'riskFlag', 'scope', 'severity', 'decisionFloor', 'reason', 'matchers'],
+  required: [
+    'id',
+    'riskFlag',
+    'scope',
+    'severity',
+    'decisionFloor',
+    'reason',
+    'matchers',
+  ],
   properties: {
     id: { type: 'string' },
-    riskFlag: { type: 'string', enum: ['AUTH_CHANGE', 'SCHEMA_CHANGE', 'CONFIG_CHANGE'] },
-    scope: { type: 'string', enum: ['PATH_SEGMENT_MATCH', 'FILENAME_MATCH', 'EXTENSION_MATCH'] },
+    riskFlag: {
+      type: 'string',
+      enum: ['AUTH_CHANGE', 'SCHEMA_CHANGE', 'CONFIG_CHANGE'],
+    },
+    scope: {
+      type: 'string',
+      enum: ['PATH_SEGMENT_MATCH', 'FILENAME_MATCH', 'EXTENSION_MATCH'],
+    },
     severity: { type: 'string', enum: ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'] },
-    decisionFloor: { type: 'string', enum: ['ALLOW', 'WARN', 'REQUIRE_PLAN', 'BLOCK'] },
+    decisionFloor: {
+      type: 'string',
+      enum: ['ALLOW', 'WARN', 'REQUIRE_PLAN', 'BLOCK'],
+    },
     reason: { type: 'string' },
     matchers: {
       type: 'array',
@@ -20,7 +41,10 @@ const validateRiskRule = ajv.compile({
         type: 'object',
         required: ['type', 'value'],
         properties: {
-          type: { type: 'string', enum: ['PATH_SEGMENT_MATCH', 'FILENAME_MATCH', 'EXTENSION_MATCH'] },
+          type: {
+            type: 'string',
+            enum: ['PATH_SEGMENT_MATCH', 'FILENAME_MATCH', 'EXTENSION_MATCH'],
+          },
           value: { type: 'string' },
         },
         additionalProperties: false,
@@ -53,7 +77,9 @@ export class WorkspaceMappingStore {
 
     let parsed: WorkspaceMappingConfig;
     try {
-      parsed = JSON.parse(fs.readFileSync(mappingPath, 'utf8')) as WorkspaceMappingConfig;
+      parsed = JSON.parse(
+        fs.readFileSync(mappingPath, 'utf8'),
+      ) as WorkspaceMappingConfig;
     } catch {
       return {
         status: 'INVALID',
@@ -71,7 +97,8 @@ export class WorkspaceMappingStore {
         mode,
         rules: [],
         uiSegments: [],
-        reason: 'Shared or team workspace mapping is not authorized in Phase 5.',
+        reason:
+          'Shared or team workspace mapping is not authorized in Phase 5.',
       };
     }
 
@@ -96,7 +123,9 @@ export class WorkspaceMappingStore {
     }, 0);
 
     const uiSegments = Array.isArray(parsed.ui_segments)
-      ? parsed.ui_segments.filter((segment): segment is string => typeof segment === 'string')
+      ? parsed.ui_segments.filter(
+          (segment): segment is string => typeof segment === 'string',
+        )
       : [];
 
     return {
@@ -104,8 +133,11 @@ export class WorkspaceMappingStore {
       mode,
       rules: validRules,
       uiSegments,
-      ...(skippedCount > 0 ? { reason: `${skippedCount} rule(s) skipped: failed LINTEL risk-rule schema validation.` } : {}),
+      ...(skippedCount > 0
+        ? {
+            reason: `${skippedCount} rule(s) skipped: failed ARC XT risk-rule schema validation.`,
+          }
+        : {}),
     };
   }
 }
-

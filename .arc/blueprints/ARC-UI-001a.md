@@ -1,4 +1,4 @@
-# LINTEL Blueprint: ARC-UI-001a
+# ARC XT Blueprint: ARC-UI-001a
 **Directive ID:** ARC-UI-001a
 
 ## Objective

@@ -332,6 +332,39 @@ export class LocalReviewSurfaceService {
   }
 
   // Phase 7.10 — Task Board v1 (ARC-UI-002)
+  getTaskBoardItems(): TaskBoardItem[] {
+    const blueprintsDir = path.join(this.workspaceRoot, '.arc', 'blueprints');
+    const files = fs.existsSync(blueprintsDir)
+      ? fs.readdirSync(blueprintsDir).filter((f) => f.endsWith('.md')).sort()
+      : [];
+    return files.map((fileName) => {
+      const directiveId = fileName.replace(/\.md$/, '');
+      const blueprintPath = path.join(blueprintsDir, fileName);
+      const content = fs.readFileSync(blueprintPath, 'utf8');
+      const resolution = this.blueprintArtifacts.resolveProof({
+        directiveId,
+        blueprintId: this.blueprintArtifacts.canonicalBlueprintId(directiveId),
+        blueprintMode: 'LOCAL_ONLY',
+      });
+      const taskCount = hasTasksSection(content)
+        ? parseBlueprintTasks(content).length
+        : 0;
+      const taskLabel = taskCount > 0 ? ` (${taskCount} tasks)` : '';
+      const status = deriveTaskStatusPathA(resolution, content);
+      const qualityScore = calculateTaskQualityScore(resolution, status);
+      return {
+        directiveId,
+        blueprintPath:
+          resolution.link?.blueprintPath ??
+          this.blueprintArtifacts.blueprintPath(directiveId),
+        status,
+        validationReason: resolution.reason,
+        nextAction: resolution.nextAction + taskLabel,
+        qualityScore,
+      };
+    });
+  }
+
   renderTaskBoard(): string {
     return measureSync(
       (entry) => this.performanceRecorder.record(entry),

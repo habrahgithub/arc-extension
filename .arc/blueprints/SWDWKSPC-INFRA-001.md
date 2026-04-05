@@ -1,4 +1,4 @@
-# LINTEL Blueprint: SWDWKSPC-INFRA-001
+# ARC XT Blueprint: SWDWKSPC-INFRA-001
 
 **Directive ID:** SWDWKSPC-INFRA-001
 

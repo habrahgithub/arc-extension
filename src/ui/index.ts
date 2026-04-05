@@ -27,6 +27,8 @@ import { createAuditTimelinePanel } from './webview/AuditTimeline';
 import { createWhyPanelPanel } from './webview/WhyPanel';
 // Phase 7.10 — Task Board v1 (ARC-UI-002)
 import { createTaskBoardPanel } from './webview/TaskBoard';
+// Phase 7.11 — Liquid Shell (ARC-UI-003)
+import { createLiquidShellPanel } from './webview/LiquidShell';
 
 /**
  * Register all ARC-UI commands
@@ -109,6 +111,13 @@ export function registerUiCommands(context: vscode.ExtensionContext): void {
       createTaskBoardPanel(context);
     }),
   );
+
+  // Phase 7.11 — Liquid Shell (ARC-UI-003)
+  context.subscriptions.push(
+    vscode.commands.registerCommand('arc.ui.liquidShell', () => {
+      createLiquidShellPanel(context);
+    }),
+  );
 }
 
 /**
@@ -116,7 +125,7 @@ export function registerUiCommands(context: vscode.ExtensionContext): void {
  *
  * This module depends on:
  * - vscode Extension API
- * - Existing extension commands (lintel.*)
+ * - Existing extension commands (arc.*)
  *
  * This module does NOT:
  * - Write to audit state

@@ -1,0 +1,6 @@
+{
+  "mode": "RULE_ONLY",
+  "local_lane_enabled": false,
+  "cloud_lane_enabled": false,
+  "cloud_data_class": "LOCAL_ONLY"
+}

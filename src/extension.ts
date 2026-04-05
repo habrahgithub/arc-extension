@@ -127,7 +127,7 @@ Use this order for any \`REQUIRE_PLAN\` save:
 
 ## Important clarifications
 
-- The dialog placeholder (for example \`LINTEL-PH5-001\`) is only an example format. It is not submitted input.
+- The dialog placeholder (for example \`ARC-101\`) is only an example format. It is not submitted input.
 - \`.arc/workspace-map.json\` does **not** satisfy proof by itself.
 - The canonical proof path is \`.arc/blueprints/<CHANGE-ID>.md\`.
 - Template creation is a starting point only; incomplete blueprints do not authorize saves.
@@ -167,7 +167,7 @@ async function promptForDirectiveId(): Promise<string | undefined> {
     title: 'ARC XT — Plan-Linked Save (Step 3: Change ID)',
     prompt:
       'Current SOP: confirm governed root and local ARC config, then enter the Change ID that links this save to a governance plan.',
-    placeHolder: 'LINTEL-PH5-001',
+    placeHolder: 'ARC-101',
     ignoreFocusOut: true,
     validateInput: (value) => {
       if (!value.trim()) {
@@ -176,7 +176,7 @@ async function promptForDirectiveId(): Promise<string | undefined> {
 
       return isValidDirectiveId(value.trim())
         ? undefined
-        : 'Use an uppercase, hyphenated Change ID such as LINTEL-PH5-001.';
+        : 'Use an uppercase, hyphenated Change ID such as ARC-101.';
     },
   });
 }
@@ -636,8 +636,9 @@ export function activate(context: vscode.ExtensionContext): void {
       );
     }),
 
-    // ARC-CMD-001: Compatibility bridge lintel.* namespace (legacy, deprecated)
-    // These delegate to the same handlers, ensuring existing keybindings work
+    // ARC-CMD-001: Compatibility bridge lintel.* namespace (DEPRECATED — retained for backward compat with existing keybindings/macros)
+    // DO NOT add new commands to this namespace. All new commands use arc.* prefix.
+    // This bridge will be removed in a future major release.
     vscode.commands.registerCommand('lintel.showWelcome', async () => {
       await welcomeSurface.showWelcome();
     }),

@@ -1,4 +1,4 @@
-# LINTEL Blueprint: ARC-CMD-001
+# ARC XT Blueprint: ARC-CMD-001
 
 **Directive ID:** ARC-CMD-001
 

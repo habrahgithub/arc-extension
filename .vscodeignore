@@ -1,6 +1,5 @@
-# LINTEL VSIX Packaging Boundary
-# WRD-0091: Marketplace Remediation
-# LINTEL-MKT-REM-001
+# ARC XT VSIX Packaging Boundary
+# ARCXT-PKG-001 — Clean Baseline Release
 
 # ===========================================
 # EXCLUDE: Evidence bundles and artifacts (OBS-S-7092)
@@ -8,6 +7,12 @@
 artifacts/**
 .arc/**
 .continue/**
+test-evidence/**
+
+# ===========================================
+# EXCLUDE: Design assets (reference only, not runtime)
+# ===========================================
+Public/* Template/**
 
 # ===========================================
 # EXCLUDE: Test files
@@ -77,14 +82,12 @@ AGENTS.md
 LINTEL-*.md
 PHASE*.md
 BUILD-*.md
-docs/ARCHITECTURE.md
-docs/CODE_MAP.md
-docs/RELEASE_CHECKLIST.md
-docs/RISK_REGISTER.md
-docs/TESTING.md
-docs/PHASE-*.md
-docs/ARC-*.md
-docs/RELEASE-READINESS.md
+HARDENING-*.md
+ACTIVATION-*.md
+
+# Exclude entire docs directory except README
+docs/**
+!docs/README.md
 
 # ===========================================
 # KEEP: Required runtime files (whitelist)
@@ -92,8 +95,12 @@ docs/RELEASE-READINESS.md
 !package.json
 !README.md
 !dist/**
-!node_modules/**
+!node_modules/ajv/dist/**
+!node_modules/fast-deep-equal/**
+!node_modules/fast-uri/dist/**
+!node_modules/json-schema-traverse/**
+!node_modules/require-from-string/**
 !rules/**
-!Public/**
+!Public/Logo/**
 !LICENSE
 

@@ -8,7 +8,7 @@ import * as vscode from 'vscode';
  *
  * Governance Anchors:
  * - OBS-S-7009: Onboarding mechanism remains bounded (local-only, no remote resources)
- * - OBS-S-7010: Command identity preserved (lintel.* prefix, ARC-aligned titles)
+ * - OBS-S-7010: Command identity uses arc.* prefix (legacy lintel.* bridge deprecated)
  * - WRD-0068: Wording truthfulness (no implication of readiness beyond actual state)
  */
 
@@ -132,7 +132,7 @@ ARC XT uses local-only configuration for runtime parameters. No cloud defaults o
 ### Proof-Required Saves
 
 For high-risk files (auth, config), you must:
-1. Link a directive ID (e.g., \`LINTEL-PH5-001\`)
+1. Link a directive ID (e.g., \`ARC-101\`)
 2. Acknowledge the risk before save proceeds
 
 This ensures explicit intent for sensitive changes.
@@ -218,19 +218,32 @@ export class WelcomeSurfaceService {
   /**
    * Check if this is the first activation (user hasn't dismissed welcome before).
    * Returns true if welcome should be shown.
+   * Migrates from legacy lintel.welcomeShown key.
    */
   shouldShowWelcome(): boolean {
-    const hasSeenWelcome = this.context.globalState.get<boolean>(
+    // Migration: check new key first, fall back to legacy key
+    const hasSeenWelcome = this.context.globalState.get<boolean | undefined>(
+      'arc.welcomeShown',
+    );
+    if (hasSeenWelcome !== undefined) {
+      return !hasSeenWelcome;
+    }
+    // Legacy key migration
+    const legacySeen = this.context.globalState.get<boolean>(
       'lintel.welcomeShown',
       false,
     );
-    return !hasSeenWelcome;
+    if (legacySeen) {
+      // Migrate to new key
+      this.context.globalState.update('arc.welcomeShown', true);
+    }
+    return !legacySeen;
   }
 
   /**
    * Mark welcome as shown (user has seen it).
    */
   async markWelcomeShown(): Promise<void> {
-    await this.context.globalState.update('lintel.welcomeShown', true);
+    await this.context.globalState.update('arc.welcomeShown', true);
   }
 }

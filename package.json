@@ -28,12 +28,12 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/habrahgithub/lintel.git"
+    "url": "https://github.com/habrahgithub/arc-extension.git"
   },
   "bugs": {
-    "url": "https://github.com/habrahgithub/lintel/issues"
+    "url": "https://github.com/habrahgithub/arc-extension/issues"
   },
-  "homepage": "https://github.com/habrahgithub/lintel#readme",
+  "homepage": "https://github.com/habrahgithub/arc-extension#readme",
   "icon": "Public/Logo/ARC-ICON-1024.png",
   "galleryBanner": {
     "color": "#1e1e1e",
@@ -107,6 +107,10 @@
       {
         "command": "arc.ui.taskBoard",
         "title": "ARC XT: Task Board"
+      },
+      {
+        "command": "arc.ui.liquidShell",
+        "title": "ARC XT: Liquid Shell"
       },
       {
         "command": "arc.explainCurrentFileState",

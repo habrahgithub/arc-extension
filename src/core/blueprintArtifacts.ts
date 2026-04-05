@@ -110,7 +110,7 @@ export class BlueprintArtifactStore {
         ok: false,
         status: 'MISSING_DIRECTIVE',
         reason:
-          'Plan-linked saves require a Change ID (e.g., LINTEL-PH5-001) and a linked local blueprint artifact.',
+          'Plan-linked saves require a Change ID (e.g., ARC-101) and a linked local blueprint artifact.',
         nextAction:
           'Provide a Change ID and create the local blueprint before saving.',
       };
@@ -120,9 +120,8 @@ export class BlueprintArtifactStore {
       return {
         ok: false,
         status: 'INVALID_DIRECTIVE',
-        reason: `Change ID "${proof.directiveId}" is not valid. Use uppercase, hyphenated format (e.g., LINTEL-PH5-001).`,
-        nextAction:
-          'Use an uppercase, hyphenated Change ID. Example: LINTEL-PH5-001',
+        reason: `Change ID "${proof.directiveId}" is not valid. Use uppercase, hyphenated format (e.g., ARC-101).`,
+        nextAction: 'Use an uppercase, hyphenated Change ID. Example: ARC-101',
       };
     }
 
@@ -192,7 +191,7 @@ export function isValidDirectiveId(value: string): boolean {
 
 export function renderBlueprintTemplate(directiveId: string): string {
   return [
-    `# LINTEL Blueprint: ${directiveId}`,
+    `# ARC XT Blueprint: ${directiveId}`,
     `**Directive ID:** ${directiveId}`,
     '',
     '> Status: INCOMPLETE_TEMPLATE',
@@ -276,9 +275,7 @@ export interface ParsedTaskLine {
   lineIndex: number;
 }
 
-export function parseBlueprintTasks(
-  contents: string,
-): ParsedTaskLine[] {
+export function parseBlueprintTasks(contents: string): ParsedTaskLine[] {
   const lines = contents.replace(/\r\n/g, '\n').split('\n');
   const tasks: ParsedTaskLine[] = [];
   let inTasksSection = false;
