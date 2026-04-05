@@ -2,7 +2,7 @@
 
 **Directive ID:** ARCXT-UX-SMOKE-001
 
-> Status: PLANNED — 2026-04-05
+> Status: CLOSED — 2026-04-05
 
 ## Objective
 
@@ -30,7 +30,7 @@ Approved by Axis (via Claude Code, Axis continuity mode) on 2026-04-05.
 Three source changes + one manifest change. No architecture changes. No new modules. No new commands. No governance logic changes.
 
 | File | Change | Est. Lines |
-|---|---|---|
+| --- | --- | --- |
 | `package.json` | `contributes.views` — add `arc.ui.liquidShell` as primary Activity Bar view; rename sidebar container label to "ARC XT" | ~5 |
 | `src/ui/webview/TaskBoard.ts` | Update sidebar button handlers: Runtime/Review buttons route to Liquid Shell (not markdown preview). Focus existing panel if open. | ~15 |
 | `src/ui/webview/TaskBoard.ts` | Replace "No Blueprint Artifacts" empty state with structured "Get Started" empty state including [Show Welcome Guide] and [Open Runtime Status] actions | ~20 |
@@ -90,7 +90,31 @@ Rollback is a single manifest revert. No runtime enforcement changes to undo.
 
 ## Execution Evidence
 
-_To be populated on closeout._
+- **Commits:** `860313d` → `6a72e34` → `3da5213` (lintel `main`)
+- **Files changed:** 2 source files + 1 manifest (`package.json`, `LiquidShell.ts`, `extension.ts`, `TaskBoard.ts`, `ui/index.ts`)
+- **Delta:** +47 / -14 lines (core UX wiring only — no runtime/contract changes)
+- **VSIX:** `arc-audit-ready-core-0.1.13.vsix` — SHA256 `f0ac006bf68e1d1eb99b11fdafcba56643acc89da8e24e75dff5abded29158e4`
+- **Tests:** 73 files / 579 passing — no regressions
+- **Acceptance criteria:** 10/10 passed (verified against post-ship audit by Prime/David)
+
+### Criteria record
+
+| # | Criterion | Result |
+| --- | --- | --- |
+| 1 | Activity Bar icon opens Liquid Shell, not Task Board | ✓ PASS |
+| 2 | Task Board sidebar remains accessible alongside Liquid Shell | ✓ PASS |
+| 3 | Sidebar Runtime/Review buttons no longer open markdown previews | ✓ PASS |
+| 4 | Empty state shows structured "Get Started" with [Show Welcome Guide] | ✓ PASS |
+| 5 | Sidebar container label reads "ARC XT" | ✓ PASS |
+| 6 | Runtime/Review from sidebar does not open duplicate panel instances | ✓ PASS |
+| 7 | Lint, typecheck, build, and test pass | ✓ PASS |
+| 8 | Route wired through from Task Board to Liquid Shell (gap fix) | ✓ PASS |
+| 9 | `arc.ui.liquidShell` command reveals sidebar, not new panel (gap fix) | ✓ PASS |
+| 10 | Liquid Shell internal buttons (EXECUTE_RUN, topbar) route within shell (gap fix) | ✓ PASS |
+
+### Gap closure
+
+Initial ship (`6a72e34`) was 60–70% aligned. Three navigation gaps identified in post-ship audit and closed in `3da5213`. Evidence trail is complete.
 
 ## Notes
 
