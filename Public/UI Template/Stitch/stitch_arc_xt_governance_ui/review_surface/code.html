@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ARC XT - Review Surface</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary": "#004272",
+                        "inverse-primary": "#0062a5",
+                        "background": "#0e0e0e",
+                        "outline": "#757575",
+                        "tertiary-fixed-dim": "#7aec8d",
+                        "tertiary-fixed": "#88fb9a",
+                        "on-surface": "#e6e5e5",
+                        "secondary-fixed": "#dae3ef",
+                        "error-container": "#7f2927",
+                        "on-primary-fixed-variant": "#005e9f",
+                        "on-secondary-container": "#b7c0cb",
+                        "surface-container-lowest": "#000000",
+                        "on-error": "#490106",
+                        "surface-container-high": "#1f2020",
+                        "primary-fixed": "#d1e4ff",
+                        "secondary-container": "#343c45",
+                        "primary-fixed-dim": "#b8d7ff",
+                        "inverse-surface": "#fcf9f8",
+                        "error-dim": "#bb5551",
+                        "on-background": "#e6e5e5",
+                        "inverse-on-surface": "#565555",
+                        "on-tertiary-fixed-variant": "#006a2b",
+                        "primary": "#9fcaff",
+                        "on-secondary": "#182129",
+                        "on-primary-container": "#b1d3ff",
+                        "secondary": "#969fa9",
+                        "surface-container-low": "#131313",
+                        "surface-bright": "#2b2c2c",
+                        "on-tertiary-fixed": "#004a1b",
+                        "on-secondary-fixed-variant": "#535c66",
+                        "primary-container": "#00497d",
+                        "error": "#ee7d77",
+                        "surface-dim": "#0e0e0e",
+                        "on-surface-variant": "#ababab",
+                        "secondary-fixed-dim": "#ccd5e1",
+                        "on-tertiary-container": "#005f25",
+                        "tertiary-dim": "#7aec8d",
+                        "surface-variant": "#252626",
+                        "on-primary-fixed": "#004171",
+                        "surface-tint": "#9fcaff",
+                        "primary-dim": "#83bdff",
+                        "surface": "#0e0e0e",
+                        "surface-container": "#191a1a",
+                        "outline-variant": "#474848",
+                        "tertiary": "#c6ffc7",
+                        "on-error-container": "#ff9993",
+                        "on-secondary-fixed": "#374049",
+                        "on-tertiary": "#00692a",
+                        "secondary-dim": "#969fa9",
+                        "surface-container-highest": "#252626",
+                        "tertiary-container": "#88fb9a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Space Grotesk"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+            font-size: 18px;
+        }
+        .code-font {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #0e0e0e; }
+        ::-webkit-scrollbar-thumb { background: #37373d; }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body overflow-hidden h-screen flex flex-col">
+<!-- TopAppBar -->
+<header class="bg-[#0e0e0e] dark:bg-[#0e0e0e] text-[#9fcaff] font-['Space_Grotesk'] text-sm uppercase tracking-wider docked full-width top-0 border-b border-white/10 flex justify-between items-center w-full px-2 h-10 z-50">
+<div class="flex items-center gap-4">
+<span class="text-lg font-bold text-[#9fcaff] tracking-tighter">ARC XT</span>
+<div class="flex gap-4 ml-4">
+<button class="text-gray-500 hover:bg-[#ffffff0d] transition-colors px-2 py-1">Tasks</button>
+<button class="text-gray-500 hover:bg-[#ffffff0d] transition-colors px-2 py-1">Runtime</button>
+<button class="text-[#9fcaff] border-b-2 border-[#9fcaff] px-2 py-1">Review</button>
+<button class="text-gray-500 hover:bg-[#ffffff0d] transition-colors px-2 py-1">Architect</button>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<button class="hover:bg-[#ffffff0d] transition-colors p-1 scale-98 active:opacity-80">
+<span class="material-symbols-outlined" data-icon="terminal">terminal</span>
+</button>
+<button class="hover:bg-[#ffffff0d] transition-colors p-1 scale-98 active:opacity-80">
+<span class="material-symbols-outlined" data-icon="bug_report">bug_report</span>
+</button>
+<button class="hover:bg-[#ffffff0d] transition-colors p-1 scale-98 active:opacity-80">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+</div>
+</header>
+<div class="flex flex-1 overflow-hidden">
+<!-- SideNavBar -->
+<aside class="bg-[#1a1a1a] dark:bg-[#1a1a1a] text-[#9fcaff] font-['Inter'] text-[11px] leading-tight docked left-0 h-full w-64 flex flex-col overflow-y-auto border-r border-outline-variant/15">
+<div class="p-4 flex flex-col gap-1">
+<span class="font-['Space_Grotesk'] font-bold text-[#9fcaff] text-base tracking-tighter uppercase">ARC XT</span>
+<span class="text-on-surface-variant text-[9px] tracking-[0.2em]">ENGINEERING_CORE</span>
+</div>
+<nav class="flex-1 mt-4">
+<div class="px-3 mb-2 text-on-surface-variant uppercase text-[9px] font-bold tracking-widest">Main Pipeline</div>
+<a class="flex items-center gap-3 px-4 py-2 text-gray-400 hover:bg-[#2a2d2e] transition-all duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="assignment">assignment</span>
+<span>Tasks</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 text-gray-400 hover:bg-[#2a2d2e] transition-all duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span>Runtime</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 bg-[#37373d] text-white border-l-2 border-[#9fcaff] transition-all duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="fact_check">fact_check</span>
+<span>Review</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 text-gray-400 hover:bg-[#2a2d2e] transition-all duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="architecture">architecture</span>
+<span>Architect</span>
+</a>
+</nav>
+<div class="p-4 mt-auto">
+<div class="bg-surface-container-low p-3 border border-outline-variant/10 rounded-sm mb-4">
+<div class="flex items-center gap-3 mb-2">
+<div class="w-8 h-8 rounded-sm bg-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-sm" data-icon="person">person</span>
+</div>
+<div class="flex flex-col">
+<span class="text-on-surface text-[10px] font-bold">System Architect</span>
+<span class="text-on-surface-variant text-[9px]">L7_AUTH_BYPASS</span>
+</div>
+</div>
+<button class="w-full py-1.5 bg-primary text-on-primary font-bold text-[10px] rounded-sm hover:bg-primary-fixed transition-colors tracking-tight">EXECUTE_RUN</button>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 overflow-y-auto bg-surface flex flex-col">
+<!-- Context Header -->
+<div class="p-4 border-b border-outline-variant/15 flex justify-between items-end bg-surface-container-low">
+<div>
+<div class="flex items-center gap-2 mb-1">
+<span class="material-symbols-outlined text-primary text-sm" data-icon="description">description</span>
+<h1 class="font-headline text-lg font-bold tracking-tight">Blueprint Compliance Review</h1>
+</div>
+<div class="flex items-center gap-2 code-font text-[11px] text-on-surface-variant">
+<span class="bg-surface-container-lowest px-1.5 py-0.5 border border-outline-variant/20 rounded">FILE_ID: AXT-882-9</span>
+<span class="text-primary/70">src/auth/service.ts</span>
+</div>
+</div>
+<div class="flex flex-col items-end gap-1">
+<span class="text-[9px] uppercase font-bold tracking-widest text-on-surface-variant">System Confidence</span>
+<div class="flex items-center gap-2 px-2 py-0.5 bg-tertiary-container text-on-tertiary-container rounded-full text-[10px] font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-on-tertiary"></span>
+                        HIGH
+                    </div>
+</div>
+</div>
+<!-- Dashboard Grid -->
+<div class="p-4 grid grid-cols-12 gap-4">
+<!-- Left Column: Code Preview -->
+<div class="col-span-8 space-y-4">
+<div class="bg-surface-container-low rounded-sm overflow-hidden flex flex-col h-[500px]">
+<div class="px-3 py-1.5 bg-surface-container-high border-b border-outline-variant/15 flex justify-between items-center">
+<span class="text-[10px] font-mono text-on-surface-variant">src/auth/service.ts</span>
+<div class="flex gap-1">
+<div class="w-2 h-2 rounded-full bg-error/40"></div>
+<div class="w-2 h-2 rounded-full bg-yellow-500/40"></div>
+<div class="w-2 h-2 rounded-full bg-tertiary/40"></div>
+</div>
+</div>
+<div class="flex-1 p-4 code-font text-[12px] leading-relaxed text-on-surface/90 overflow-y-auto bg-surface-container-lowest">
+<div class="flex gap-4">
+<div class="text-on-surface-variant/40 text-right select-none pr-2 border-r border-outline-variant/10">01<br/>02<br/>03<br/>04<br/>05<br/>06<br/>07<br/>08<br/>09<br/>10<br/>11<br/>12<br/>13<br/>14<br/>15<br/>16<br/>17<br/>18</div>
+<div class="flex-1">
+<span class="text-purple-400">import</span> { Injectable } <span class="text-purple-400">from</span> <span class="text-emerald-400">'@nestjs/common'</span>;<br/>
+<span class="text-purple-400">import</span> { JwtService } <span class="text-purple-400">from</span> <span class="text-emerald-400">'@nestjs/jwt'</span>;<br/>
+<br/>
+<span class="text-blue-400">@Injectable</span>()<br/>
+<span class="text-purple-400">export class</span> <span class="text-yellow-200">AuthService</span> {<br/>
+                                      <span class="text-purple-400">constructor</span>(<span class="text-blue-300">private</span> jwtService: JwtService) {}<br/>
+<br/>
+                                      <span class="text-blue-300">async</span> <span class="text-yellow-200">validateUser</span>(payload: <span class="text-blue-300">any</span>) {<br/>
+                                        <span class="bg-error-container/30 border-l-2 border-error px-1 text-on-error-container"><span class="text-on-error-container/50 italic mr-2">// Rule BR-02 violation: Missing strict type check</span></span><br/>
+                                        <span class="text-purple-400">return</span> payload;<br/>
+                                      }<br/>
+<br/>
+                                      <span class="text-blue-300">async</span> <span class="text-yellow-200">login</span>(user: <span class="text-blue-300">any</span>) {<br/>
+                                        <span class="bg-yellow-500/10 border-l-2 border-yellow-500 px-1 text-yellow-200"><span class="text-yellow-500/50 italic mr-2">// Rule BR-04 warning: Token TTL exceeds 24h</span></span><br/>
+                                        <span class="text-purple-400">const</span> payload = { username: user.username, sub: user.userId };<br/>
+                                        <span class="text-purple-400">return</span> {<br/>
+                                          access_token: <span class="text-blue-300">this</span>.jwtService.<span class="text-yellow-200">sign</span>(payload),<br/>
+                                        };<br/>
+                                      }<br/>
+                                    }
+                                </div>
+</div>
+</div>
+</div>
+<div class="flex gap-4">
+<div class="flex-1 bg-surface-container-low p-4 border-l-2 border-primary">
+<h3 class="text-[10px] font-bold uppercase tracking-widest text-primary mb-3">Rule Evaluations</h3>
+<div class="space-y-1">
+<div class="flex items-center justify-between p-2 hover:bg-surface-bright transition-colors rounded-sm group">
+<div class="flex items-center gap-3">
+<span class="text-[11px] code-font text-on-surface-variant group-hover:text-on-surface">BR-01</span>
+<span class="text-xs font-medium">Injection Pattern Safety</span>
+</div>
+<span class="px-2 py-0.5 bg-tertiary-container text-on-tertiary-container rounded-full text-[9px] font-bold">PASS</span>
+</div>
+<div class="flex items-center justify-between p-2 hover:bg-surface-bright transition-colors rounded-sm group">
+<div class="flex items-center gap-3">
+<span class="text-[11px] code-font text-on-surface-variant group-hover:text-on-surface">BR-02</span>
+<span class="text-xs font-medium">Strict Payload Validation</span>
+</div>
+<span class="px-2 py-0.5 bg-error-container text-on-error-container rounded-full text-[9px] font-bold">FAIL</span>
+</div>
+<div class="flex items-center justify-between p-2 hover:bg-surface-bright transition-colors rounded-sm group">
+<div class="flex items-center gap-3">
+<span class="text-[11px] code-font text-on-surface-variant group-hover:text-on-surface">BR-03</span>
+<span class="text-xs font-medium">Dependency Decoupling</span>
+</div>
+<span class="px-2 py-0.5 bg-tertiary-container text-on-tertiary-container rounded-full text-[9px] font-bold">PASS</span>
+</div>
+<div class="flex items-center justify-between p-2 hover:bg-surface-bright transition-colors rounded-sm group">
+<div class="flex items-center gap-3">
+<span class="text-[11px] code-font text-on-surface-variant group-hover:text-on-surface">BR-04</span>
+<span class="text-xs font-medium">Token Lifecycle Policy</span>
+</div>
+<span class="px-2 py-0.5 bg-yellow-500 text-black rounded-full text-[9px] font-bold">WARN</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Column: Deviations & Metadata -->
+<div class="col-span-4 space-y-4">
+<div class="bg-surface-container-low p-4">
+<h3 class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-4">Deviation List</h3>
+<div class="space-y-4">
+<div class="flex gap-3">
+<div class="w-1 h-12 bg-error rounded-full"></div>
+<div class="flex-1">
+<div class="flex items-center justify-between mb-1">
+<span class="text-[10px] font-bold text-error uppercase">High Severity</span>
+<span class="text-[10px] code-font text-on-surface-variant">L:08</span>
+</div>
+<p class="text-xs text-on-surface leading-snug">Any-type casting detected in validation payload. Violates Tier-1 security blueprint.</p>
+</div>
+</div>
+<div class="flex gap-3">
+<div class="w-1 h-12 bg-yellow-500 rounded-full"></div>
+<div class="flex-1">
+<div class="flex items-center justify-between mb-1">
+<span class="text-[10px] font-bold text-yellow-500 uppercase">Medium Severity</span>
+<span class="text-[10px] code-font text-on-surface-variant">L:13</span>
+</div>
+<p class="text-xs text-on-surface leading-snug">Token TTL configuration is hardcoded. Recommended move to environment vault.</p>
+</div>
+</div>
+<div class="flex gap-3 opacity-60">
+<div class="w-1 h-12 bg-primary rounded-full"></div>
+<div class="flex-1">
+<div class="flex items-center justify-between mb-1">
+<span class="text-[10px] font-bold text-primary uppercase">Low Severity</span>
+<span class="text-[10px] code-font text-on-surface-variant">L:04</span>
+</div>
+<p class="text-xs text-on-surface leading-snug">Constructor uses implicit injection shorthand. Standardizing is advised.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-highest/30 p-4 border border-outline-variant/10">
+<h3 class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-3">Architectural Stats</h3>
+<div class="grid grid-cols-2 gap-4">
+<div class="bg-surface-container-lowest p-2">
+<div class="text-on-surface-variant text-[9px] uppercase tracking-tighter">Loc Coverage</div>
+<div class="text-lg font-headline font-bold text-primary">100%</div>
+</div>
+<div class="bg-surface-container-lowest p-2">
+<div class="text-on-surface-variant text-[9px] uppercase tracking-tighter">Complexity</div>
+<div class="text-lg font-headline font-bold text-on-surface">2.4</div>
+</div>
+</div>
+<div class="mt-4 pt-4 border-t border-outline-variant/15">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-on-surface-variant text-xs" data-icon="history">history</span>
+<span class="text-[10px] text-on-surface-variant">Review History</span>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between items-center text-[10px]">
+<span class="text-on-surface-variant">v1.2.0-rc1</span>
+<span class="text-tertiary">STABLE</span>
+</div>
+<div class="flex justify-between items-center text-[10px]">
+<span class="text-on-surface-variant">v1.2.1-pre</span>
+<span class="text-error">FAILED</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Governed Root Metadata Footer -->
+<footer class="mt-auto p-4 border-t border-outline-variant/15 bg-surface-container-low flex justify-between items-center">
+<div class="flex items-center gap-6">
+<div class="flex flex-col">
+<span class="text-[9px] font-bold uppercase tracking-[0.2em] text-on-surface-variant">Governed Root</span>
+<span class="text-[11px] code-font text-primary/80">root://axt-core/services/auth</span>
+</div>
+<div class="flex flex-col border-l border-outline-variant/20 pl-6">
+<span class="text-[9px] font-bold uppercase tracking-[0.2em] text-on-surface-variant">Timestamp</span>
+<span class="text-[11px] code-font text-on-surface/70 uppercase">2023-11-24T10:44:12.921Z</span>
+</div>
+<div class="flex flex-col border-l border-outline-variant/20 pl-6">
+<span class="text-[9px] font-bold uppercase tracking-[0.2em] text-on-surface-variant">Checksum</span>
+<span class="text-[11px] code-font text-on-surface/70">SHA-256: 8f2a...c190</span>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="px-4 py-1.5 bg-surface-container-high border border-outline-variant/20 text-on-surface text-[10px] font-bold rounded-sm hover:bg-surface-bright transition-colors">EXPORT_PDF</button>
+<button class="px-4 py-1.5 bg-primary text-on-primary text-[10px] font-bold rounded-sm hover:bg-primary-fixed transition-colors">PUSH_REVISIONS</button>
+</div>
+</footer>
+</main>
+</div>
+</body></html>

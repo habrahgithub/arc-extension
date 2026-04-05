@@ -121,7 +121,7 @@ export class BlueprintArtifactStore {
         ok: false,
         status: 'INVALID_DIRECTIVE',
         reason: `Change ID "${proof.directiveId}" is not valid. Use uppercase, hyphenated format (e.g., ARC-101).`,
-        nextAction: 'Use an uppercase, hyphenated Change ID. Example: ARC-101',
+        nextAction: 'Use an uppercase, hyphenated Change ID. Example: LINTEL-PH5-001',
       };
     }
 

@@ -323,7 +323,8 @@ No automatic update checks are implemented (internal release posture).
 - [x] Rollback path documented and tested
 - [x] Evidence artifacts retained by path reference
 - [x] SHA256 checksum recorded for distributed VSIX artifact
-  - `c0dfda75403eedaffe696fe7d6d9d77445421d7161a5ab0d14fe66b5c7405c98  arc-audit-ready-core-0.1.12.vsix` (built at this commit)
+  - `c0dfda75403eedaffe696fe7d6d9d77445421d7161a5ab0d14fe66b5c7405c98  arc-audit-ready-core-0.1.12.vsix`
+  - `03ffc36b7ed5b654c8566bffb834783677624ee72328fca0f0973012d6e20cb2  arc-audit-ready-core-0.1.13.vsix` (ARCXT-UX-SMOKE-001: Liquid Shell primary surface)
 - [ ] Stage 5 gate cleared (U33 override policy, U34 enterprise distribution) — pending Axis/Codex recovery
 
 ---

@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@500;700&amp;family=JetBrains+Mono&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary": "#004272",
+                        "inverse-primary": "#0062a5",
+                        "background": "#0e0e0e",
+                        "outline": "#757575",
+                        "tertiary-fixed-dim": "#7aec8d",
+                        "tertiary-fixed": "#88fb9a",
+                        "on-surface": "#e6e5e5",
+                        "secondary-fixed": "#dae3ef",
+                        "error-container": "#7f2927",
+                        "on-primary-fixed-variant": "#005e9f",
+                        "on-secondary-container": "#b7c0cb",
+                        "surface-container-lowest": "#000000",
+                        "on-error": "#490106",
+                        "surface-container-high": "#1f2020",
+                        "primary-fixed": "#d1e4ff",
+                        "secondary-container": "#343c45",
+                        "primary-fixed-dim": "#b8d7ff",
+                        "inverse-surface": "#fcf9f8",
+                        "error-dim": "#bb5551",
+                        "on-background": "#e6e5e5",
+                        "inverse-on-surface": "#565555",
+                        "on-tertiary-fixed-variant": "#006a2b",
+                        "primary": "#9fcaff",
+                        "on-secondary": "#182129",
+                        "on-primary-container": "#b1d3ff",
+                        "secondary": "#969fa9",
+                        "surface-container-low": "#131313",
+                        "surface-bright": "#2b2c2c",
+                        "on-tertiary-fixed": "#004a1b",
+                        "on-secondary-fixed-variant": "#535c66",
+                        "primary-container": "#00497d",
+                        "error": "#ee7d77",
+                        "surface-dim": "#0e0e0e",
+                        "on-surface-variant": "#ababab",
+                        "secondary-fixed-dim": "#ccd5e1",
+                        "on-tertiary-container": "#005f25",
+                        "tertiary-dim": "#7aec8d",
+                        "surface-variant": "#252626",
+                        "on-primary-fixed": "#004171",
+                        "surface-tint": "#9fcaff",
+                        "primary-dim": "#83bdff",
+                        "surface": "#0e0e0e",
+                        "surface-container": "#191a1a",
+                        "outline-variant": "#474848",
+                        "tertiary": "#c6ffc7",
+                        "on-error-container": "#ff9993",
+                        "on-secondary-fixed": "#374049",
+                        "on-tertiary": "#00692a",
+                        "secondary-dim": "#969fa9",
+                        "surface-container-highest": "#252626",
+                        "tertiary-container": "#88fb9a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Space Grotesk"],
+                        "body": ["Inter"],
+                        "label": ["Inter"],
+                        "mono": ["JetBrains Mono"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            font-size: 18px;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #474848;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body overflow-hidden h-screen flex">
+<!-- Predicted SideNavBar Component -->
+<aside class="flex flex-col h-full overflow-y-auto bg-[#1a1a1a] dark:bg-[#1a1a1a] docked left-0 h-full w-64 border-r border-white/5">
+<div class="p-4 mb-4">
+<div class="font-['Space_Grotesk'] font-bold text-[#9fcaff] text-xl tracking-tighter">ARC XT</div>
+<div class="font-['Inter'] text-[11px] leading-tight text-on-surface-variant uppercase tracking-widest mt-1">ENGINEERING_CORE</div>
+</div>
+<nav class="flex-1 px-2 space-y-1">
+<div class="bg-[#37373d] text-white border-l-2 border-[#9fcaff] transition-all duration-150 ease-in-out flex items-center px-3 py-2 gap-3 cursor-pointer">
+<span class="material-symbols-outlined">assignment</span>
+<span class="font-['Inter'] text-[11px] leading-tight">Tasks</span>
+</div>
+<div class="text-gray-400 hover:bg-[#2a2d2e] transition-all duration-150 ease-in-out flex items-center px-3 py-2 gap-3 cursor-pointer">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-['Inter'] text-[11px] leading-tight">Runtime</span>
+</div>
+<div class="text-gray-400 hover:bg-[#2a2d2e] transition-all duration-150 ease-in-out flex items-center px-3 py-2 gap-3 cursor-pointer">
+<span class="material-symbols-outlined">fact_check</span>
+<span class="font-['Inter'] text-[11px] leading-tight">Review</span>
+</div>
+<div class="text-gray-400 hover:bg-[#2a2d2e] transition-all duration-150 ease-in-out flex items-center px-3 py-2 gap-3 cursor-pointer">
+<span class="material-symbols-outlined">architecture</span>
+<span class="font-['Inter'] text-[11px] leading-tight">Architect</span>
+</div>
+</nav>
+<div class="p-4 mt-auto">
+<button class="w-full bg-primary text-on-primary font-bold py-2 rounded-sm text-[11px] flex items-center justify-center gap-2 transition-all duration-150 active:opacity-80">
+<span class="material-symbols-outlined" style="font-size: 16px;">play_arrow</span>
+                EXECUTE_RUN
+            </button>
+</div>
+</aside>
+<!-- Main Content Canvas (800px area) -->
+<main class="flex-1 flex flex-col h-full bg-surface max-w-[800px] mx-auto border-x border-outline-variant/15">
+<!-- Predicted TopAppBar Component -->
+<header class="bg-[#0e0e0e] dark:bg-[#0e0e0e] flex justify-between items-center w-full px-4 h-12 border-b border-white/10 shrink-0">
+<div class="flex items-center gap-4">
+<span class="font-['Space_Grotesk'] text-sm uppercase tracking-wider text-[#9fcaff] font-bold">Task_Board</span>
+<div class="h-4 w-[1px] bg-outline-variant/30"></div>
+<div class="flex gap-2">
+<button class="text-[10px] uppercase font-bold text-[#9fcaff] px-2 py-1 hover:bg-[#ffffff0d] transition-colors rounded">Select Task</button>
+<button class="text-[10px] uppercase font-bold text-on-surface-variant px-2 py-1 hover:bg-[#ffffff0d] transition-colors rounded">Clear Task</button>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary transition-colors">terminal</span>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary transition-colors">bug_report</span>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary transition-colors">settings</span>
+</div>
+</header>
+<!-- Task Board Panel -->
+<section class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8">
+<!-- Phase: Planning -->
+<div class="space-y-4">
+<div class="flex items-center justify-between border-b border-outline-variant/10 pb-2">
+<h2 class="font-headline text-sm font-bold text-on-surface tracking-tight flex items-center gap-2">
+<span class="w-1.5 h-1.5 bg-on-surface-variant rounded-full"></span>
+                        Planning
+                    </h2>
+<span class="font-mono text-[10px] text-on-surface-variant uppercase tracking-tighter">03 Tasks</span>
+</div>
+<div class="space-y-2">
+<!-- Task Row 1 -->
+<div class="group flex items-center justify-between p-3 bg-surface-container-low hover:bg-surface-bright transition-all cursor-pointer border-l-2 border-transparent">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary-dim">radio_button_checked</span>
+<div>
+<h3 class="text-sm font-medium text-on-surface">Initial Architecture Draft</h3>
+<div class="flex items-center gap-2 mt-1">
+<span class="bg-primary-container text-on-primary-container text-[10px] font-bold px-1.5 rounded-full uppercase tracking-tighter">Created</span>
+<span class="font-mono text-[10px] text-on-surface-variant opacity-60">ID: ARCH-001</span>
+</div>
+</div>
+</div>
+<span class="font-mono text-[10px] text-on-surface-variant">09:45 AM</span>
+</div>
+<!-- Task Row 2 -->
+<div class="group flex items-center justify-between p-3 bg-surface-container-low hover:bg-surface-bright transition-all cursor-pointer border-l-2 border-transparent">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary-dim">radio_button_checked</span>
+<div>
+<h3 class="text-sm font-medium text-on-surface">Data Schema Validation</h3>
+<div class="flex items-center gap-2 mt-1">
+<span class="bg-primary-container text-on-primary-container text-[10px] font-bold px-1.5 rounded-full uppercase tracking-tighter">Created</span>
+<span class="font-mono text-[10px] text-on-surface-variant opacity-60">ID: DB-SEC-22</span>
+</div>
+</div>
+</div>
+<span class="font-mono text-[10px] text-on-surface-variant">10:15 AM</span>
+</div>
+</div>
+</div>
+<!-- Phase: Implementation (Active Area) -->
+<div class="space-y-4">
+<div class="flex items-center justify-between border-b border-outline-variant/10 pb-2">
+<h2 class="font-headline text-sm font-bold text-on-surface tracking-tight flex items-center gap-2">
+<span class="w-1.5 h-1.5 bg-primary rounded-full animate-pulse"></span>
+                        Implementation
+                    </h2>
+<span class="font-mono text-[10px] text-primary uppercase tracking-tighter">Active Session</span>
+</div>
+<div class="space-y-2">
+<!-- Active Task Selection -->
+<div class="group flex items-center justify-between p-3 bg-[#37373d] border-l-2 border-primary shadow-lg">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-warning text-[#ffcc00]">pending</span>
+<div>
+<h3 class="text-sm font-bold text-white">Kernel Module Optimization</h3>
+<div class="flex items-center gap-2 mt-1">
+<span class="bg-[#ffcc00] text-[#000000] text-[10px] font-extrabold px-1.5 rounded-full uppercase tracking-tighter">In Progress</span>
+<span class="font-mono text-[10px] text-primary-dim">ID: KERN-OPT-09</span>
+</div>
+</div>
+</div>
+<div class="flex flex-col items-end">
+<span class="font-mono text-[10px] text-white">ELAPSED: 01:24:03</span>
+<span class="text-[9px] text-primary-dim/60 uppercase">High Priority</span>
+</div>
+</div>
+<!-- Task Row 4 -->
+<div class="group flex items-center justify-between p-3 bg-surface-container-low hover:bg-surface-bright transition-all cursor-pointer border-l-2 border-transparent">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-[#ffcc00]">pending</span>
+<div>
+<h3 class="text-sm font-medium text-on-surface">API Gateway Routing</h3>
+<div class="flex items-center gap-2 mt-1">
+<span class="bg-[#ffcc00] text-[#000000] text-[10px] font-bold px-1.5 rounded-full uppercase tracking-tighter">In Progress</span>
+<span class="font-mono text-[10px] text-on-surface-variant opacity-60">ID: API-GW-404</span>
+</div>
+</div>
+</div>
+<span class="font-mono text-[10px] text-on-surface-variant">08:00 AM</span>
+</div>
+</div>
+</div>
+<!-- Phase: Review -->
+<div class="space-y-4">
+<div class="flex items-center justify-between border-b border-outline-variant/10 pb-2">
+<h2 class="font-headline text-sm font-bold text-on-surface tracking-tight flex items-center gap-2">
+<span class="w-1.5 h-1.5 bg-tertiary-dim rounded-full"></span>
+                        Review
+                    </h2>
+<span class="font-mono text-[10px] text-on-surface-variant uppercase tracking-tighter">02 Completed</span>
+</div>
+<div class="grid grid-cols-1 gap-2">
+<!-- Task Row 5 -->
+<div class="group flex items-center justify-between p-3 bg-surface-container-low hover:bg-surface-bright transition-all cursor-pointer border-l-2 border-transparent opacity-70">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-tertiary-dim" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<div>
+<h3 class="text-sm font-medium text-on-surface line-through decoration-on-surface-variant/40">Unit Test Pipeline Setup</h3>
+<div class="flex items-center gap-2 mt-1">
+<span class="bg-tertiary-container text-on-tertiary-container text-[10px] font-bold px-1.5 rounded-full uppercase tracking-tighter">Completed</span>
+<span class="font-mono text-[10px] text-on-surface-variant opacity-60">ID: TEST-LVM-1</span>
+</div>
+</div>
+</div>
+<span class="font-mono text-[10px] text-on-surface-variant italic">Verified</span>
+</div>
+<!-- Task Row 6 -->
+<div class="group flex items-center justify-between p-3 bg-surface-container-low hover:bg-surface-bright transition-all cursor-pointer border-l-2 border-transparent opacity-70">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-tertiary-dim" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<div>
+<h3 class="text-sm font-medium text-on-surface line-through decoration-on-surface-variant/40">Legacy Dependency Audit</h3>
+<div class="flex items-center gap-2 mt-1">
+<span class="bg-tertiary-container text-on-tertiary-container text-[10px] font-bold px-1.5 rounded-full uppercase tracking-tighter">Completed</span>
+<span class="font-mono text-[10px] text-on-surface-variant opacity-60">ID: AUD-LEG-99</span>
+</div>
+</div>
+</div>
+<span class="font-mono text-[10px] text-on-surface-variant italic">Verified</span>
+</div>
+</div>
+</div>
+<!-- Bento Metadata Insight -->
+<div class="grid grid-cols-2 gap-4 mt-8">
+<div class="bg-surface-container-lowest p-4 border border-outline-variant/10">
+<span class="font-mono text-[10px] text-primary uppercase block mb-2 tracking-widest">System_Health</span>
+<div class="font-headline text-2xl font-bold text-on-surface">98.2%</div>
+<div class="text-[10px] text-on-surface-variant mt-1 uppercase">Process efficiency rated optimal</div>
+</div>
+<div class="bg-surface-container-lowest p-4 border border-outline-variant/10">
+<span class="font-mono text-[10px] text-[#ffcc00] uppercase block mb-2 tracking-widest">Cycle_Time</span>
+<div class="font-headline text-2xl font-bold text-on-surface">14m <span class="text-sm font-normal text-on-surface-variant">avg</span></div>
+<div class="text-[10px] text-on-surface-variant mt-1 uppercase">Task completion velocity</div>
+</div>
+</div>
+</section>
+<!-- Contextual Status Footer -->
+<footer class="h-8 bg-surface-container flex items-center px-4 justify-between border-t border-outline-variant/10">
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 bg-primary rounded-full"></span>
+<span class="font-mono text-[9px] text-on-surface-variant uppercase">Ready</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[14px] text-on-surface-variant">sync</span>
+<span class="font-mono text-[9px] text-on-surface-variant uppercase">Cloud_Synced</span>
+</div>
+</div>
+<div class="font-mono text-[9px] text-on-surface-variant">
+                ARC_ENGINE_V2.4.0-STABLE
+            </div>
+</footer>
+</main>
+<!-- Side Context Panel (Filler for wide screens) -->
+<aside class="hidden lg:flex flex-col w-64 border-l border-outline-variant/15 p-4 space-y-6">
+<div>
+<h4 class="font-headline text-[10px] font-bold text-on-surface uppercase tracking-widest mb-4">Live_Logs</h4>
+<div class="space-y-2">
+<div class="font-mono text-[9px] text-on-surface-variant leading-relaxed">
+                    [12:01:04] <span class="text-primary">INFO</span> Module "KERN" init...
+                </div>
+<div class="font-mono text-[9px] text-on-surface-variant leading-relaxed">
+                    [12:01:05] <span class="text-primary">INFO</span> Thread pool allocated (64)
+                </div>
+<div class="font-mono text-[9px] text-[#ffcc00] leading-relaxed">
+                    [12:02:12] <span class="font-bold">WARN</span> High latency detected
+                </div>
+<div class="font-mono text-[9px] text-on-surface-variant leading-relaxed">
+                    [12:02:15] <span class="text-primary">INFO</span> Auto-scaling active
+                </div>
+</div>
+</div>
+<div class="bg-surface-container-high p-3 rounded">
+<h4 class="font-headline text-[10px] font-bold text-on-surface uppercase tracking-widest mb-2">Architect_Note</h4>
+<p class="text-[10px] text-on-surface-variant leading-normal">
+                Optimize the kernel buffer size before proceeding to Phase 4. Current throughput is bottlenecked at 400MB/s.
+            </p>
+</div>
+</aside>
+</body></html>

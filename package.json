@@ -142,6 +142,13 @@
           "name": "ARC XT",
           "icon": "$(tasklist)",
           "contextualTitle": "ARC XT Command Center"
+        },
+        {
+          "type": "webview",
+          "id": "arc.ui.taskBoard",
+          "name": "Task Board",
+          "icon": "$(checklist)",
+          "contextualTitle": "ARC XT Task Board"
         }
       ]
     }

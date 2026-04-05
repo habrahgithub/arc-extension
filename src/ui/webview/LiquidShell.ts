@@ -77,6 +77,46 @@ interface LiquidShellOpts {
   logoUri: string;
 }
 
+/** Sidebar WebviewViewProvider — primary Activity Bar surface */
+export class LiquidShellViewProvider implements vscode.WebviewViewProvider {
+  public static readonly viewType = 'arc.ui.liquidShell';
+  private _view?: vscode.WebviewView;
+
+  constructor(private readonly _extensionUri: vscode.Uri) {}
+
+  public resolveWebviewView(webviewView: vscode.WebviewView): void {
+    this._view = webviewView;
+    webviewView.webview.options = {
+      enableScripts: true,
+      localResourceRoots: [
+        vscode.Uri.joinPath(this._extensionUri, 'Public', 'Logo'),
+      ],
+    };
+    const nonce = generateNonce();
+    const csp = buildCSPWithNonce(nonce, webviewView.webview.cspSource);
+    const logoUri = webviewView.webview
+      .asWebviewUri(
+        vscode.Uri.joinPath(this._extensionUri, 'Public', 'Logo', 'ARC-ICON-1024.png'),
+      )
+      .toString();
+    webviewView.webview.html = buildLiquidShellHtml({ nonce, csp, logoUri });
+    webviewView.webview.onDidReceiveMessage(
+      async (message: { command?: string; commandId?: string; route?: string }) => {
+        if (message.command === 'executeCommand' && message.commandId) {
+          await vscode.commands.executeCommand(message.commandId);
+        }
+        if (message.command === 'navigateRoute' && message.route) {
+          webviewView.webview.postMessage({ type: 'routeChanged', route: message.route });
+        }
+      },
+    );
+  }
+
+  public reveal(): void {
+    this._view?.show(true);
+  }
+}
+
 function buildLiquidShellHtml(opts: LiquidShellOpts): string {
   const { nonce, csp, logoUri } = opts;
 
@@ -87,8 +127,7 @@ function buildLiquidShellHtml(opts: LiquidShellOpts): string {
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <meta http-equiv="Content-Security-Policy" content="${escapeHtml(csp)}"/>
 <title>ARC XT — Liquid Shell</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&family=JetBrains+Mono&display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+
 <style nonce="${nonce}">
   /* ═══════════════════════════════════════
      TOKEN SYSTEM (MD3 dark)
@@ -133,9 +172,9 @@ function buildLiquidShellHtml(opts: LiquidShellOpts): string {
     --outline-variant:           #474848;
 
     /* Fonts */
-    --font-headline: 'Space Grotesk', system-ui, sans-serif;
-    --font-body:     'Inter', system-ui, sans-serif;
-    --font-mono:     'JetBrains Mono', 'Cascadia Code', 'Fira Code', monospace;
+    --font-headline: var(--vscode-font-family, system-ui, sans-serif);
+    --font-body:     var(--vscode-font-family, system-ui, sans-serif);
+    --font-mono:     var(--vscode-editor-font-family, 'Cascadia Code', 'Fira Code', monospace);
 
     /* Radii */
     --radius-sm:   0.125rem;
@@ -157,11 +196,8 @@ function buildLiquidShellHtml(opts: LiquidShellOpts): string {
   .label    { font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; }
 
   .material-symbols-outlined {
-    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
-    font-size: 16px; vertical-align: middle;
-  }
-  .material-symbols-outlined.filled {
-    font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+    font-style: normal; font-size: 16px; vertical-align: middle;
+    line-height: 1; display: inline-block; user-select: none;
   }
 
   .custom-scrollbar::-webkit-scrollbar { width: 4px; }
@@ -743,13 +779,13 @@ function buildLiquidShellHtml(opts: LiquidShellOpts): string {
     </div>
     <div class="topbar-icons">
       <button class="topbar-icon-btn" id="btn-terminal" title="Terminal">
-        <span class="material-symbols-outlined">terminal</span>
+        <span class="material-symbols-outlined">⌨</span>
       </button>
       <button class="topbar-icon-btn" id="btn-bugs" title="Bugs">
-        <span class="material-symbols-outlined">bug_report</span>
+        <span class="material-symbols-outlined">⚐</span>
       </button>
       <button class="topbar-icon-btn" id="btn-settings" title="Settings">
-        <span class="material-symbols-outlined">settings</span>
+        <span class="material-symbols-outlined">⚙</span>
       </button>
     </div>
   </header>
@@ -759,20 +795,20 @@ function buildLiquidShellHtml(opts: LiquidShellOpts): string {
     <nav class="rail">
       <div class="rail-logo"><img src="${escapeHtml(logoUri)}" alt="ARC"/></div>
       <div class="rail-item active" data-route="runtime" title="Runtime">
-        <span class="material-symbols-outlined">analytics</span>
+        <span class="material-symbols-outlined">◉</span>
       </div>
       <div class="rail-item" data-route="tasks" title="Tasks">
-        <span class="material-symbols-outlined">assignment</span>
+        <span class="material-symbols-outlined">◻</span>
       </div>
       <div class="rail-item" data-route="review" title="Review">
-        <span class="material-symbols-outlined">fact_check</span>
+        <span class="material-symbols-outlined">✓</span>
       </div>
       <div class="rail-item" data-route="architect" title="Architect">
-        <span class="material-symbols-outlined">architecture</span>
+        <span class="material-symbols-outlined">◈</span>
       </div>
       <div class="rail-spacer"></div>
       <div class="rail-btn" title="Settings">
-        <span class="material-symbols-outlined">settings</span>
+        <span class="material-symbols-outlined">⚙</span>
       </div>
     </nav>
 
@@ -799,7 +835,7 @@ function buildLiquidShellHtml(opts: LiquidShellOpts): string {
       <div>
         <div class="sidebar-nav-item active" data-route="runtime">
           <div class="sidebar-nav-left">
-            <span class="material-symbols-outlined nav-icon" style="font-size:15px">analytics</span>
+            <span class="material-symbols-outlined nav-icon" style="font-size:15px">◉</span>
             <div>
               <div class="sidebar-nav-label">Runtime</div>
               <div class="sidebar-nav-hint">What is happening</div>
@@ -809,7 +845,7 @@ function buildLiquidShellHtml(opts: LiquidShellOpts): string {
         </div>
         <div class="sidebar-nav-item" data-route="tasks">
           <div class="sidebar-nav-left">
-            <span class="material-symbols-outlined nav-icon" style="font-size:15px">assignment</span>
+            <span class="material-symbols-outlined nav-icon" style="font-size:15px">◻</span>
             <div>
               <div class="sidebar-nav-label">Tasks</div>
               <div class="sidebar-nav-hint">What is progressing</div>
@@ -819,7 +855,7 @@ function buildLiquidShellHtml(opts: LiquidShellOpts): string {
         </div>
         <div class="sidebar-nav-item" data-route="review">
           <div class="sidebar-nav-left">
-            <span class="material-symbols-outlined nav-icon" style="font-size:15px">fact_check</span>
+            <span class="material-symbols-outlined nav-icon" style="font-size:15px">✓</span>
             <div>
               <div class="sidebar-nav-label">Review</div>
               <div class="sidebar-nav-hint">What needs judgment</div>
@@ -829,7 +865,7 @@ function buildLiquidShellHtml(opts: LiquidShellOpts): string {
         </div>
         <div class="sidebar-nav-item" data-route="architect">
           <div class="sidebar-nav-left">
-            <span class="material-symbols-outlined nav-icon" style="font-size:15px">architecture</span>
+            <span class="material-symbols-outlined nav-icon" style="font-size:15px">◈</span>
             <div>
               <div class="sidebar-nav-label">Architect</div>
               <div class="sidebar-nav-hint">What defines the shape</div>
@@ -958,7 +994,7 @@ function buildLiquidShellHtml(opts: LiquidShellOpts): string {
               <div class="task-list">
                 <div class="task-row">
                   <div class="task-left">
-                    <div class="task-icon-box"><span class="material-symbols-outlined" style="font-size:16px">assignment</span></div>
+                    <div class="task-icon-box"><span class="material-symbols-outlined" style="font-size:16px">◻</span></div>
                     <div>
                       <span class="task-name">Directive route verification</span><span class="task-id mono">ARC-101</span>
                       <div class="task-phase">Planning</div>
@@ -968,7 +1004,7 @@ function buildLiquidShellHtml(opts: LiquidShellOpts): string {
                 </div>
                 <div class="task-row">
                   <div class="task-left">
-                    <div class="task-icon-box"><span class="material-symbols-outlined" style="font-size:16px">assignment</span></div>
+                    <div class="task-icon-box"><span class="material-symbols-outlined" style="font-size:16px">◻</span></div>
                     <div>
                       <span class="task-name">Policy manifest sync</span><span class="task-id mono">ARC-118</span>
                       <div class="task-phase">Implementation</div>
@@ -978,7 +1014,7 @@ function buildLiquidShellHtml(opts: LiquidShellOpts): string {
                 </div>
                 <div class="task-row">
                   <div class="task-left">
-                    <div class="task-icon-box"><span class="material-symbols-outlined" style="font-size:16px">assignment</span></div>
+                    <div class="task-icon-box"><span class="material-symbols-outlined" style="font-size:16px">◻</span></div>
                     <div>
                       <span class="task-name">Execution token envelope</span><span class="task-id mono">ARC-123</span>
                       <div class="task-phase">Review</div>
@@ -1037,7 +1073,7 @@ function buildLiquidShellHtml(opts: LiquidShellOpts): string {
                   <div class="card-label">Live Output</div>
                   <div class="card-value headline" style="font-size:16px">Terminal</div>
                 </div>
-                <span class="material-symbols-outlined" style="color:rgba(159,202,255,0.7)">terminal</span>
+                <span class="material-symbols-outlined" style="color:rgba(159,202,255,0.7)">⌨</span>
               </div>
               <div class="terminal">
                 <div><span class="ts-green">[14:30:50]</span> Initializing ARC XT runtime...</div>

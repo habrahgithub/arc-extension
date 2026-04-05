@@ -19,6 +19,7 @@ import { SaveOrchestrator } from './extension/saveOrchestrator';
 import { StatusBarItemService } from './extension/statusBarItem';
 import { FileAuditIndicator } from './extension/fileAuditIndicator';
 import { TaskBoardViewProvider } from './extension/taskBoardView';
+import { LiquidShellViewProvider } from './ui/webview/LiquidShell';
 import { WelcomeSurfaceService } from './extension/welcomeSurface';
 import { resolveWorkspaceTarget } from './extension/workspaceTargeting';
 import { CommitInterceptor } from './extension/interceptors/commitInterceptor';
@@ -383,6 +384,15 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.window.registerWebviewViewProvider(
       TaskBoardViewProvider.viewType,
       taskBoardProvider,
+    ),
+  );
+
+  // ARCXT-UX-SMOKE-001 — Liquid Shell as primary Activity Bar surface
+  const liquidShellProvider = new LiquidShellViewProvider(context.extensionUri);
+  context.subscriptions.push(
+    vscode.window.registerWebviewViewProvider(
+      LiquidShellViewProvider.viewType,
+      liquidShellProvider,
     ),
   );
 

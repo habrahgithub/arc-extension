@@ -280,6 +280,9 @@ describe('Phase 7.7 — Trigger Visibility Governance', () => {
           'perf.jsonl',
           'leases.jsonl', // Decision lease runtime artifact
           'overrides.jsonl', // Override log runtime artifact
+          'router.json', // Route policy runtime artifact
+          'workspace-map.json', // Workspace mapping runtime artifact
+          'active-task.json', // Active task selection runtime artifact (N01)
         ];
         const unexpectedFiles = files.filter(
           (f) => !expectedFiles.some((e) => f === e || f.startsWith(e)),

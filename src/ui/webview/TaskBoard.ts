@@ -136,8 +136,18 @@ export function createTaskBoardPanel(
       ? `<div class="empty-board">
     <div class="empty-icon">◻</div>
     <div class="empty-title">No Blueprint Artifacts Yet</div>
-    <div class="empty-hint">ARC XT tracks governed changes through blueprint documents.<br/><br/>To get started:<br/>• Make a governed save (e.g., edit <span class="mono">package.json</span> and save)<br/>• Or run: <strong>ARC XT: Show Welcome Guide</strong></div>
-    <button id="btn-welcome" class="empty-action-btn">Show Welcome Guide</button>
+    <div class="empty-body">
+      ARC XT tracks governed changes through blueprint documents stored in
+      <span class="mono">.arc/blueprints/</span>.
+    </div>
+    <div class="empty-steps">
+      <div class="empty-step">▸ Make a governed save — edit any file and save to trigger ARC XT</div>
+      <div class="empty-step">▸ Or open the Welcome Guide for a full walkthrough</div>
+    </div>
+    <div class="empty-actions-row">
+      <button id="btn-welcome" class="empty-action-btn primary">Show Welcome Guide</button>
+      <button id="btn-runtime" class="empty-action-btn">Open Runtime Status</button>
+    </div>
   </div>`
       : '';
 
@@ -345,18 +355,22 @@ export function createTaskBoardPanel(
       justify-content: center; text-align: center;
       padding: 60px 24px; gap: 10px;
     }
-    .empty-icon { font-size: 40px; opacity: 0.2; }
+    .empty-icon { font-size: 40px; opacity: 0.15; }
     .empty-title { font-size: 14px; font-weight: 600; color: var(--text-dim); }
-    .empty-hint { font-size: 11px; color: var(--text-dim); opacity: 0.6; line-height: 1.6; }
+    .empty-body { font-size: 11px; color: var(--text-dim); opacity: 0.7; line-height: 1.6; max-width: 340px; }
+    .empty-steps { display: flex; flex-direction: column; gap: 4px; align-self: stretch; max-width: 340px; margin-top: 4px; }
+    .empty-step { font-size: 11px; color: var(--text-dim); opacity: 0.6; text-align: left; line-height: 1.5; }
+    .empty-actions-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 8px; }
     .empty-action-btn {
-      margin-top: 6px;
-      background: var(--primary); color: var(--on-primary);
-      border: none; border-radius: 4px; cursor: pointer;
+      background: none; color: var(--primary);
+      border: 1px solid var(--primary); border-radius: 2px; cursor: pointer;
       font-size: 11px; font-weight: 700; letter-spacing: 0.04em;
-      padding: 8px 16px; text-transform: uppercase;
-      transition: opacity 0.15s;
+      padding: 7px 14px; text-transform: uppercase;
+      transition: background 0.15s;
     }
-    .empty-action-btn:hover { opacity: 0.85; }
+    .empty-action-btn.primary { background: var(--primary); color: #004272; border-color: var(--primary); }
+    .empty-action-btn:hover { background: rgba(159,202,255,0.12); }
+    .empty-action-btn.primary:hover { background: var(--primary-dim); }
 
     /* ── Footer ── */
     .footer {
