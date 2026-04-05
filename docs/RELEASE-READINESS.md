@@ -323,7 +323,8 @@ No automatic update checks are implemented (internal release posture).
 - [x] Rollback path documented and tested
 - [x] Evidence artifacts retained by path reference
 - [x] SHA256 checksum recorded for distributed VSIX artifact
-  - `215e29dd382d48cb5c14e62a23e93c9321f779ee87e4cfbb97eb61a94fbc0530  arc-audit-ready-core-0.1.12.vsix` (built at `87a0719`)
+  - `2f8205af7a8f1d660a653922b89ce54b2b1a2b0902f241ed83ec159cf64d5af7  arc-audit-ready-core-0.1.12.vsix` (built at this commit)
+- [ ] Stage 5 gate cleared (U33 override policy, U34 enterprise distribution) — pending Axis/Codex recovery
 
 ---
 

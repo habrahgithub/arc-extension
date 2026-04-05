@@ -129,10 +129,10 @@ export class TaskBoardViewProvider implements vscode.WebviewViewProvider {
     <h3>No Blueprint Artifacts Found</h3>
     <p class="empty">No local blueprints exist for the current governed root.</p>
     <div class="empty-actions">
-      <button class="action-btn" onclick="sendMessage('reviewGovernedRoot')">🔍 Review Governed Root</button>
-      <button class="action-btn" onclick="sendMessage('createArcConfig')">⚙️ Create Minimal ARC Config</button>
-      <button class="action-btn" onclick="sendMessage('createFirstBlueprint')">📄 Create First Blueprint</button>
-      <button class="action-btn" onclick="sendMessage('useExistingConfig')">📂 Use Existing ARC Config</button>
+      <button class="action-btn" id="btn-reviewGovernedRoot">🔍 Review Governed Root</button>
+      <button class="action-btn" id="btn-createArcConfig">⚙️ Create Minimal ARC Config</button>
+      <button class="action-btn" id="btn-createFirstBlueprint">📄 Create First Blueprint</button>
+      <button class="action-btn" id="btn-useExistingConfig">📂 Use Existing ARC Config</button>
     </div>
   </div>`
       : '';
@@ -152,8 +152,8 @@ export class TaskBoardViewProvider implements vscode.WebviewViewProvider {
       <span class="label">Blueprints:</span>
       <span class="badge ${firstRunState.hasBlueprints ? 'success' : 'warning'}">${firstRunState.hasBlueprints ? 'Present' : 'None'}</span>
     </div>
-    <button class="clickable" onclick="sendMessage('openFullTaskBoard')">Open Full Board</button>
-    <button class="clickable" onclick="sendMessage('openRuntimeStatus')">Runtime Status</button>
+    <button class="clickable" id="btn-openFullTaskBoard">Open Full Board</button>
+    <button class="clickable" id="btn-openRuntimeStatus">Runtime Status</button>
   </div>`;
 
     return `<!DOCTYPE html>
@@ -225,6 +225,17 @@ export class TaskBoardViewProvider implements vscode.WebviewViewProvider {
     function sendMessage(command, data = {}) {
       vscode.postMessage({ command, ...data });
     }
+    [
+      ['btn-openFullTaskBoard', 'openFullTaskBoard'],
+      ['btn-openRuntimeStatus', 'openRuntimeStatus'],
+      ['btn-reviewGovernedRoot', 'reviewGovernedRoot'],
+      ['btn-createArcConfig', 'createArcConfig'],
+      ['btn-createFirstBlueprint', 'createFirstBlueprint'],
+      ['btn-useExistingConfig', 'useExistingConfig'],
+    ].forEach(function([id, cmd]) {
+      var el = document.getElementById(id);
+      if (el) { el.addEventListener('click', function() { sendMessage(cmd); }); }
+    });
   </script>
 </body>
 </html>`;

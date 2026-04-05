@@ -15,6 +15,7 @@ artifacts/**
 tests/**
 test/**
 vitest.config.ts
+vitest.config.mts
 vitest.config.js
 coverage/**
 .nyc_output/**
