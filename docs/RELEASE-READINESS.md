@@ -127,6 +127,26 @@ npm run pack
 
 ---
 
+## Upgrade Path
+
+### From 0.1.11 or earlier
+
+1. Uninstall prior version: Extensions view → Find "ARC XT" → Uninstall → Reload
+2. Install new VSIX: Extensions → `...` → Install from VSIX → select `arc-audit-ready-core-0.1.12.vsix`
+3. Verify audit continuity: `.arc/audit.jsonl` should be preserved across upgrade
+
+### Rollback
+
+```bash
+git checkout <prior-commit>
+npm install && npm run build && npm run pack
+# Re-install VSIX from generated package
+```
+
+Audit continuity: rollback preserves `.arc/` directory and audit history.
+
+---
+
 ## Known Limitations
 
 ### Classification Limitations
@@ -252,15 +272,18 @@ No automatic update checks are implemented (internal release posture).
 
 ## Governance-Gap Acknowledgment (OBS-S-7030)
 
-**Condition:** All Phase 4-9 execution-review coverage is now complete and closed.
+**Condition:** All Phase 4-10 execution-review coverage is now complete and closed.
 
-- Phase 4 (U07-U11): Closed with full governance test coverage (565+ tests)
+- Phase 7.9 (Precision & False-Positive Reduction): Closed with full governance test coverage (18 tests). Evidence: `artifacts/phase-7.9-evidence-summary.md`
+- Phase 7.10 (Pilot Readiness / UAT Pack): Closed with full governance test coverage (18 tests). Evidence: `artifacts/phase-7.10-evidence-summary.md`
+- Phase 4 / ARCXT-UX-002 (U07-U11): Closed with full governance test coverage (565+ tests)
 - Phase 5 (U29-U32): Closed with docs-only artifacts
 - Phase 6 (U37-U38): Closed with type contract + tests
 - Phase 7 (U39-U42/U45-U46): Closed with security mapping records
 - Phase 8-9 (U20/N01): Closed with docs + bounded persistence feature
+- Phase 10 (U31/U36): Closed with telemetry contract and metrics spec
 
-**Resolution:** All active work items under ARCXT-UX-002 are closed. Remaining items are LATER/WATCH status requiring new reviewed packages.
+**Resolution:** All active work items under ARCXT-UX-002 are closed. Prior phase-7.9 and phase-7.10 execution-review gaps are acknowledged and covered by retained evidence artifacts. Remaining ledger items are LATER/WATCH status requiring new reviewed packages.
 
 ---
 
@@ -299,6 +322,7 @@ No automatic update checks are implemented (internal release posture).
 - [x] Known limitations documented
 - [x] Rollback path documented and tested
 - [x] Evidence artifacts retained by path reference
+- [ ] SHA256 checksum recorded for distributed VSIX artifact
 
 ---
 
