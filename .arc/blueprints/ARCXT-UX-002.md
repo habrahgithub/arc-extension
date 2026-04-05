@@ -142,11 +142,11 @@ Maintenance rule:
 - [ ] U13 — Add blocked-save recovery shortcuts such as “Open Current Blueprint” / “Resume SOP”.
 - [ ] U14 — Show active Change ID / blueprint and next required operator action directly in the Task Board.
 - [ ] U15 — Stage a real TypeScript 6+ module-resolution migration package instead of a silencing patch.
-- [ ] U16 — Maintain the documentation/evidence flow so blueprint, release, hardening, and evidence docs stay aligned to current truth.
+- [x] U16 — Maintain the documentation/evidence flow so blueprint, release, hardening, and evidence docs stay aligned to current truth.
 - [x] U17 — Prepare the exact minimum Stage 3 soak evidence pack Sentinel expects before next gate escalation.
 - [ ] U18 — Reconcile `ARC-BLUEPRINT-001` future architecture direction with current local-only Lintel scope before any control-plane expansion.
 - [ ] U19 — Define how future Vercel/Railway infrastructure boundaries could align with current Lintel behavior without premature coupling.
-- [ ] U20 — Map roadmap concepts such as plan artifacts, execution tokens, run board, and modes to existing Lintel primitives.
+- [x] U20 — Map roadmap concepts such as plan artifacts, execution tokens, run board, and modes to existing Lintel primitives.
 
 ### ARC-BLUEPRINT-001 Reconciliation Tracks (Axis 2026-04-03)
 
@@ -163,33 +163,33 @@ Maintenance rule:
 
 ### Deep research / public trust / enterprise-readiness tracks
 
-- [ ] U29 — Align public assets (Marketplace, landing, public docs) around a concrete value statement, Open VSX install parity, and plain-language proof explanation.
-- [ ] U30 — Create ARC-specific security, privacy, DPA, and procurement-facing trust pages separate from DocSmith/payroll material.
-- [ ] U31 — Publish a privacy-first telemetry contract and bounded event schema with no code/prompt/content telemetry by default.
-- [ ] U32 — Create a 10-minute evaluation path / first-run demo that proves ARC value before friction.
+- [x] U29 — Align public assets (Marketplace, landing, public docs) around a concrete value statement, Open VSX install parity, and plain-language proof explanation.
+- [x] U30 — Create ARC-specific security, privacy, DPA, and procurement-facing trust pages separate from DocSmith/payroll material.
+- [x] U31 — Publish a privacy-first telemetry contract and bounded event schema with no code/prompt/content telemetry by default.
+- [x] U32 — Create a 10-minute evaluation path / first-run demo that proves ARC value before friction.
 - [ ] U33 — Design override-with-reason and rule-dispute capture as explicit, auditable workflows.
 - [ ] U34 — Define signed releases, checksum publication, private-marketplace / rehost guidance, and enterprise procurement-pack contents.
 - [ ] U35 — Validate pricing / packaging assumptions against actual retention and interview evidence before any commercialization package.
-- [ ] U36 — Define privacy-safe retention and engagement metrics (3-day retention, save-gate engagement, override/dispute rate, latency).
+- [x] U36 — Define privacy-safe retention and engagement metrics (3-day retention, save-gate engagement, override/dispute rate, latency).
 
 ### System coherence / signal-integrity tracks
 
-- [ ] U37 — Define `ARC-SYS-COHERENCE-001` as an implementation-ready coherence contract so ARC behaves as one system, not fragmented features.
-- [ ] U38 — Define `EvaluationResult` / signal-consistency contract as the single derived source for severity, decision, explanation, and progressive disclosure across all ARC surfaces.
+- [x] U37 — Define `ARC-SYS-COHERENCE-001` as an implementation-ready coherence contract so ARC behaves as one system, not fragmented features.
+- [x] U38 — Define `EvaluationResult` / signal-consistency contract as the single derived source for severity, decision, explanation, and progressive disclosure across all ARC surfaces.
 
 ### Security-control-plane tracks
 
-- [ ] U39 — Map `S1 Prompt Injection Firewall` into current local-only Lintel boundaries; define what can be adopted now vs deferred.
-- [ ] U40 — Map `S3 Tool Boundary Enforcer` to current tool/adapter boundaries and allowlist posture without widening execution scope.
-- [ ] U41 — Map `S6/S11` directive lifecycle + governed state transitions to current proof, audit, and save-governance behavior.
-- [ ] U42 — Define `S7 Context Engineering Guard` for bounded local model/context packets while preserving no-content telemetry and fail-closed posture.
+- [x] U39 — Map `S1 Prompt Injection Firewall` into current local-only Lintel boundaries; define what can be adopted now vs deferred.
+- [x] U40 — Map `S3 Tool Boundary Enforcer` to current tool/adapter boundaries and allowlist posture without widening execution scope.
+- [x] U41 — Map `S6/S11` directive lifecycle + governed state transitions to current proof, audit, and save-governance behavior.
+- [x] U42 — Define `S7 Context Engineering Guard` for bounded local model/context packets while preserving no-content telemetry and fail-closed posture.
 - [ ] U43 — Explicitly defer `S8 Retrieval / RAG Guard` until retrieval enters reviewed scope; retain a denial/default-out-of-scope rule in canon.
 - [ ] U44 — Define `S9 SDLC Debug Governance` as a future governed-debug flow without turning ARC into a freeform orchestration runtime.
-- [ ] U45 — Reconcile `S4 Vault` and `S12 EventStream Continuity` with current audit log, evidence flow, and trust-boundary posture.
-- [ ] U46 — Produce `ARC-BLUEPRINT-SECURITY-001` reconciliation matrix: adopt now / track / defer / reject.
+- [x] U45 — Reconcile `S4 Vault` and `S12 EventStream Continuity` with current audit log, evidence flow, and trust-boundary posture.
+- [x] U46 — Produce `ARC-BLUEPRINT-SECURITY-001` reconciliation matrix: adopt now / track / defer / reject.
 - [ ] U47 — Migrate retained legacy root-level records into the sectioned records canon only when references can be updated cleanly without losing audit traceability.
 
-- [ ] N01 — Consider persisting local active-task selection across reloads in a bounded local ARC state file or equivalent store.
+- [x] N01 — Consider persisting local active-task selection across reloads in a bounded local ARC state file or equivalent store.
 - [ ] N02 — Consider Task Board progress summaries (`x/y tasks complete`) once task parsing lands.
 - [ ] N03 — Consider a “create from template, then open for edit” bootstrap shortcut.
 - [ ] N04 — Distinguish wrong-root empty state from true no-blueprint empty state.
