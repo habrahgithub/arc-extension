@@ -102,11 +102,11 @@ async function openMarkdownPreview(
     content,
     language: 'markdown',
   });
-  await vscode.window.showTextDocument(document, {
-    preview: true,
-    viewColumn: vscode.ViewColumn.Beside,
-  });
   void title;
+  await vscode.commands.executeCommand(
+    'markdown.showPreviewToSide',
+    document.uri,
+  );
 }
 
 const PLAN_LINKED_SAVE_SOP_SEQUENCE =
