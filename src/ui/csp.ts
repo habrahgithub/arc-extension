@@ -6,7 +6,7 @@
  * WRD-0097 Fix: Nonce-based CSP for inline scripts (VS Code webview requirement)
  */
 
-import * as crypto from 'crypto';
+import * as crypto from 'node:crypto';
 
 /**
  * Generate a cryptographic nonce for CSP

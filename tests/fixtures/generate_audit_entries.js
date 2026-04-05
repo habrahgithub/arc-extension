@@ -1,7 +1,7 @@
-const crypto = require('crypto');
+const crypto = require('node:crypto');
 
 // Read existing audit file and get last hash
-const fs = require('fs');
+const fs = require('node:fs');
 const auditPath = '/home/habib/workspace/projects/lintel/.arc/audit.jsonl';
 const lines = fs.readFileSync(auditPath, 'utf-8').trim().split('\n');
 const lastEntry = JSON.parse(lines[lines.length - 1]);
