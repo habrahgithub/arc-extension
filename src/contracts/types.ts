@@ -287,6 +287,9 @@ export interface DecisionPayload {
   failure_type?: 'TYPE-B';
   explanation?: ExplanationResult;
   governance_proposal?: GovernanceProposal;
+  // U38 — Precision label (ARC-SYS-COHERENCE-001)
+  // Optional so existing code is unaffected
+  confidence?: 'HIGH' | 'MEDIUM' | 'LOW';
 }
 
 export interface Finding {
@@ -483,6 +486,15 @@ export interface ModelEvaluationResult {
   violated_rules: string[];
   next_action: string;
 }
+
+/**
+ * EvaluationResult — the single derived truth for all ARC surfaces.
+ * Every surface (gutter, status bar, hover, panel, modal, save enforcement)
+ * MUST derive its display state from this type only.
+ * No surface may compute severity, decision, or explanation independently.
+ * Alias of DecisionPayload — do not diverge.
+ */
+export type EvaluationResult = DecisionPayload;
 
 export interface WorkspaceMappingConfig {
   mode?: BlueprintMode;
