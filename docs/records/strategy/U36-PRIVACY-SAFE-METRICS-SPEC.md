@@ -1,6 +1,6 @@
 # U36 — Privacy-Safe Retention Metrics Spec
 
-**Status:** PLANNED  
+**Status:** DONE  
 **Priority:** P1  
 **Category:** Metrics / Privacy  
 **Date:** 2026-04-04  

@@ -1,6 +1,6 @@
 # U31 — Telemetry Contract (Privacy-First)
 
-**Status:** PLANNED  
+**Status:** DONE  
 **Priority:** P1  
 **Category:** Telemetry / Privacy  
 **Date:** 2026-04-04  
