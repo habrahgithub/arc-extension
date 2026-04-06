@@ -37,6 +37,10 @@ import {
   createMinimalRoutePolicy,
   createMinimalWorkspaceMapping,
 } from './extension/configTemplates';
+// ARCXT-MVG-001 — Minimal Viable Guardrail
+import { GuardrailState } from './extension/guardrailState';
+import { registerFirstSessionHook } from './extension/firstSessionHook';
+import { detectLayerLeak } from './core/layerLeakDetector';
 
 function humanActor(): ActorIdentity {
   return {
@@ -285,13 +289,21 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(fileAuditIndicator);
   context.subscriptions.push(timelineOutput);
   context.subscriptions.push(new RunCommandInterceptor(orchestratorFor));
+
+  // ARCXT-MVG-001 — Guardrail state (created before CommitInterceptor)
+  const guardrailState = new GuardrailState(context.workspaceState);
+
   context.subscriptions.push(
-    new CommitInterceptor(orchestratorFor, () => {
-      const fp = activeEditorFilePath();
-      fileAuditIndicator.updateForFile(fp, (f) =>
-        orchestratorFor(f).queryFileAuditState(f),
-      );
-    }),
+    new CommitInterceptor(
+      orchestratorFor,
+      () => {
+        const fp = activeEditorFilePath();
+        fileAuditIndicator.updateForFile(fp, (f) =>
+          orchestratorFor(f).queryFileAuditState(f),
+        );
+      },
+      guardrailState,
+    ),
   );
 
   function editorFilePath(editor?: vscode.TextEditor): string | undefined {
@@ -401,6 +413,34 @@ export function activate(context: vscode.ExtensionContext): void {
     // arc.ui.liquidShell.navigate → reveal + switch route inside the shell
     vscode.commands.registerCommand('arc.ui.liquidShell.navigate', (route: string) => {
       liquidShellProvider.navigateTo(route);
+    }),
+    // arc.guardrail.justify → prompt user for justification text and persist
+    vscode.commands.registerCommand('arc.guardrail.justify', async (driftId: string) => {
+      const input = await vscode.window.showInputBox({
+        title: 'Justify Layer Leak',
+        prompt: 'Provide a brief justification for this architectural exception',
+        placeHolder: 'e.g. Legacy pattern, will refactor in LINTEL-PH6',
+      });
+      if (input && input.trim()) {
+        await guardrailState.justifyDrift(driftId, input.trim());
+      }
+    }),
+  );
+
+  // ARCXT-MVG-001 — First-session hook, on-save detector, guardrail→UI bridge
+  const workspaceRoot = workspaceFolderRoots[0] ?? fallbackRoot;
+  context.subscriptions.push(
+    registerFirstSessionHook(workspaceRoot, guardrailState, context),
+    vscode.workspace.onDidSaveTextDocument((doc) => {
+      if (doc.uri.scheme !== 'file') return;
+      const result = detectLayerLeak(doc.uri.fsPath, doc.getText());
+      if (result.hasViolation && result.item) {
+        guardrailState.addDrift(result.item);
+        liquidShellProvider.reveal();
+      }
+    }),
+    guardrailState.onUpdate((update) => {
+      liquidShellProvider.sendGuardrailUpdate(update);
     }),
   );
 

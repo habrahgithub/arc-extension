@@ -789,3 +789,46 @@ export interface TaskContextPacket {
   task_summary: string;
   task_status: TaskStatus;
 }
+
+// ── ARCXT-MVG-001 — Minimal Viable Guardrail types ──────────────────────────
+
+export type ArchitecturePattern =
+  | 'service_layer_app'
+  | 'route_service_data'
+  | 'ui_service_data'
+  | 'unknown_structure';
+
+export type PatternConfidence = 'HIGH' | 'MEDIUM' | 'LOW';
+
+export interface FingerprintResult {
+  pattern: ArchitecturePattern;
+  confidence: PatternConfidence;
+  detectedFolders: string[];
+  label: string; // Human-readable: "Service-Layer Architecture"
+}
+
+export interface LayerDriftItem {
+  id: string;
+  symbol: string;
+  originFile: string;
+  targetFile: string;
+  relationship: string; // e.g. "UI imports data entity directly"
+  why: string;          // Human explanation
+  detectedAt: string;   // ISO timestamp
+  resolved: boolean;
+  justification?: string;
+}
+
+export type GuardrailCardState =
+  | 'architecture_detected'
+  | 'simulation'
+  | 'drift_detected'
+  | 'commit_preflight'
+  | 'idle';
+
+export interface GuardrailUpdate {
+  state: GuardrailCardState;
+  fingerprint?: FingerprintResult;
+  drift?: LayerDriftItem;
+  unresolvedCount?: number;
+}

@@ -6,6 +6,7 @@ import {
   formatCommitContextMessage,
 } from './commitContextAggregator';
 import { ARCOutputChannel } from '../ARCOutputChannel';
+import type { GuardrailState } from '../guardrailState';
 
 interface GitApiV1 {
   repositories: GitRepository[];
@@ -33,6 +34,8 @@ export class CommitInterceptor implements vscode.Disposable {
     // P9-001 — optional callback invoked after each commit observation so the
     // file audit indicator can refresh without coupling to the indicator directly
     private readonly onCommitObserved?: () => void,
+    // MVG-001 — optional guardrail state for layer-leak preflight escalation
+    private readonly guardrailState?: GuardrailState,
   ) {
     this.initialize();
   }
@@ -60,56 +63,74 @@ export class CommitInterceptor implements vscode.Disposable {
         for (const repository of resolvedApi.repositories) {
           const repoRoot = repository.rootUri.fsPath;
           this.headByRepo.set(repoRoot, repository.state.HEAD?.commit);
-
-          const subscription = repository.state.onDidChange(() => {
-            const previousHead = this.headByRepo.get(repoRoot);
-            const nextHead = repository.state.HEAD?.commit;
-            this.headByRepo.set(repoRoot, nextHead);
-
-            if (!nextHead || previousHead === nextHead) {
-              return;
-            }
-
-            const activeFilePath =
-              vscode.window.activeTextEditor?.document.uri.fsPath;
-            const observedPath = activeFilePath ?? repoRoot;
-            const observedText =
-              activeFilePath && vscode.window.activeTextEditor
-                ? vscode.window.activeTextEditor.document.getText()
-                : undefined;
-
-            const orchestrator = this.orchestratorFor(observedPath);
-
-            void orchestrator
-              .observeCommit(observedPath, observedText)
-              .then((entry) => {
-                // Per-file drift signal (existing behavior)
-                emitDriftAwarenessSignal(entry.drift_status, {
-                  warn: (message) => {
-                    void vscode.window.showWarningMessage(message);
-                  },
-                  append: (message) => {
-                    this.outputChannel.appendLine(message);
-                  },
-                });
-
-                // M4-001 — Commit context awareness (aggregate summary)
-                const contextRows = orchestrator.queryCommitContext(repoRoot);
-                const summary = aggregateCommitContext(contextRows);
-                const message = formatCommitContextMessage(summary);
-                if (message) {
-                  this.outputChannel.appendLine(message);
-                }
-
-                // P9-001 — notify file audit indicator
-                this.onCommitObserved?.();
-              })
-              .catch(() => undefined);
-          });
-
+          const subscription = repository.state.onDidChange(
+            () => void this.onRepoStateChange(repository, repoRoot),
+          );
           this.subscriptions.push(subscription);
         }
       })
       .catch(() => undefined);
+  }
+
+  private async onRepoStateChange(repository: GitRepository, repoRoot: string): Promise<void> {
+    const previousHead = this.headByRepo.get(repoRoot);
+    const nextHead = repository.state.HEAD?.commit;
+    this.headByRepo.set(repoRoot, nextHead);
+
+    if (!nextHead || previousHead === nextHead) {
+      return;
+    }
+
+    const activeFilePath = vscode.window.activeTextEditor?.document.uri.fsPath;
+    const observedPath = activeFilePath ?? repoRoot;
+    const observedText =
+      activeFilePath && vscode.window.activeTextEditor
+        ? vscode.window.activeTextEditor.document.getText()
+        : undefined;
+
+    const orchestrator = this.orchestratorFor(observedPath);
+
+    const entry = await orchestrator.observeCommit(observedPath, observedText).catch(() => undefined);
+    if (!entry) return;
+
+    // Per-file drift signal (existing behavior)
+    emitDriftAwarenessSignal(entry.drift_status, {
+      warn: (message) => { void vscode.window.showWarningMessage(message); },
+      append: (message) => { this.outputChannel.appendLine(message); },
+    });
+
+    // M4-001 — Commit context awareness (aggregate summary)
+    const contextRows = orchestrator.queryCommitContext(repoRoot);
+    const summary = aggregateCommitContext(contextRows);
+    const message = formatCommitContextMessage(summary);
+    if (message) {
+      this.outputChannel.appendLine(message);
+    }
+
+    // P9-001 — notify file audit indicator
+    this.onCommitObserved?.();
+
+    // MVG-001 — guardrail commit preflight escalation
+    await this.runGuardrailPreflight();
+  }
+
+  private async runGuardrailPreflight(): Promise<void> {
+    if (!this.guardrailState || this.guardrailState.unresolvedCount === 0) {
+      return;
+    }
+
+    this.guardrailState.enterCommitPreflight();
+
+    const count = this.guardrailState.unresolvedCount;
+    const label = count === 1 ? '1 layer leak' : `${count} layer leaks`;
+    const choice = await vscode.window.showWarningMessage(
+      `ARC XT: Commit landed with ${label} unresolved. Open ARC XT to review.`,
+      'Open ARC XT',
+      'Dismiss',
+    );
+
+    if (choice === 'Open ARC XT') {
+      await vscode.commands.executeCommand('arc.ui.liquidShell.navigate', 'architect');
+    }
   }
 }

@@ -20,6 +20,7 @@
 import * as vscode from 'vscode';
 import { buildCSPWithNonce, generateNonce } from '../csp';
 import { escapeHtml } from '../sanitize';
+import type { GuardrailUpdate } from '../../contracts/types';
 
 export function createLiquidShellPanel(
   context: vscode.ExtensionContext,
@@ -101,12 +102,15 @@ export class LiquidShellViewProvider implements vscode.WebviewViewProvider {
       .toString();
     webviewView.webview.html = buildLiquidShellHtml({ nonce, csp, logoUri });
     webviewView.webview.onDidReceiveMessage(
-      async (message: { command?: string; commandId?: string; route?: string }) => {
+      async (message: { command?: string; commandId?: string; route?: string; driftId?: string }) => {
         if (message.command === 'executeCommand' && message.commandId) {
           await vscode.commands.executeCommand(message.commandId);
         }
         if (message.command === 'navigateRoute' && message.route) {
           webviewView.webview.postMessage({ type: 'routeChanged', route: message.route });
+        }
+        if (message.command === 'guardrailJustify' && message.driftId) {
+          await vscode.commands.executeCommand('arc.guardrail.justify', message.driftId);
         }
       },
     );
@@ -123,6 +127,11 @@ export class LiquidShellViewProvider implements vscode.WebviewViewProvider {
       this._view.show(false);
       void this._view.webview.postMessage({ type: 'routeChanged', route });
     }
+  }
+
+  /** Push a guardrail state update into the webview */
+  public sendGuardrailUpdate(update: GuardrailUpdate): void {
+    void this._view?.webview.postMessage({ type: 'guardrailUpdate', update });
   }
 }
 
@@ -1287,6 +1296,17 @@ function buildLiquidShellHtml(opts: LiquidShellOpts): string {
            NOT a settings page — a topology map
            ═══════════════════════════════════ -->
       <div id="view-architect" style="display:none">
+
+        <!-- MVG-001 — Guardrail Card (hidden until state update) -->
+        <div id="guardrail-card" style="display:none;margin-bottom:12px;padding:12px 14px;border-radius:8px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+            <span id="guardrail-title" style="font-size:11px;font-weight:600;letter-spacing:0.06em;color:rgba(255,255,255,0.55)">LAYER LEAKAGE PROTECTION</span>
+            <span id="guardrail-badge" class="pill pill-info" style="font-size:9px">Scanning</span>
+          </div>
+          <div id="guardrail-body" style="font-size:12px;color:rgba(255,255,255,0.7);line-height:1.5;margin-bottom:10px"></div>
+          <div id="guardrail-actions" style="display:flex;gap:6px"></div>
+        </div>
+
         <div class="content-header">
           <div>
             <div class="content-eyebrow label">Control Plane</div>
@@ -1513,6 +1533,82 @@ function buildLiquidShellHtml(opts: LiquidShellOpts): string {
     if (settingsBtn) settingsBtn.addEventListener('click', function() {
       vscode.postMessage({ command: 'executeCommand', commandId: 'arc.showWelcome' });
     });
+
+    // ── MVG-001 — Guardrail card message handler ──
+    window.addEventListener('message', function(event) {
+      var msg = event.data;
+      if (msg && msg.type === 'guardrailUpdate') {
+        updateGuardrailCard(msg.update);
+      }
+      if (msg && msg.type === 'routeChanged') {
+        activateRoute(msg.route);
+      }
+    });
+
+    function clearChildren(el) {
+      while (el.firstChild) el.removeChild(el.firstChild);
+    }
+
+    function makeSpan(text, styleText) {
+      var el = document.createElement('span');
+      el.textContent = text;
+      if (styleText) el.style.cssText = styleText;
+      return el;
+    }
+
+    function updateGuardrailCard(update) {
+      var card = document.getElementById('guardrail-card');
+      var badge = document.getElementById('guardrail-badge');
+      var body = document.getElementById('guardrail-body');
+      var actions = document.getElementById('guardrail-actions');
+      if (!card || !badge || !body || !actions) return;
+
+      card.style.display = '';
+      clearChildren(actions);
+      clearChildren(body);
+
+      if (update.state === 'architecture_detected') {
+        badge.className = 'pill pill-good';
+        badge.textContent = 'Active';
+        body.textContent = update.fingerprint
+          ? 'ARC detected a ' + update.fingerprint.label + '. Layer Leakage Protection is now active.'
+          : 'Layer Leakage Protection is active.';
+
+      } else if (update.state === 'simulation') {
+        badge.className = 'pill pill-info';
+        badge.textContent = 'Demo';
+        body.textContent = 'Simulating a layer leak violation — this is what a real detection looks like.';
+
+      } else if (update.state === 'drift_detected') {
+        badge.className = 'pill pill-warn';
+        badge.textContent = (update.unresolvedCount || 1) + ' Unresolved';
+        card.style.borderColor = 'rgba(255,170,0,0.3)';
+        var drift = update.drift;
+        if (drift) {
+          body.appendChild(makeSpan(drift.symbol + ' Layer Leak  ', 'color:rgba(255,170,0,0.9)'));
+          body.appendChild(makeSpan(drift.originFile, 'font-family:monospace;font-size:11px'));
+          body.appendChild(document.createTextNode(' \u2192 '));
+          body.appendChild(makeSpan(drift.targetFile, 'font-family:monospace;font-size:11px'));
+          body.appendChild(document.createElement('br'));
+          body.appendChild(makeSpan(drift.why, 'font-size:11px;color:rgba(255,255,255,0.45)'));
+        }
+        var justifyBtn = document.createElement('button');
+        justifyBtn.textContent = 'Add Justification';
+        justifyBtn.style.cssText = 'padding:4px 10px;font-size:11px;border-radius:4px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.8);cursor:pointer';
+        justifyBtn.addEventListener('click', function() {
+          if (drift) {
+            vscode.postMessage({ command: 'guardrailJustify', driftId: drift.id });
+          }
+        });
+        actions.appendChild(justifyBtn);
+
+      } else if (update.state === 'commit_preflight') {
+        badge.className = 'pill pill-danger';
+        badge.textContent = 'Commit Blocked';
+        card.style.borderColor = 'rgba(255,80,80,0.35)';
+        body.textContent = (update.unresolvedCount || 1) + ' unresolved layer leak(s) detected at commit time. Justify or resolve before next commit.';
+      }
+    }
   })();
 </script>
 </body>

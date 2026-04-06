@@ -221,6 +221,8 @@ describe('Phase 7.8 — Operator Friction Hardening Governance', () => {
         'governanceHandoffService.ts', // added via Codex PR #7
         'implementationDraftService.ts', // added via Codex PR #7
         'implementationPackageService.ts', // added via Codex PR #7
+        'architectureFingerprint.ts', // ARCXT-MVG-001 — Minimal Viable Guardrail (authorized by Prime/Axis)
+        'layerLeakDetector.ts', // ARCXT-MVG-001 — Minimal Viable Guardrail (authorized by Prime/Axis)
         'overrideLog.ts', // Phase 8 (ARC-PHASE-008) — not Phase 7.8
         'performance.ts',
         'risk.ts',
