@@ -507,15 +507,20 @@ export function activate(context: vscode.ExtensionContext): void {
   const firstRunBootstrap = new FirstRunBootstrapService(context);
   const firstTargetResolution = targetFor(activeEditorFilePath());
 
-  if (
-    firstRunBootstrap.shouldShowBootstrap(firstTargetResolution.effectiveRoot)
-  ) {
+  // ARC-STABILITY-LOCK-001 T3: Grace mode — demote REQUIRE_PLAN to WARN
+  // until user completes bootstrap wizard. Prevents first-session hard-block.
+  let graceModeActive = firstRunBootstrap.shouldShowBootstrap(
+    firstTargetResolution.effectiveRoot,
+  );
+
+  if (graceModeActive) {
     void (async () => {
       const bootstrapResult = await firstRunBootstrap.showBootstrap(
         firstTargetResolution.effectiveRoot,
         activeEditorFilePath(),
         firstTargetResolution.workspaceFolderRoot,
       );
+      graceModeActive = false;
 
       // U03: Rebind Task Board to the selected governed root
       if (
@@ -833,108 +838,134 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.workspace.onWillSaveTextDocument((event) => {
       event.waitUntil(
         (async () => {
-          const controller = controllerFor(event.document.uri.fsPath);
-          const orchestrator = orchestratorFor(event.document.uri.fsPath);
-          const currentText = event.document.getText();
-          if (
-            controller.consumeRestoreBypass(
-              event.document.uri.fsPath,
-              currentText,
-            )
-          ) {
-            return [];
-          }
+          try {
+            const controller = controllerFor(event.document.uri.fsPath);
+            const orchestrator = orchestratorFor(event.document.uri.fsPath);
+            const currentText = event.document.getText();
+            if (
+              controller.consumeRestoreBypass(
+                event.document.uri.fsPath,
+                currentText,
+              )
+            ) {
+              return [];
+            }
 
-          const assessment = await controller.prepareSave({
-            filePath: event.document.uri.fsPath,
-            fileName: path.basename(event.document.uri.fsPath),
-            text: currentText,
-            saveMode: saveModeFromReason(event.reason),
-            autoSaveMode: mode,
-            selectionText: selectionText(event.document),
-          });
+            const assessment = await controller.prepareSave({
+              filePath: event.document.uri.fsPath,
+              fileName: path.basename(event.document.uri.fsPath),
+              text: currentText,
+              saveMode: saveModeFromReason(event.reason),
+              autoSaveMode: mode,
+              selectionText: selectionText(event.document),
+            });
 
-          if (assessment.reducedGuaranteeNotice) {
-            void assessment.reducedGuaranteeNotice;
-          }
+            if (assessment.reducedGuaranteeNotice) {
+              void assessment.reducedGuaranteeNotice;
+            }
 
-          const actor = humanActor();
+            const actor = humanActor();
 
-          if (
-            assessment.decision.decision === 'ALLOW' ||
-            assessment.decision.lease_status === 'REUSED'
-          ) {
-            controller.finalizeSave(assessment, true, undefined, actor);
+            if (
+              assessment.decision.decision === 'ALLOW' ||
+              assessment.decision.lease_status === 'REUSED'
+            ) {
+              controller.finalizeSave(assessment, true, undefined, actor);
+              statusBarItem.updateFromDecision(
+                assessment.decision.decision,
+                false,
+              );
+              taskBoardProvider.refresh();
+              return [];
+            }
+
+            if (assessment.decision.decision === 'BLOCK') {
+              controller.finalizeSave(assessment, false, undefined, actor);
+              statusBarItem.updateFromDecision(
+                assessment.decision.decision,
+                true,
+              );
+              taskBoardProvider.refresh();
+              void vscode.window.showErrorMessage(
+                `[ARC XT] BLOCK: ${assessment.decision.reason}`,
+                { modal: true },
+              );
+              return [];
+            }
+
+            // ARC-STABILITY-LOCK-001 T3: Grace mode — demote REQUIRE_PLAN to WARN
+            // during first session so new users aren't hard-blocked without context.
+            if (
+              graceModeActive &&
+              assessment.decision.decision === 'REQUIRE_PLAN'
+            ) {
+              assessment.decision.decision = 'WARN';
+              assessment.decision.reason =
+                '[Grace Mode] This would normally require a Change ID. Complete ARC XT setup to activate full enforcement.';
+              assessment.shouldPrompt = true;
+            }
+
+            if (
+              assessment.shouldPrompt &&
+              assessment.decision.decision === 'REQUIRE_PLAN'
+            ) {
+              const planFlow = await collectRequirePlanProof(
+                orchestrator,
+                assessment,
+              );
+              controller.finalizeSave(
+                assessment,
+                planFlow.acknowledged,
+                planFlow.proof,
+                actor,
+              );
+              statusBarItem.updateFromDecision(
+                assessment.decision.decision,
+                !planFlow.acknowledged,
+              );
+              taskBoardProvider.refresh();
+              return [];
+            }
+
+            if (assessment.shouldPrompt) {
+              const choice = await vscode.window.showWarningMessage(
+                `[ARC XT] ${assessment.decision.decision}: ${assessment.decision.reason}`,
+                { modal: true },
+                'Continue',
+                'Cancel',
+              );
+
+              controller.finalizeSave(
+                assessment,
+                choice === 'Continue',
+                undefined,
+                actor,
+              );
+              statusBarItem.updateFromDecision(
+                assessment.decision.decision,
+                choice !== 'Continue',
+              );
+              taskBoardProvider.refresh();
+              return [];
+            }
+
+            controller.finalizeSave(assessment, false, undefined, actor);
             statusBarItem.updateFromDecision(
               assessment.decision.decision,
               false,
             );
             taskBoardProvider.refresh();
             return [];
-          }
-
-          if (assessment.decision.decision === 'BLOCK') {
-            controller.finalizeSave(assessment, false, undefined, actor);
-            statusBarItem.updateFromDecision(
-              assessment.decision.decision,
-              true,
-            );
-            taskBoardProvider.refresh();
+          } catch (err) {
+            // ARC-STABILITY-LOCK-001 BLOCKER-C: Hard error boundary on save pipeline.
+            // Any exception here must be surfaced — never silent.
+            const message = err instanceof Error ? err.message : String(err);
             void vscode.window.showErrorMessage(
-              `[ARC XT] BLOCK: ${assessment.decision.reason}`,
-              { modal: true },
+              `[ARC XT] Save assessment error: ${message}. Save will proceed without governance audit.`,
             );
+            // Fail-open: return empty edit array so save proceeds.
             return [];
           }
-
-          if (
-            assessment.shouldPrompt &&
-            assessment.decision.decision === 'REQUIRE_PLAN'
-          ) {
-            const planFlow = await collectRequirePlanProof(
-              orchestrator,
-              assessment,
-            );
-            controller.finalizeSave(
-              assessment,
-              planFlow.acknowledged,
-              planFlow.proof,
-              actor,
-            );
-            statusBarItem.updateFromDecision(
-              assessment.decision.decision,
-              !planFlow.acknowledged,
-            );
-            taskBoardProvider.refresh();
-            return [];
-          }
-
-          if (assessment.shouldPrompt) {
-            const choice = await vscode.window.showWarningMessage(
-              `[ARC XT] ${assessment.decision.decision}: ${assessment.decision.reason}`,
-              { modal: true },
-              'Continue',
-              'Cancel',
-            );
-
-            controller.finalizeSave(
-              assessment,
-              choice === 'Continue',
-              undefined,
-              actor,
-            );
-            statusBarItem.updateFromDecision(
-              assessment.decision.decision,
-              choice !== 'Continue',
-            );
-            taskBoardProvider.refresh();
-            return [];
-          }
-
-          controller.finalizeSave(assessment, false, undefined, actor);
-          statusBarItem.updateFromDecision(assessment.decision.decision, false);
-          taskBoardProvider.refresh();
-          return [];
         })(),
       );
     }),

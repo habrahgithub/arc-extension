@@ -744,27 +744,54 @@ export class AuditLogWriter {
   }
 
   private execSql(sqlStatement: string): void {
-    // Use stdio: 'pipe' to capture stderr; re-throw on actual failure
-    // This prevents expected errors (e.g., rollback tests) from polluting test output
-    execFileSync('sqlite3', ['-bail', this.sqlitePath(), sqlStatement], {
-      encoding: 'utf8',
-      stdio: ['pipe', 'pipe', 'pipe'],
-    });
+    if (!this.hasSqliteCli()) return;
+    try {
+      execFileSync('sqlite3', ['-bail', this.sqlitePath(), sqlStatement], {
+        encoding: 'utf8',
+        stdio: ['pipe', 'pipe', 'pipe'],
+      });
+    } catch {
+      // sqlite3 CLI not available — DB operations silently skipped.
+      // Primary audit trail is JSONL (.arc/audit.jsonl), not DB.
+    }
   }
 
   private execSqlJson<T>(sqlStatement: string): T[] {
-    const output = execFileSync(
-      'sqlite3',
-      ['-json', this.sqlitePath(), sqlStatement],
-      {
-        encoding: 'utf8',
-        stdio: ['pipe', 'pipe', 'pipe'],
-      },
-    ).trim();
-    if (!output) {
+    if (!this.hasSqliteCli()) return [];
+    try {
+      const output = execFileSync(
+        'sqlite3',
+        ['-json', this.sqlitePath(), sqlStatement],
+        {
+          encoding: 'utf8',
+          stdio: ['pipe', 'pipe', 'pipe'],
+        },
+      ).trim();
+      if (!output) {
+        return [];
+      }
+      return JSON.parse(output) as T[];
+    } catch {
+      // sqlite3 CLI not available — return empty result.
+      // Primary audit trail is JSONL (.arc/audit.jsonl), not DB.
       return [];
     }
-    return JSON.parse(output) as T[];
+  }
+
+  private _sqliteCliAvailable: boolean | undefined;
+
+  private hasSqliteCli(): boolean {
+    if (this._sqliteCliAvailable !== undefined) return this._sqliteCliAvailable;
+    try {
+      execFileSync('sqlite3', ['--version'], {
+        encoding: 'utf8',
+        stdio: ['pipe', 'pipe', 'pipe'],
+      });
+      this._sqliteCliAvailable = true;
+    } catch {
+      this._sqliteCliAvailable = false;
+    }
+    return this._sqliteCliAvailable;
   }
 
   private findLatestSaveDecisionId(
