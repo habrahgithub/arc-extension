@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { version as EXTENSION_VERSION } from '../../package.json';
 
 /**
  * Welcome Surface — Bounded Operator Onboarding
@@ -171,7 +172,7 @@ This ensures explicit intent for sensitive changes.
 
 ## Version
 
-**Extension Version:** 0.1.5
+**Extension Version:** ${EXTENSION_VERSION}
 **Governance Framework:** ARC-GOV-RULE-002
 **Phase:** Phase 7.10+ / Beta Baseline
 
@@ -209,10 +210,10 @@ export class WelcomeSurfaceService {
       language: 'markdown',
     });
 
-    await vscode.window.showTextDocument(document, {
-      preview: true,
-      viewColumn: vscode.ViewColumn.One,
-    });
+    await vscode.commands.executeCommand(
+      'markdown.showPreviewToSide',
+      document.uri,
+    );
   }
 
   /**

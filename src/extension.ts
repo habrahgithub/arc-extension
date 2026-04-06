@@ -411,20 +411,27 @@ export function activate(context: vscode.ExtensionContext): void {
       liquidShellProvider.reveal();
     }),
     // arc.ui.liquidShell.navigate → reveal + switch route inside the shell
-    vscode.commands.registerCommand('arc.ui.liquidShell.navigate', (route: string) => {
-      liquidShellProvider.navigateTo(route);
-    }),
+    vscode.commands.registerCommand(
+      'arc.ui.liquidShell.navigate',
+      (route: string) => {
+        liquidShellProvider.navigateTo(route);
+      },
+    ),
     // arc.guardrail.justify → prompt user for justification text and persist
-    vscode.commands.registerCommand('arc.guardrail.justify', async (driftId: string) => {
-      const input = await vscode.window.showInputBox({
-        title: 'Justify Layer Leak',
-        prompt: 'Provide a brief justification for this architectural exception',
-        placeHolder: 'e.g. Legacy pattern, will refactor in LINTEL-PH6',
-      });
-      if (input && input.trim()) {
-        await guardrailState.justifyDrift(driftId, input.trim());
-      }
-    }),
+    vscode.commands.registerCommand(
+      'arc.guardrail.justify',
+      async (driftId: string) => {
+        const input = await vscode.window.showInputBox({
+          title: 'Justify Layer Leak',
+          prompt:
+            'Provide a brief justification for this architectural exception',
+          placeHolder: 'e.g. Legacy pattern, will refactor in LINTEL-PH6',
+        });
+        if (input && input.trim()) {
+          await guardrailState.justifyDrift(driftId, input.trim());
+        }
+      },
+    ),
   );
 
   // ARCXT-MVG-001 — First-session hook, on-save detector, guardrail→UI bridge
@@ -496,12 +503,7 @@ export function activate(context: vscode.ExtensionContext): void {
   }
 
   // Show welcome surface on first activation (bounded onboarding)
-  if (welcomeSurface.shouldShowWelcome()) {
-    void welcomeSurface.showWelcome();
-    void welcomeSurface.markWelcomeShown();
-  }
-
-  // U01–U06: First-run bootstrap for new operators (local-only, fail-closed)
+  // U04 — Bootstrap owns first-run; welcome only if bootstrap not applicable
   const firstRunBootstrap = new FirstRunBootstrapService(context);
   const firstTargetResolution = targetFor(activeEditorFilePath());
 
@@ -524,6 +526,10 @@ export function activate(context: vscode.ExtensionContext): void {
         taskBoardProvider.rebindToRoot(bootstrapResult.selectedRoot);
       }
     })();
+  } else if (welcomeSurface.shouldShowWelcome()) {
+    // Bootstrap not applicable — show welcome as secondary onboarding
+    void welcomeSurface.showWelcome();
+    void welcomeSurface.markWelcomeShown();
   }
 
   for (const document of vscode.workspace.textDocuments) {
@@ -584,114 +590,16 @@ export function activate(context: vscode.ExtensionContext): void {
       timelineOutput.show(true);
     }),
     vscode.commands.registerCommand('arc.reviewAudit', async () => {
-      const filePath = activeEditorFilePath();
-      await openMarkdownPreview(
-        'ARC XT — Audit Review',
-        reviewSurfaceFor(filePath).renderAuditReview(),
-      );
+      await vscode.commands.executeCommand('arc.ui.auditReview');
     }),
     vscode.commands.registerCommand('arc.showRuntimeStatus', async () => {
-      const filePath = activeEditorFilePath();
-      const target = targetFor(filePath);
-      const routePolicy = new RoutePolicyStore(target.effectiveRoot).load();
-
-      // Phase 7.7 — Read last audit entry for trigger visibility
-      // Phase 7.8 — Staleness hardening and audit-read degradation
-      const auditPath = path.join(target.effectiveRoot, '.arc', 'audit.jsonl');
-      let lastAudit: AuditEntry | undefined;
-      let auditReadError: string | undefined;
-
-      try {
-        if (fs.existsSync(auditPath)) {
-          const auditContent = fs.readFileSync(auditPath, 'utf8');
-          const lines = auditContent.trim().split('\n').filter(Boolean);
-          if (lines.length > 0) {
-            lastAudit = JSON.parse(lines[lines.length - 1]) as AuditEntry;
-          }
-        }
-      } catch {
-        // Phase 7.8 — WRD-0077: Do not silently ignore audit read errors.
-        // Degrade to "audit unavailable" rather than "audit clean".
-        // Do not expose raw error details to operator surface.
-        auditReadError = 'AUDIT_READ_FAILED';
-      }
-
-      // Phase 7.8 — Staleness detection
-      let lastDecisionContext:
-        | (typeof lastAudit & {
-            isStale?: boolean;
-            stalenessReason?: 'FILE_MISMATCH' | 'TIME_THRESHOLD' | 'BOTH';
-          })
-        | undefined;
-
-      if (lastAudit && !auditReadError) {
-        const activeFilePath = activeEditorFilePath();
-        const lastDecisionTs = new Date(lastAudit.ts).getTime();
-        const nowTs = Date.now();
-        const timeDiff = nowTs - lastDecisionTs;
-
-        // Staleness model (OBS-S-7019):
-        // - FILE_MISMATCH: last decision file_path differs from active file
-        // - TIME_THRESHOLD: last decision is older than 5 minutes
-        // - BOTH: both conditions are true
-        const isFileMismatch =
-          activeFilePath != null && lastAudit.file_path !== activeFilePath;
-        const isTimeStale = timeDiff > 5 * 60 * 1000; // 5 minutes
-
-        const isStale = isFileMismatch || isTimeStale;
-        const stalenessReason =
-          isFileMismatch && isTimeStale
-            ? 'BOTH'
-            : isFileMismatch
-              ? 'FILE_MISMATCH'
-              : isTimeStale
-                ? 'TIME_THRESHOLD'
-                : undefined;
-
-        lastDecisionContext = {
-          ...lastAudit,
-          isStale,
-          stalenessReason,
-        };
-      }
-
-      await openMarkdownPreview(
-        'ARC XT — Active Workspace Status',
-        renderRuntimeStatusMarkdown({
-          target,
-          autoSaveMode: mode,
-          routePolicy,
-          lastDecision: lastDecisionContext
-            ? {
-                decision: lastDecisionContext.decision,
-                source: lastDecisionContext.source,
-                fallbackCause: lastDecisionContext.fallback_cause,
-                evaluationLane: lastDecisionContext.evaluation_lane,
-                leaseStatus: lastDecisionContext.lease_status,
-                saveMode: lastDecisionContext.save_mode,
-                autoSaveMode: lastDecisionContext.auto_save_mode,
-                timestamp: lastDecisionContext.ts,
-                filePath: lastDecisionContext.file_path,
-                isStale: lastDecisionContext.isStale,
-                stalenessReason: lastDecisionContext.stalenessReason,
-              }
-            : undefined,
-        }),
-      );
+      await vscode.commands.executeCommand('arc.ui.runtimeStatus');
     }),
     vscode.commands.registerCommand('arc.reviewBlueprints', async () => {
-      const filePath = activeEditorFilePath();
-      await openMarkdownPreview(
-        'ARC XT — Blueprint Proof Review',
-        reviewSurfaceFor(filePath).renderBlueprintReview(),
-      );
+      await vscode.commands.executeCommand('arc.ui.blueprintProof');
     }),
     vscode.commands.registerCommand('arc.reviewFalsePositives', async () => {
-      const filePath = activeEditorFilePath();
-      await openMarkdownPreview(
-        'ARC XT — False-Positive Review',
-        reviewSurfaceFor(filePath).renderFalsePositiveReview(),
-      );
+      await vscode.commands.executeCommand('arc.ui.falsePositiveReview');
     }),
 
     // ARC-CMD-001: Compatibility bridge lintel.* namespace (DEPRECATED — retained for backward compat with existing keybindings/macros)

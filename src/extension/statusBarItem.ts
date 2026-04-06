@@ -60,7 +60,7 @@ const STATUS_CONFIG: Record<
 
 export class StatusBarItemService {
   private statusBarItem: vscode.StatusBarItem;
-  private currentStatus: EnforcementStatus = 'READY';
+  private currentStatus: EnforcementStatus | 'IDLE' = 'IDLE';
 
   constructor() {
     this.statusBarItem = vscode.window.createStatusBarItem(
@@ -68,8 +68,10 @@ export class StatusBarItemService {
       100, // Priority (higher = more to the right)
     );
     this.statusBarItem.command = 'arc.showRuntimeStatus';
+    this.statusBarItem.text = '$(shield) ARC XT';
+    this.statusBarItem.tooltip = 'ARC XT — waiting for first file assessment';
+    this.statusBarItem.color = undefined;
     this.statusBarItem.show();
-    this.updateStatus('READY');
   }
 
   /**
@@ -82,6 +84,11 @@ export class StatusBarItemService {
     this.statusBarItem.text = config.text;
     this.statusBarItem.tooltip = config.tooltip;
     this.statusBarItem.color = config.color;
+  }
+
+  /** Check if status has not yet been assessed */
+  isIdle(): boolean {
+    return this.currentStatus === 'IDLE';
   }
 
   /**
@@ -138,7 +145,7 @@ export class StatusBarItemService {
             | 'afterDelay'
             | 'onFocusChange'
             | 'onWindowChange',
-          );
+        );
         break;
       }
     }

@@ -154,6 +154,8 @@ export class LiquidShellViewProvider implements vscode.WebviewViewProvider {
     this._view = webviewView;
     webviewView.webview.options = {
       enableScripts: true,
+      // @ts-expect-error — retainContextWhenHidden is a valid VS Code webview option not exposed in types
+      retainContextWhenHidden: true,
       localResourceRoots: [
         vscode.Uri.joinPath(this._extensionUri, 'Public', 'Logo'),
       ],
@@ -915,11 +917,10 @@ function buildLiquidShellHtml(opts: LiquidShellOpts): string {
         <div class="card-header">
           <div>
             <div class="card-label">Active Directive</div>
-            <div class="card-value headline">ARC-101</div>
+            <div class="card-desc" style="color:rgba(255,255,255,0.3);font-style:italic">No active directive — open a governed workspace to begin.</div>
           </div>
-          <span class="pill pill-info">Live</span>
+          <span class="pill pill-neutral">Demo</span>
         </div>
-        <div class="card-desc">OnSave route inspection with strict policy envelope and bounded execution posture.</div>
         <div style="margin-top:8px;display:flex;align-items:center;gap:6px">
           <span style="width:6px;height:6px;border-radius:50%;background:var(--tertiary-fixed-dim)"></span>
           <span style="font-size:9px;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:0.1em">Authority: local enforcement</span>
@@ -944,8 +945,7 @@ function buildLiquidShellHtml(opts: LiquidShellOpts): string {
             <div class="operator-role">Bounded execution role</div>
           </div>
         </div>
-        <!-- EXECUTE_RUN — starts "ready" when directive is live -->
-        <button class="btn-execute ready" id="btn-execute">EXECUTE_RUN</button>
+        <div class="card-desc" style="color:rgba(255,255,255,0.25);font-style:italic;margin-top:8px;font-size:10px">Execution control pending governed workspace context.</div>
       </div>
     </aside>
 
@@ -1046,39 +1046,10 @@ function buildLiquidShellHtml(opts: LiquidShellOpts): string {
                   <div class="card-label">Task Stream</div>
                   <div class="card-value headline" style="font-size:16px">Active Tasks</div>
                 </div>
-                <span class="pill pill-info">3 visible</span>
+                <span class="pill pill-neutral">Demo</span>
               </div>
-              <div class="task-list">
-                <div class="task-row">
-                  <div class="task-left">
-                    <div class="task-icon-box"><span class="material-symbols-outlined" style="font-size:16px">◻</span></div>
-                    <div>
-                      <span class="task-name">Directive route verification</span><span class="task-id mono">ARC-101</span>
-                      <div class="task-phase">Planning</div>
-                    </div>
-                  </div>
-                  <span class="pill pill-info">Active</span>
-                </div>
-                <div class="task-row">
-                  <div class="task-left">
-                    <div class="task-icon-box"><span class="material-symbols-outlined" style="font-size:16px">◻</span></div>
-                    <div>
-                      <span class="task-name">Policy manifest sync</span><span class="task-id mono">ARC-118</span>
-                      <div class="task-phase">Implementation</div>
-                    </div>
-                  </div>
-                  <span class="pill pill-warn">Review</span>
-                </div>
-                <div class="task-row">
-                  <div class="task-left">
-                    <div class="task-icon-box"><span class="material-symbols-outlined" style="font-size:16px">◻</span></div>
-                    <div>
-                      <span class="task-name">Execution token envelope</span><span class="task-id mono">ARC-123</span>
-                      <div class="task-phase">Review</div>
-                    </div>
-                  </div>
-                  <span class="pill pill-good">Ready</span>
-                </div>
+              <div class="card-desc" style="color:rgba(255,255,255,0.3);font-style:italic;padding:20px 0">
+                No tasks loaded — open a governed workspace to see your task pipeline.
               </div>
             </div>
           </div>
@@ -1166,77 +1137,14 @@ function buildLiquidShellHtml(opts: LiquidShellOpts): string {
           <div>
             <div class="content-eyebrow label">Control Plane</div>
             <h1 class="content-title headline">Task Board</h1>
-            <p class="content-subtitle">Milestone-first navigation with active focus and clean phase separation.</p>
           </div>
           <div style="display:flex;gap:6px">
-            <span class="pill pill-good">Stable</span>
-            <span class="pill pill-info">v2.4.0</span>
+            <span class="pill pill-neutral">Demo</span>
           </div>
         </div>
-
-        <!-- Phase-grouper: Planning -->
-        <div style="margin-bottom:20px">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
-            <span style="width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.2)"></span>
-            <span style="font-size:10px;text-transform:uppercase;letter-spacing:0.16em;color:rgba(255,255,255,0.35)">Planning</span>
-            <span style="flex:1;height:1px;background:rgba(255,255,255,0.05)"></span>
-            <span style="font-size:10px;color:rgba(255,255,255,0.25)">01 task</span>
-          </div>
-          <div class="task-list">
-            <div class="task-row">
-              <div class="task-left">
-                <div class="task-icon-box"><span class="material-symbols-outlined" style="font-size:16px">bolt</span></div>
-                <div>
-                  <span class="task-name">Directive route verification</span><span class="task-id mono">ARC-101</span>
-                  <div class="task-phase">Planning</div>
-                </div>
-              </div>
-              <span class="pill pill-info">Active</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Phase-grouper: Implementation -->
-        <div style="margin-bottom:20px">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
-            <span style="width:6px;height:6px;border-radius:50%;background:rgba(159,202,255,0.5);box-shadow:0 0 6px rgba(159,202,255,0.2)"></span>
-            <span style="font-size:10px;text-transform:uppercase;letter-spacing:0.16em;color:rgba(255,255,255,0.35)">Implementation</span>
-            <span style="flex:1;height:1px;background:rgba(255,255,255,0.05)"></span>
-            <span style="font-size:10px;color:rgba(255,255,255,0.25)">01 task</span>
-          </div>
-          <div class="task-list">
-            <div class="task-row">
-              <div class="task-left">
-                <div class="task-icon-box"><span class="material-symbols-outlined" style="font-size:16px">sync</span></div>
-                <div>
-                  <span class="task-name">Policy manifest sync</span><span class="task-id mono">ARC-118</span>
-                  <div class="task-phase">Implementation</div>
-                </div>
-              </div>
-              <span class="pill pill-warn">Review</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Phase-grouper: Review -->
-        <div>
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
-            <span style="width:6px;height:6px;border-radius:50%;background:var(--tertiary-fixed-dim);box-shadow:0 0 6px rgba(122,236,141,0.2)"></span>
-            <span style="font-size:10px;text-transform:uppercase;letter-spacing:0.16em;color:rgba(255,255,255,0.35)">Review</span>
-            <span style="flex:1;height:1px;background:rgba(255,255,255,0.05)"></span>
-            <span style="font-size:10px;color:rgba(255,255,255,0.25)">01 task</span>
-          </div>
-          <div class="task-list">
-            <div class="task-row">
-              <div class="task-left">
-                <div class="task-icon-box"><span class="material-symbols-outlined" style="font-size:16px">security</span></div>
-                <div>
-                  <span class="task-name">Execution token envelope</span><span class="task-id mono">ARC-123</span>
-                  <div class="task-phase">Review</div>
-                </div>
-              </div>
-              <span class="pill pill-good">Ready</span>
-            </div>
+        <div class="card">
+          <div class="card-desc" style="color:rgba(255,255,255,0.3);font-style:italic;padding:20px 0">
+            No tasks loaded — open a governed workspace to see your task pipeline.
           </div>
         </div>
       </div>
@@ -1350,126 +1258,44 @@ function buildLiquidShellHtml(opts: LiquidShellOpts): string {
           <div>
             <div class="content-eyebrow label">Control Plane</div>
             <h1 class="content-title headline">Architect View</h1>
-            <p class="content-subtitle">System posture, route policies, and directive-state visibility in one shell.</p>
           </div>
           <div style="display:flex;gap:6px">
-            <span class="pill pill-good">Stable</span>
-            <span class="pill pill-info">v2.4.0</span>
+            <span class="pill pill-neutral">Demo</span>
           </div>
         </div>
 
-        <!-- Policy mode — dominant -->
+        <!-- Policy mode — placeholder -->
         <div class="topology-block">
-          <div style="display:flex;align-items:center;justify-content:space-between">
-            <div>
-              <div class="topology-label">Policy Mode</div>
-              <div class="topology-value" style="color:var(--tertiary-fixed-dim)">STRICT_ENFORCEMENT</div>
-              <div class="topology-hint">All requests require valid signature + pre-flight audit</div>
-            </div>
-            <div style="display:flex;gap:6px">
-              <span class="pill pill-good" style="font-size:9px">Sign-Req</span>
-              <span class="pill pill-good" style="font-size:9px">Audit-Pre</span>
-              <span class="pill pill-good" style="font-size:9px">Log-All</span>
-            </div>
-          </div>
+          <div class="topology-label">Policy Mode</div>
+          <div class="card-desc" style="color:rgba(255,255,255,0.3);font-style:italic">No governed workspace open — policy state unavailable.</div>
         </div>
 
         <div class="bento">
           <div>
-            <!-- Active Routes -->
+            <!-- Active Routes — placeholder -->
             <div class="topology-block">
               <div class="topology-label">Active Routes</div>
-              <div class="route-map">
-                <div class="route-entry">
-                  <div class="route-left">
-                    <div class="route-indicator active"></div>
-                    <div>
-                      <div class="route-name">Local → Cloud</div>
-                      <div class="route-desc mono">Primary · us-east-1.aws.arc</div>
-                    </div>
-                  </div>
-                  <span class="route-badge pill pill-good">Active</span>
-                </div>
-                <div class="route-entry">
-                  <div class="route-left">
-                    <div class="route-indicator disabled"></div>
-                    <div>
-                      <div class="route-name">Local → Fallback</div>
-                      <div class="route-desc mono">Secondary · disabled</div>
-                    </div>
-                  </div>
-                  <span class="route-badge pill pill-neutral">Disabled</span>
-                </div>
-                <div class="route-entry">
-                  <div class="route-left">
-                    <div class="route-indicator disabled"></div>
-                    <div>
-                      <div class="route-name">Audit Cache Read</div>
-                      <div class="route-desc mono">Degraded — fallback engaged</div>
-                    </div>
-                  </div>
-                  <span class="route-badge pill pill-warn">Degraded</span>
-                </div>
-              </div>
+              <div class="card-desc" style="color:rgba(255,255,255,0.3);font-style:italic">Open a governed workspace to see route topology.</div>
             </div>
 
-            <!-- Blueprint Score -->
+            <!-- Blueprint Score — placeholder -->
             <div class="topology-block">
               <div class="topology-label">Blueprint Score</div>
-              <div style="display:flex;align-items:baseline;gap:12px">
-                <div class="topology-value headline" style="font-size:36px">94<span style="font-size:16px;font-weight:400;color:rgba(255,255,255,0.3)">%</span></div>
-                <span class="pill pill-good">Above threshold</span>
-              </div>
-              <div class="topology-hint" style="margin-top:6px">Composite of rule evaluations across 3 active directives</div>
+              <div class="card-desc" style="color:rgba(255,255,255,0.3);font-style:italic">No directives evaluated yet.</div>
             </div>
           </div>
 
           <div>
-            <!-- Directive State -->
+            <!-- Directive State — placeholder -->
             <div class="topology-block">
               <div class="topology-label">Directive State</div>
-              <div class="directive-list">
-                <div class="directive-entry">
-                  <span class="directive-id">ARC-101</span>
-                  <div style="display:flex;align-items:center;gap:8px">
-                    <span style="font-size:11px;color:rgba(255,255,255,0.5)">Route verification</span>
-                    <span class="directive-status pill pill-info">Active</span>
-                  </div>
-                </div>
-                <div class="directive-entry">
-                  <span class="directive-id">ARC-118</span>
-                  <div style="display:flex;align-items:center;gap:8px">
-                    <span style="font-size:11px;color:rgba(255,255,255,0.5)">Policy manifest</span>
-                    <span class="directive-status pill pill-warn">Review</span>
-                  </div>
-                </div>
-                <div class="directive-entry">
-                  <span class="directive-id">ARC-123</span>
-                  <div style="display:flex;align-items:center;gap:8px">
-                    <span style="font-size:11px;color:rgba(255,255,255,0.5)">Token envelope</span>
-                    <span class="directive-status pill pill-good">Ready</span>
-                  </div>
-                </div>
-              </div>
+              <div class="card-desc" style="color:rgba(255,255,255,0.3);font-style:italic">No active directives.</div>
             </div>
 
-            <!-- System Parameters -->
+            <!-- System Parameters — placeholder -->
             <div class="topology-block">
               <div class="topology-label">System Parameters</div>
-              <div style="display:flex;flex-direction:column;gap:8px">
-                <div style="display:flex;justify-content:space-between">
-                  <span style="font-size:11px;color:rgba(255,255,255,0.35)">Thread ID</span>
-                  <span class="mono" style="font-size:11px;color:rgba(159,202,255,0.7)">0x7ff82c03</span>
-                </div>
-                <div style="display:flex;justify-content:space-between">
-                  <span style="font-size:11px;color:rgba(255,255,255,0.35)">Memory Usage</span>
-                  <span class="mono" style="font-size:11px;color:rgba(159,202,255,0.7)">142.8 MB</span>
-                </div>
-                <div style="display:flex;justify-content:space-between">
-                  <span style="font-size:11px;color:rgba(255,255,255,0.35)">Node Affinity</span>
-                  <span class="mono" style="font-size:11px;color:rgba(159,202,255,0.7)">CLUSTER-B12</span>
-                </div>
-              </div>
+              <div class="card-desc" style="color:rgba(255,255,255,0.3);font-style:italic">Parameters appear when a workspace is governed.</div>
             </div>
           </div>
         </div>
@@ -1519,29 +1345,6 @@ function buildLiquidShellHtml(opts: LiquidShellOpts): string {
         activateRoute(el.getAttribute('data-route'));
       });
     });
-
-    // ── EXECUTE_RUN — ceremonial with state awareness ──
-    var execBtn = document.getElementById('btn-execute');
-    var execState = 'ready'; // ready | executing | warning
-
-    if (execBtn) {
-      execBtn.addEventListener('click', function() {
-        if (execState === 'executing') return; // locked during execution
-
-        execState = 'executing';
-        execBtn.className = 'btn-execute executing';
-        execBtn.textContent = 'EXECUTING…';
-
-        // Navigate to Runtime view within the shell (no markdown preview)
-        vscode.postMessage({ command: 'navigateRoute', route: 'runtime' });
-
-        setTimeout(function() {
-          execState = 'ready';
-          execBtn.className = 'btn-execute ready';
-          execBtn.textContent = 'EXECUTE_RUN';
-        }, 3000);
-      });
-    }
 
     // ── Deviation row click → expand code context ──
     document.querySelectorAll('.deviation-row[data-context]').forEach(function(row) {

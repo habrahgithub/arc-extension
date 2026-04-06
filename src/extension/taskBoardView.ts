@@ -54,6 +54,8 @@ export class TaskBoardViewProvider implements vscode.WebviewViewProvider {
 
     webviewView.webview.options = {
       enableScripts: true,
+      // @ts-expect-error — retainContextWhenHidden is a valid VS Code webview option not exposed in types
+      retainContextWhenHidden: true,
       // Scoped to Public/Logo only (WRD-0129 follow-up hardening)
       localResourceRoots: [
         vscode.Uri.joinPath(this._extensionUri, 'Public', 'Logo'),
