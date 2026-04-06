@@ -63,6 +63,20 @@ jsconfig.*
 scripts/**
 tools/**
 
+# Exclude dev-only subdirectories from node_modules dependencies
+node_modules/**/benchmark/**
+node_modules/**/.github/**
+node_modules/**/*.spec.*
+node_modules/**/spec/**
+node_modules/**/*.yml
+node_modules/**/*.yaml
+node_modules/**/.gitattributes
+node_modules/**/*.runkit*
+node_modules/**/.eslint*
+node_modules/**/*.gitignore
+node_modules/**/test/**
+node_modules/**/tests/**
+
 # Exclude TypeScript source from node_modules dependencies
 node_modules/**/*.ts
 node_modules/**/*.d.ts
@@ -104,7 +118,6 @@ docs/**
 !node_modules/ajv/dist/**
 !node_modules/fast-deep-equal/**
 !node_modules/fast-uri/dist/**
-!node_modules/json-schema-traverse/**
 !node_modules/require-from-string/**
 !rules/**
 !Public/Logo/**
