@@ -15,12 +15,77 @@
  * - Each view has a unique hero surface, not relabeled cards
  * - EXECUTE_RUN is ceremonial — state-aware, not decorative
  * - Motion only for focus, route transitions, and feedback
+ *
+ * D-ARC-UI-001 — Phase A: UIState normalized, sidebar memoized, sizing discipline
  */
 
 import * as vscode from 'vscode';
 import { buildCSPWithNonce, generateNonce } from '../csp';
 import { escapeHtml } from '../sanitize';
 import type { GuardrailUpdate } from '../../contracts/types';
+
+/* ═══════════════════════════════════════
+   UIState — Single source of truth (Phase A)
+   ═══════════════════════════════════════ */
+interface NavItem {
+  route: string;
+  label: string;
+  hint: string;
+  icon: string;
+}
+
+const NAV_ITEMS: NavItem[] = [
+  { route: 'runtime', label: 'Runtime', hint: 'What is happening', icon: '◉' },
+  { route: 'tasks', label: 'Tasks', hint: 'What is progressing', icon: '◻' },
+  { route: 'review', label: 'Review', hint: 'What needs judgment', icon: '✓' },
+  {
+    route: 'architect',
+    label: 'Architect',
+    hint: 'What defines shape',
+    icon: '◈',
+  },
+];
+
+/** Build sidebar nav items from state — memoized, no duplication */
+function buildSidebarNavItemsHtml(activeRoute: string): string {
+  return NAV_ITEMS.map((item) => {
+    const isActive = item.route === activeRoute;
+    const activeClass = isActive ? ' active' : '';
+    const chevron = isActive
+      ? '<span class="material-symbols-outlined filled" style="font-size:14px;color:rgba(159,202,255,0.7)">chevron_right</span>'
+      : '<span class="material-symbols-outlined" style="font-size:14px;color:rgba(255,255,255,0.18)">chevron_right</span>';
+    return `<div class="sidebar-nav-item${activeClass}" data-route="${item.route}">
+          <div class="sidebar-nav-left">
+            <span class="material-symbols-outlined nav-icon" style="font-size:15px">${item.icon}</span>
+            <div>
+              <div class="sidebar-nav-label">${item.label}</div>
+              <div class="sidebar-nav-hint">${item.hint}</div>
+            </div>
+          </div>
+          ${chevron}
+        </div>`;
+  }).join('\n');
+}
+
+/** Build rail nav items from state — memoized */
+function buildRailItemsHtml(activeRoute: string): string {
+  return NAV_ITEMS.map((item) => {
+    const isActive = item.route === activeRoute;
+    const activeClass = isActive ? ' active' : '';
+    return `<div class="rail-item${activeClass}" data-route="${item.route}" title="${item.label}">
+        <span class="material-symbols-outlined">${item.icon}</span>
+      </div>`;
+  }).join('\n');
+}
+
+/** Build topbar nav items from state — memoized */
+function buildTopbarNavHtml(activeRoute: string): string {
+  return NAV_ITEMS.map((item) => {
+    const isActive = item.route === activeRoute;
+    const activeClass = isActive ? ' active' : '';
+    return `<button class="topbar-nav-item${activeClass}" data-route="${item.route}">${item.label}</button>`;
+  }).join('\n');
+}
 
 export function createLiquidShellPanel(
   context: vscode.ExtensionContext,
@@ -97,20 +162,36 @@ export class LiquidShellViewProvider implements vscode.WebviewViewProvider {
     const csp = buildCSPWithNonce(nonce, webviewView.webview.cspSource);
     const logoUri = webviewView.webview
       .asWebviewUri(
-        vscode.Uri.joinPath(this._extensionUri, 'Public', 'Logo', 'ARC-ICON-1024.png'),
+        vscode.Uri.joinPath(
+          this._extensionUri,
+          'Public',
+          'Logo',
+          'ARC-ICON-1024.png',
+        ),
       )
       .toString();
     webviewView.webview.html = buildLiquidShellHtml({ nonce, csp, logoUri });
     webviewView.webview.onDidReceiveMessage(
-      async (message: { command?: string; commandId?: string; route?: string; driftId?: string }) => {
+      async (message: {
+        command?: string;
+        commandId?: string;
+        route?: string;
+        driftId?: string;
+      }) => {
         if (message.command === 'executeCommand' && message.commandId) {
           await vscode.commands.executeCommand(message.commandId);
         }
         if (message.command === 'navigateRoute' && message.route) {
-          webviewView.webview.postMessage({ type: 'routeChanged', route: message.route });
+          webviewView.webview.postMessage({
+            type: 'routeChanged',
+            route: message.route,
+          });
         }
         if (message.command === 'guardrailJustify' && message.driftId) {
-          await vscode.commands.executeCommand('arc.guardrail.justify', message.driftId);
+          await vscode.commands.executeCommand(
+            'arc.guardrail.justify',
+            message.driftId,
+          );
         }
       },
     );
@@ -365,11 +446,14 @@ function buildLiquidShellHtml(opts: LiquidShellOpts): string {
 
   /* ── Pills ── */
   .pill {
-    display: inline-flex; align-items: center;
+    display: inline-flex; align-items: center; justify-content: center;
     border-radius: 999px; border: 1px solid;
     padding: 2px 10px;
-    font-size: 10px; font-weight: 700;
+    font-size: 10px; font-weight: 700; line-height: 1.4;
+    min-width: 40px; min-height: 18px;
     text-transform: uppercase; letter-spacing: 0.12em;
+    flex-shrink: 0;
+    vertical-align: middle;
   }
   .pill-info    { background: rgba(56,189,248,0.12); color: rgba(186,230,253,0.9); border-color: rgba(56,189,248,0.15); }
   .pill-good    { background: rgba(16,185,129,0.12); color: rgba(167,243,208,0.9); border-color: rgba(16,185,129,0.15); }
@@ -390,7 +474,11 @@ function buildLiquidShellHtml(opts: LiquidShellOpts): string {
     /* no border default — tonal only */
   }
   .sidebar-nav-item:hover { background: rgba(255,255,255,0.04); }
-  .sidebar-nav-item.active { background: rgba(159,202,255,0.07); }
+  .sidebar-nav-item.active {
+    background: rgba(159,202,255,0.10);
+    border-left: 2px solid rgba(159,202,255,0.35);
+    padding-left: 12px;
+  }
   .sidebar-nav-left { display: flex; align-items: center; gap: 10px; }
   .sidebar-nav-item .nav-icon { color: rgba(255,255,255,0.45); }
   .sidebar-nav-item.active .nav-icon { color: var(--primary-fixed); }
@@ -789,10 +877,7 @@ function buildLiquidShellHtml(opts: LiquidShellOpts): string {
       <img src="${escapeHtml(logoUri)}" width="20" height="20" alt="ARC XT" style="border-radius:3px;flex-shrink:0"/>
       <span class="topbar-brand">ARC XT</span>
       <nav class="topbar-nav">
-        <button class="topbar-nav-item active" data-route="runtime">Runtime</button>
-        <button class="topbar-nav-item" data-route="tasks">Tasks</button>
-        <button class="topbar-nav-item" data-route="review">Review</button>
-        <button class="topbar-nav-item" data-route="architect">Architect</button>
+        ${buildTopbarNavHtml('runtime')}
       </nav>
     </div>
     <div class="topbar-icons">
@@ -812,18 +897,7 @@ function buildLiquidShellHtml(opts: LiquidShellOpts): string {
     <!-- ═══ Narrow Icon Rail ═══ -->
     <nav class="rail">
       <div class="rail-logo"><img src="${escapeHtml(logoUri)}" alt="ARC"/></div>
-      <div class="rail-item active" data-route="runtime" title="Runtime">
-        <span class="material-symbols-outlined">◉</span>
-      </div>
-      <div class="rail-item" data-route="tasks" title="Tasks">
-        <span class="material-symbols-outlined">◻</span>
-      </div>
-      <div class="rail-item" data-route="review" title="Review">
-        <span class="material-symbols-outlined">✓</span>
-      </div>
-      <div class="rail-item" data-route="architect" title="Architect">
-        <span class="material-symbols-outlined">◈</span>
-      </div>
+      ${buildRailItemsHtml('runtime')}
       <div class="rail-spacer"></div>
       <div class="rail-btn" title="Settings">
         <span class="material-symbols-outlined">⚙</span>
@@ -846,51 +920,16 @@ function buildLiquidShellHtml(opts: LiquidShellOpts): string {
           <span class="pill pill-info">Live</span>
         </div>
         <div class="card-desc">OnSave route inspection with strict policy envelope and bounded execution posture.</div>
+        <div style="margin-top:8px;display:flex;align-items:center;gap:6px">
+          <span style="width:6px;height:6px;border-radius:50%;background:var(--tertiary-fixed-dim)"></span>
+          <span style="font-size:9px;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:0.1em">Authority: local enforcement</span>
+        </div>
       </div>
 
       <div class="sidebar-section-label label">Navigation</div>
 
       <div>
-        <div class="sidebar-nav-item active" data-route="runtime">
-          <div class="sidebar-nav-left">
-            <span class="material-symbols-outlined nav-icon" style="font-size:15px">◉</span>
-            <div>
-              <div class="sidebar-nav-label">Runtime</div>
-              <div class="sidebar-nav-hint">What is happening</div>
-            </div>
-          </div>
-          <span class="material-symbols-outlined filled" style="font-size:14px;color:rgba(159,202,255,0.7)">chevron_right</span>
-        </div>
-        <div class="sidebar-nav-item" data-route="tasks">
-          <div class="sidebar-nav-left">
-            <span class="material-symbols-outlined nav-icon" style="font-size:15px">◻</span>
-            <div>
-              <div class="sidebar-nav-label">Tasks</div>
-              <div class="sidebar-nav-hint">What is progressing</div>
-            </div>
-          </div>
-          <span class="material-symbols-outlined" style="font-size:14px;color:rgba(255,255,255,0.18)">chevron_right</span>
-        </div>
-        <div class="sidebar-nav-item" data-route="review">
-          <div class="sidebar-nav-left">
-            <span class="material-symbols-outlined nav-icon" style="font-size:15px">✓</span>
-            <div>
-              <div class="sidebar-nav-label">Review</div>
-              <div class="sidebar-nav-hint">What needs judgment</div>
-            </div>
-          </div>
-          <span class="material-symbols-outlined" style="font-size:14px;color:rgba(255,255,255,0.18)">chevron_right</span>
-        </div>
-        <div class="sidebar-nav-item" data-route="architect">
-          <div class="sidebar-nav-left">
-            <span class="material-symbols-outlined nav-icon" style="font-size:15px">◈</span>
-            <div>
-              <div class="sidebar-nav-label">Architect</div>
-              <div class="sidebar-nav-hint">What defines the shape</div>
-            </div>
-          </div>
-          <span class="material-symbols-outlined" style="font-size:14px;color:rgba(255,255,255,0.18)">chevron_right</span>
-        </div>
+        ${buildSidebarNavItemsHtml('runtime')}
       </div>
 
       <div class="card" style="margin-top:16px">

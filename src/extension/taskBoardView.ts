@@ -73,20 +73,11 @@ export class TaskBoardViewProvider implements vscode.WebviewViewProvider {
           case 'openFullTaskBoard':
             await vscode.commands.executeCommand('arc.ui.taskBoard');
             break;
-          case 'openRuntimeStatus':
-            await vscode.commands.executeCommand('arc.showRuntimeStatus');
-            break;
-          case 'reviewGovernedRoot':
-            await vscode.commands.executeCommand('arc.reviewGovernedRoot');
-            break;
-          case 'createArcConfig':
-            await vscode.commands.executeCommand('arc.createArcConfig');
-            break;
           case 'createFirstBlueprint':
             await vscode.commands.executeCommand('arc.createFirstBlueprint');
             break;
-          case 'useExistingConfig':
-            await vscode.commands.executeCommand('arc.useExistingConfig');
+          case 'createArcConfig':
+            await vscode.commands.executeCommand('arc.createArcConfig');
             break;
         }
       },
@@ -110,6 +101,11 @@ export class TaskBoardViewProvider implements vscode.WebviewViewProvider {
       taskBoardMarkdown.trim() === '' ||
       taskBoardMarkdown.includes('No task board');
 
+    // Count open tasks from markdown (Phase B — slim summary)
+    const taskCount = isEmpty
+      ? 0
+      : (taskBoardMarkdown.match(/^[-*]\s+/gm) || []).length;
+
     // Generate CSP nonce for security hardening
     const nonce = generateNonce();
     const csp = buildCSPWithNonce(nonce, webview.cspSource);
@@ -121,40 +117,6 @@ export class TaskBoardViewProvider implements vscode.WebviewViewProvider {
       'ARC-ICON-1024.png',
     );
     const logoUri = webview.asWebviewUri(logoPath).toString();
-
-    // Bounded empty-state actions (U04)
-    const emptyStateActions = isEmpty
-      ? `
-  <div class="section">
-    <h3>No Blueprint Artifacts Found</h3>
-    <p class="empty">No local blueprints exist for the current governed root.</p>
-    <div class="empty-actions">
-      <button class="action-btn" id="btn-reviewGovernedRoot">🔍 Review Governed Root</button>
-      <button class="action-btn" id="btn-createArcConfig">⚙️ Create Minimal ARC Config</button>
-      <button class="action-btn" id="btn-createFirstBlueprint">📄 Create First Blueprint</button>
-      <button class="action-btn" id="btn-useExistingConfig">📂 Use Existing ARC Config</button>
-    </div>
-  </div>`
-      : '';
-
-    // Root info section
-    const rootInfo = `
-  <div class="section">
-    <div class="row">
-      <span class="label">Governed Root:</span>
-      <span class="value" title="${effectiveRoot}">${this._truncatePath(effectiveRoot)}</span>
-    </div>
-    <div class="row">
-      <span class="label">ARC Config:</span>
-      <span class="badge ${firstRunState.hasArcConfig ? 'success' : 'warning'}">${firstRunState.hasArcConfig ? 'Present' : 'Missing'}</span>
-    </div>
-    <div class="row">
-      <span class="label">Blueprints:</span>
-      <span class="badge ${firstRunState.hasBlueprints ? 'success' : 'warning'}">${firstRunState.hasBlueprints ? 'Present' : 'None'}</span>
-    </div>
-    <button class="clickable" id="btn-openFullTaskBoard">Open Full Board</button>
-    <button class="clickable" id="btn-openRuntimeStatus">Runtime Status</button>
-  </div>`;
 
     return `<!DOCTYPE html>
 <html lang="en">
@@ -169,8 +131,6 @@ export class TaskBoardViewProvider implements vscode.WebviewViewProvider {
       --vscode-foreground: var(--vscode-editor-foreground, #cccccc);
       --vscode-editor-background: var(--vscode-editor-background, #1e1e1e);
       --vscode-sideBar-background: var(--vscode-sideBar-background, #252526);
-      --vscode-badge-background: var(--vscode-badge-background, #007acc);
-      --vscode-badge-foreground: var(--vscode-badge-foreground, #ffffff);
     }
     body {
       font-family: var(--vscode-font-family);
@@ -180,58 +140,128 @@ export class TaskBoardViewProvider implements vscode.WebviewViewProvider {
       margin: 0;
       padding: 8px;
     }
-    h2 { font-size: 13px; font-weight: 600; margin: 0; }
-    h3 { font-size: 12px; font-weight: 600; margin: 10px 0 4px 0; color: #858585; }
-    .header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
     .logo { width: 18px; height: 18px; object-fit: contain; }
-    .section { margin-bottom: 12px; padding: 6px; background-color: var(--vscode-editor-background); border-radius: 4px; }
+    .title { font-size: 13px; font-weight: 600; margin: 0; }
+    .summary {
+      padding: 8px 10px;
+      background-color: var(--vscode-editor-background);
+      border-radius: 6px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .summary-left { display: flex; align-items: center; gap: 6px; }
+    .summary-icon {
+      width: 24px; height: 24px; border-radius: 6px;
+      background: rgba(159,202,255,0.1);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+    }
+    .summary-label { font-size: 12px; font-weight: 500; }
+    .summary-count {
+      font-size: 10px; font-weight: 700;
+      background: rgba(159,202,255,0.15);
+      color: rgba(159,202,255,0.9);
+      padding: 2px 8px; border-radius: 99px;
+      letter-spacing: 0.06em;
+    }
+    .detail-btn {
+      width: 100%; padding: 8px;
+      background: rgba(159,202,255,0.08);
+      border: 1px solid rgba(159,202,255,0.15);
+      border-radius: 6px;
+      color: rgba(159,202,255,0.9);
+      font-size: 11px; font-weight: 600;
+      cursor: pointer; text-align: center;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      transition: background 0.15s;
+    }
+    .detail-btn:hover { background: rgba(159,202,255,0.14); }
+    .root-info {
+      padding: 6px 10px;
+      background-color: var(--vscode-editor-background);
+      border-radius: 6px;
+      margin-bottom: 10px;
+    }
     .row { display: flex; justify-content: space-between; align-items: center; padding: 3px 0; }
-    .label { color: #858585; }
-    .value { font-weight: 500; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .badge { display: inline-block; padding: 2px 6px; border-radius: 3px; font-size: 11px; font-weight: 600; background-color: var(--vscode-badge-background); color: var(--vscode-badge-foreground); }
+    .label { color: #858585; font-size: 10px; }
+    .value { font-weight: 500; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; }
+    .badge {
+      display: inline-block; padding: 1px 6px; border-radius: 3px;
+      font-size: 9px; font-weight: 600;
+    }
     .badge.success { background-color: #4ec9b0; color: #1e1e1e; }
     .badge.warning { background-color: #dcdcaa; color: #1e1e1e; }
-    .clickable { cursor: pointer; color: #569cd6; text-decoration: underline; font-size: 11px; border: none; background: none; padding: 0; margin-left: 8px; }
-    .clickable:hover { color: var(--vscode-foreground); }
-    .markdown-body { font-size: 11px; line-height: 1.5; }
-    .markdown-body h1 { font-size: 14px; margin: 0 0 8px 0; }
-    .markdown-body h2 { font-size: 13px; margin: 12px 0 6px 0; }
-    .markdown-body ul { padding-left: 16px; margin: 4px 0; }
-    .markdown-body li { margin: 2px 0; }
-    .markdown-body code { background-color: var(--vscode-sideBar-background); padding: 1px 4px; border-radius: 2px; font-size: 10px; }
-    .markdown-body blockquote { border-left: 3px solid #569cd6; padding-left: 8px; margin: 4px 0; color: #858585; }
-    .markdown-body strong { color: var(--vscode-foreground); }
-    .empty { color: #858585; font-style: italic; padding: 4px 0; }
-    .empty-actions { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
-    .action-btn { cursor: pointer; color: #569cd6; font-size: 11px; border: 1px solid #569cd6; background: none; padding: 4px 8px; border-radius: 3px; text-align: left; }
+    .empty-state {
+      padding: 12px 10px; text-align: center;
+      color: #858585; font-size: 11px; line-height: 1.5;
+    }
+    .empty-actions { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+    .action-btn {
+      cursor: pointer; color: #569cd6; font-size: 11px;
+      border: 1px solid #569cd6; background: none;
+      padding: 5px 8px; border-radius: 4px; text-align: left;
+      transition: background 0.15s;
+    }
     .action-btn:hover { background-color: #569cd622; }
   </style>
 </head>
 <body>
   <div class="header">
     <img class="logo" src="${logoUri}" alt="ARC XT logo" />
-    <h2>ARC XT Task Board</h2>
+    <h2 class="title">ARC XT</h2>
   </div>
 
-  ${rootInfo}
-  ${emptyStateActions}
-
-  <div class="section markdown-body">
-    ${isEmpty ? '<p class="empty">No task board content available. Use the actions above to get started.</p>' : this._markdownToHtml(taskBoardMarkdown)}
+  <div class="summary">
+    <div class="summary-left">
+      <div class="summary-icon">◻</div>
+      <span class="summary-label">Tasks</span>
+    </div>
+    <span class="summary-count">${taskCount} open</span>
   </div>
+
+  <button class="detail-btn" id="btn-openFullTaskBoard">Open Task Details</button>
+
+  <div class="root-info" style="margin-top:10px">
+    <div class="row">
+      <span class="label">Root</span>
+      <span class="value" title="${effectiveRoot}">${this._truncatePath(effectiveRoot)}</span>
+    </div>
+    <div class="row">
+      <span class="label">Config</span>
+      <span class="badge ${firstRunState.hasArcConfig ? 'success' : 'warning'}">${firstRunState.hasArcConfig ? 'Present' : 'Missing'}</span>
+    </div>
+    <div class="row">
+      <span class="label">Blueprints</span>
+      <span class="badge ${firstRunState.hasBlueprints ? 'success' : 'warning'}">${firstRunState.hasBlueprints ? 'Present' : 'None'}</span>
+    </div>
+  </div>
+
+  ${
+    isEmpty
+      ? `
+  <div class="empty-state">
+    No blueprint artifacts yet.<br/>
+    Make a governed save to create your first task.
+    <div class="empty-actions">
+      <button class="action-btn" id="btn-createFirstBlueprint">Create First Blueprint</button>
+      <button class="action-btn" id="btn-createArcConfig">Create ARC Config</button>
+    </div>
+  </div>`
+      : ''
+  }
 
   <script nonce="${nonce}">
     const vscode = acquireVsCodeApi();
-    function sendMessage(command, data = {}) {
-      vscode.postMessage({ command, ...data });
+    function sendMessage(command) {
+      vscode.postMessage({ command });
     }
     [
       ['btn-openFullTaskBoard', 'openFullTaskBoard'],
-      ['btn-openRuntimeStatus', 'openRuntimeStatus'],
-      ['btn-reviewGovernedRoot', 'reviewGovernedRoot'],
-      ['btn-createArcConfig', 'createArcConfig'],
       ['btn-createFirstBlueprint', 'createFirstBlueprint'],
-      ['btn-useExistingConfig', 'useExistingConfig'],
+      ['btn-createArcConfig', 'createArcConfig'],
     ].forEach(function([id, cmd]) {
       var el = document.getElementById(id);
       if (el) { el.addEventListener('click', function() { sendMessage(cmd); }); }
@@ -244,23 +274,5 @@ export class TaskBoardViewProvider implements vscode.WebviewViewProvider {
   private _truncatePath(path: string, maxLength = 20): string {
     if (path.length <= maxLength) return path;
     return '...' + path.slice(-maxLength + 3);
-  }
-
-  private _markdownToHtml(markdown: string): string {
-    let html = markdown
-      .replace(/^# (.*$)/gim, '<h1>$1</h1>')
-      .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-      .replace(/^### (.*$)/gim, '<h3>$1</h3>')
-      .replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>')
-      .replace(/\*(.*)\*/gim, '<em>$1</em>')
-      .replace(/`([^`]+)`/gim, '<code>$1</code>')
-      .replace(/^> (.*$)/gim, '<blockquote>$1</blockquote>')
-      .replace(/^\s*[-*+]\s+(.*$)/gim, '<li>$1</li>')
-      .replace(/\n/gim, '<br>');
-
-    html = html.replace(/(<li>.*<\/li>)/gis, '<ul>$1</ul>');
-    html = html.replace(/<\/ul>\s*<ul>/gim, '');
-
-    return html;
   }
 }
