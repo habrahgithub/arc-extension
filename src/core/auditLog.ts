@@ -246,6 +246,93 @@ export class AuditLogWriter {
         'ALTER TABLE audit_events ADD COLUMN governance_proposal TEXT;',
       );
     }
+
+    // ARC-STABILITY-LOCK-001 #11: Roll-forward — if JSONL has entries that
+    // SQLite hasn't indexed (e.g., crash between JSONL write and SQLite write),
+    // replay them now. This prevents false "tampered" flags.
+    this.rollForwardFromJsonl();
+  }
+
+  /** Replay JSONL entries that are missing from SQLite. */
+  private rollForwardFromJsonl(): void {
+    try {
+      if (!fs.existsSync(this.auditPath())) return;
+      const content = fs.readFileSync(this.auditPath(), 'utf8');
+      const lines = content.trim().split('\n').filter(Boolean);
+      if (lines.length === 0) return;
+
+      const sqliteTail = this.execSqlJson<{ hash: string }>(
+        'SELECT hash FROM audit_events ORDER BY event_id DESC LIMIT 1;',
+      );
+      const sqliteTailHash = sqliteTail.length > 0 ? sqliteTail[0].hash : null;
+
+      if (sqliteTailHash === null) {
+        // SQLite is empty — replay entire JSONL
+        for (const line of lines) {
+          const entry = JSON.parse(line) as AuditEntry;
+          this.persistEntryIfMissing(entry);
+        }
+      } else {
+        // Check if last JSONL entry matches SQLite tail
+        const lastJsonlLine = lines[lines.length - 1];
+        const lastJsonlEntry = JSON.parse(lastJsonlLine) as AuditEntry;
+        if (lastJsonlEntry.hash !== sqliteTailHash) {
+          // Find the gap and replay from that point
+          let foundTail = false;
+          for (const line of lines) {
+            const entry = JSON.parse(line) as AuditEntry;
+            if (foundTail) {
+              this.persistEntryIfMissing(entry);
+            } else if (entry.hash === sqliteTailHash) {
+              foundTail = true;
+            }
+          }
+        }
+      }
+    } catch {
+      // Roll-forward is best-effort. Failure is logged silently.
+    }
+  }
+
+  private persistEntryIfMissing(entry: AuditEntry): void {
+    try {
+      const exists = this.execSqlJson<{ cnt: number }>(
+        `SELECT COUNT(*) as cnt FROM audit_events WHERE hash = ${sql(entry.hash)};`,
+      );
+      if (exists.length > 0 && exists[0].cnt > 0) return;
+
+      this.execSql(`
+        INSERT OR IGNORE INTO audit_events (
+          event_type, decision_id, linked_decision_id, drift_status,
+          ts, file_path, decision, reason, risk_level, source,
+          violated_rules, next_action, fallback_cause, lease_status,
+          directive_id, blueprint_id, route_mode, route_lane, route_reason,
+          route_clarity, route_fallback, route_policy_hash,
+          actor_id, actor_type, fingerprint, fingerprint_version,
+          deviation, failure_type, explanation, governance_proposal,
+          prev_hash, hash
+        ) VALUES (
+          ${sql(entry.event_type)}, ${sql(entry.decision_id)},
+          ${sql(entry.linked_decision_id ?? null)}, ${sql(entry.drift_status ?? null)},
+          ${sql(entry.ts)}, ${sql(entry.file_path)}, ${sql(entry.decision)},
+          ${sql(entry.reason)}, ${sql(entry.risk_level)}, ${sql(entry.source)},
+          ${sql((entry.matched_rules ?? []).join(','))},
+          ${sql(entry.next_action ?? '')}, ${sql(entry.fallback_cause ?? '')},
+          ${sql(entry.lease_status ?? '')}, ${sql(entry.directive_id ?? null)},
+          ${sql(entry.blueprint_id ?? null)}, ${sql(entry.route_mode ?? null)},
+          ${sql(entry.route_lane ?? null)}, ${sql(entry.route_reason ?? null)},
+          ${sql(entry.route_clarity ?? null)}, ${sql(entry.route_fallback ?? null)},
+          ${sql(entry.route_policy_hash ?? null)},
+          ${sql(entry.actor_id ?? '')}, ${sql(entry.actor_type ?? '')},
+          ${sql(entry.fingerprint ?? '')}, ${sql(entry.fingerprint_version ?? '')},
+          ${sql(entry.deviation ? JSON.stringify(entry.deviation) : null)}, ${sql(entry.failure_type ?? null)},
+          ${sql(entry.explanation ? JSON.stringify(entry.explanation) : null)}, ${sql(entry.governance_proposal ? JSON.stringify(entry.governance_proposal) : null)},
+          ${sql(entry.prev_hash)}, ${sql(entry.hash)}
+        );
+      `);
+    } catch {
+      // Best-effort — don't crash startup over a single replay entry.
+    }
   }
 
   append(
@@ -293,11 +380,16 @@ export class AuditLogWriter {
       hash,
     };
 
-    this.persistAppendAtomically(entry);
-
+    // ARC-STABILITY-LOCK-001 #11: Write JSONL first, then SQLite.
+    // This ensures the source-of-truth log is persisted before the metadata
+    // index (SQLite) is updated. If JSONL write fails, SQLite stays consistent.
+    // If SQLite write fails, the JSONL entry exists and can be rolled forward
+    // on next activation.
     const serialized = `${JSON.stringify(entry)}\n`;
     this.rotateIfNeeded(Buffer.byteLength(serialized));
     fs.appendFileSync(this.auditPath(), serialized, 'utf8');
+
+    this.persistAppendAtomically(entry);
 
     return entry;
   }
