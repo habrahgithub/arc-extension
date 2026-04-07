@@ -69,10 +69,6 @@
         "title": "ARC XT: Review False-Positive Candidates"
       },
       {
-        "command": "arc.ui.reviewHome",
-        "title": "ARC XT: Review Home"
-      },
-      {
         "command": "arc.ui.runtimeStatus",
         "title": "ARC XT: Runtime Status"
       },
@@ -91,18 +87,6 @@
       {
         "command": "arc.ui.guidedWorkflow",
         "title": "ARC XT: Guided Proof Workflow"
-      },
-      {
-        "command": "arc.ui.decisionFeed",
-        "title": "ARC XT: Decision Feed"
-      },
-      {
-        "command": "arc.ui.auditTimeline",
-        "title": "ARC XT: Audit Timeline"
-      },
-      {
-        "command": "arc.ui.whyPanel",
-        "title": "ARC XT: Why Panel"
       },
       {
         "command": "arc.ui.taskBoard",

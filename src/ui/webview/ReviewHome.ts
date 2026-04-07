@@ -68,9 +68,9 @@ function getReviewHomeHtml(
   const csp = buildCSPWithNonce(nonce, panel.webview.cspSource);
   const productName = 'ARC XT — Audit Ready Core';
   const postureNotes = [
-    'Local-only governance',
-    'Descriptive-only review',
-    'Non-authorizing surface',
+    'Local only',
+    'Read-only view',
+    'Your data stays on your machine',
   ];
 
   // ARC-BRAND-001: Logo URI (WRD-0116: local only, no remote)
@@ -94,31 +94,31 @@ function getReviewHomeHtml(
       title: 'Runtime Status',
       description: 'Active workspace and decision context',
       command: 'arc.ui.runtimeStatus',
-      icon: '📊',
+      icon: '◉',
     },
     {
       title: 'Audit Review',
       description: 'Inspect recent audit entries',
       command: 'arc.ui.auditReview',
-      icon: '📋',
+      icon: '☰',
     },
     {
       title: 'Blueprint Proof Review',
       description: 'Proof lifecycle and validation state',
       command: 'arc.ui.blueprintProof',
-      icon: '📄',
+      icon: '□',
     },
     {
       title: 'False-Positive Review',
       description: 'Advisory candidate inspection',
       command: 'arc.ui.falsePositiveReview',
-      icon: '⚠️',
+      icon: '△',
     },
     {
       title: 'Task Board',
       description: 'Blueprint-backed work items by status',
       command: 'arc.ui.taskBoard',
-      icon: '📋',
+      icon: '▣',
     },
   ];
 
@@ -175,7 +175,7 @@ function getReviewHomeHtml(
     <div class="posture-notes">${badgesHtml}</div>
   </div>
   <div class="cards-grid">${cardsHtml}</div>
-  <div class="footer"><p>Review surfaces are local-only, read-only, and non-authorizing.</p></div>
+  <div class="footer"><p>All review surfaces are local-only and read-only.</p></div>
   <script nonce="${escapeHtml(nonce)}">${inlineScript}</script>
 </body>
 </html>`;

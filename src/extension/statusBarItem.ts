@@ -22,37 +22,37 @@ export type EnforcementStatus =
 
 const STATUS_CONFIG: Record<
   EnforcementStatus,
-  { text: string; tooltip: string; color: string }
+  { text: string; tooltip: string; color: string | undefined }
 > = {
   READY: {
     text: '$(shield-check) ARC',
     tooltip: 'ARC found no issues in the current file.',
-    color: '#00ff00',
+    color: undefined, // inherits theme default — no aggressive green
   },
   AUTO_SAVE: {
     text: '$(clock) ARC',
     tooltip: 'ARC is monitoring save events. Explicit saves are recommended.',
-    color: '#ffa500',
+    color: undefined,
   },
   BLOCKED: {
     text: '$(stop) ARC',
     tooltip: 'ARC blocked this save. Click to review the issue.',
-    color: '#ff0000',
+    color: undefined,
   },
   WARNED: {
     text: '$(alert) ARC',
     tooltip: 'ARC flagged an issue. Click to review.',
-    color: '#ffa500',
+    color: undefined,
   },
   REQUIRE_PLAN: {
     text: '$(link) ARC',
     tooltip: 'This change needs a linked blueprint. Click to review.',
-    color: '#007acc',
+    color: undefined,
   },
   ERROR: {
     text: '$(error) ARC',
     tooltip: 'ARC hit an error. Enforcement may be degraded.',
-    color: '#ff0000',
+    color: undefined,
   },
 };
 

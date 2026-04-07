@@ -51,7 +51,8 @@ export class FileAuditIndicator implements vscode.Disposable {
       vscode.StatusBarAlignment.Right,
       99, // one slot left of the enforcement indicator (priority 100)
     );
-    this.item.show();
+    // Hidden by default — the main StatusBarItemService provides the primary indicator.
+    // This item is shown only when a specific audit state (DRIFT, VERIFIED) is resolved.
     this.setState('UNKNOWN');
   }
 
@@ -81,6 +82,12 @@ export class FileAuditIndicator implements vscode.Disposable {
     this.item.text = config.text;
     this.item.tooltip = config.tooltip;
     this.item.color = config.color;
+    // Only show when there's a meaningful state to display
+    if (state === 'DRIFT' || state === 'VERIFIED') {
+      this.item.show();
+    } else {
+      this.item.hide();
+    }
   }
 
   dispose(): void {

@@ -265,7 +265,7 @@ function buildLiquidShellHtml(opts: LiquidShellOpts): string {
 <div class="content">
   <div class="view active" id="view-issues">
     <div class="empty">
-      <div class="empty-icon">🛡️</div>
+      <div class="empty-icon">◇</div>
       <div class="empty-text">No governed issues in the current file.</div>
       <div class="empty-hint">ARC is monitoring save events.</div>
     </div>
@@ -273,7 +273,7 @@ function buildLiquidShellHtml(opts: LiquidShellOpts): string {
 
   <div class="view" id="view-review">
     <div class="empty">
-      <div class="empty-icon">📋</div>
+      <div class="empty-icon">☰</div>
       <div class="empty-text">No review events yet.</div>
       <div class="empty-hint">Save a file to see audit history here.</div>
     </div>
@@ -306,28 +306,33 @@ function buildLiquidShellHtml(opts: LiquidShellOpts): string {
     document.querySelectorAll('.btn[data-action]').forEach(function(btn) {
       btn.addEventListener('click', function() {
         var action = btn.getAttribute('data-action');
+        var issueData = btn.closest('.issue-card');
+        var filePath = issueData ? issueData.getAttribute('data-file') || 'unknown file' : 'unknown file';
+        var rule = issueData ? issueData.getAttribute('data-rule') || 'unknown rule' : 'unknown rule';
         var content = '';
         switch(action) {
           case 'explain':
-            content = 'This violates <strong>Rule BR-02</strong> (Type Validation Bypass).<br/><br/>The payload is cast to <code>any</code> without schema validation, allowing unsafe data to bypass type checks.<br/><br/><strong>Fix:</strong> Add Zod or TypeScript schema validation.';
-            break;
+            vscode.postMessage({ command: 'executeCommand', commandId: 'arc.ui.whyPanel' });
+            return;
           case 'quick-plan':
-            content = 'Create a blueprint at:<br/><code>.arc/blueprints/ARC-101.md</code><br/><br/><strong>Objective:</strong> Add strict type enforcement to <code>src/auth/service.ts</code>';
-            break;
+            vscode.postMessage({ command: 'executeCommand', commandId: 'arc.ui.guidedWorkflow' });
+            return;
           case 'copy-prompt':
-            var prompt = 'Project: arc-xt\\nFile: src/auth/service.ts:42\\nRisk: MEDIUM\\nIssue: Missing strict type enforcement in payload route (Rule BR-02).\\nConstraint: Do not alter existing logic, only add validation layer.';
+            var prompt = 'File: ' + filePath + '\\nIssue: ' + rule + '\\nConstraint: Do not alter existing logic, only add the required fix.';
             navigator.clipboard.writeText(prompt).then(function() {
-              content = 'AI Handoff prompt copied to clipboard.';
+              content = 'AI handoff prompt copied to clipboard.';
             }, function() {
-              content = 'Clipboard access denied. Use browser copy.';
+              content = 'Clipboard access denied.';
             });
             break;
           case 'bypass':
             content = 'Bypassing once allows this save but logs an audit deviation. Proceed?';
             break;
         }
-        document.getElementById('modal-body').innerHTML = content;
-        document.getElementById('modal-overlay').classList.add('active');
+        if (content) {
+          document.getElementById('modal-body').innerHTML = content;
+          document.getElementById('modal-overlay').classList.add('active');
+        }
       });
     });
 

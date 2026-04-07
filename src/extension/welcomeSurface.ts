@@ -60,17 +60,6 @@ When the local model (Ollama) is unavailable or returns malformed output, ARC XT
 
 ---
 
-## What This Extension Does NOT Do
-
-- ❌ Does **not** call external AI APIs (local-only by default)
-- ❌ Does **not** imply cloud readiness or remote execution capability
-- ❌ Does **not** provide marketplace or team collaboration features
-- ❌ Does **not** replace the need for code review or testing
-- ❌ Does **not** authorize changes on your behalf
-- ❌ Does **not** connect to ARC Console or Vault (no control-plane coupling)
-
----
-
 ## First Steps
 
 ### 1. Understand Your Workspace
@@ -98,6 +87,15 @@ See all enforcement decisions and risk flags:
 See linked blueprint proofs for REQUIRE_PLAN saves:
 
 **Command:** \`ARC XT: Review Blueprint Proofs\`
+
+---
+
+## Limitations
+
+- Does **not** call external AI APIs (local-only by default)
+- Does **not** provide marketplace or team collaboration features
+- Does **not** replace the need for code review or testing
+- Does **not** connect to ARC Console or Vault
 
 ---
 
@@ -222,23 +220,10 @@ export class WelcomeSurfaceService {
    * Migrates from legacy lintel.welcomeShown key.
    */
   shouldShowWelcome(): boolean {
-    // Migration: check new key first, fall back to legacy key
     const hasSeenWelcome = this.context.globalState.get<boolean | undefined>(
       'arc.welcomeShown',
     );
-    if (hasSeenWelcome !== undefined) {
-      return !hasSeenWelcome;
-    }
-    // Legacy key migration
-    const legacySeen = this.context.globalState.get<boolean>(
-      'lintel.welcomeShown',
-      false,
-    );
-    if (legacySeen) {
-      // Migrate to new key
-      this.context.globalState.update('arc.welcomeShown', true);
-    }
-    return !legacySeen;
+    return hasSeenWelcome !== true;
   }
 
   /**

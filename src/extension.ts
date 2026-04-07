@@ -911,10 +911,17 @@ export function activate(context: vscode.ExtensionContext): void {
                 true,
               );
               taskBoardProvider.refresh();
-              void vscode.window.showErrorMessage(
+              const blockChoice = await vscode.window.showErrorMessage(
                 'Save blocked: sensitive file change.',
                 { modal: true, detail: assessment.decision.reason },
+                'View Rule',
+                'Explain',
               );
+              if (blockChoice === 'View Rule') {
+                await vscode.commands.executeCommand('arc.ui.liquidShell');
+              } else if (blockChoice === 'Explain') {
+                await showPlanLinkedSaveSopPreview();
+              }
               return [];
             }
 
@@ -954,11 +961,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
             if (assessment.shouldPrompt) {
               const choice = await vscode.window.showWarningMessage(
-                'Review this change before saving.',
-                {
-                  modal: true,
-                  detail: `${assessment.decision.decision}: ${assessment.decision.reason}`,
-                },
+                `${assessment.decision.decision}: ${assessment.decision.reason}`,
                 'Continue',
                 'Cancel',
               );

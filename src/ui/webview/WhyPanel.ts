@@ -167,7 +167,7 @@ function getWhyPanelHtml(
   ${logoHtml}
   <h1>${escapeHtml(productName)}</h1>
   <p class="absent">No decision explanation available for the active file.</p>
-  <p class="notice">Records show no audit entry for this file yet. An explanation will appear here after a save is evaluated.</p>
+  <p class="notice">No audit entry exists for this file yet. An explanation will appear here after a save is evaluated.</p>
 </body>
 </html>`;
   }
@@ -192,7 +192,7 @@ function getWhyPanelHtml(
       : '';
 
   const notices = `
-    <p class="notice">Records show this explanation is derived from the audit entry for ${escapeHtml(explanation.file_path)}. This panel explains why the decision occurred; it does not authorize, override, or bypass save decisions.</p>
+    <p class="notice">Derived from the audit entry for ${escapeHtml(explanation.file_path)}. This panel is read-only — it does not change or override save decisions.</p>
   `;
 
   return `<!DOCTYPE html>
@@ -233,8 +233,8 @@ function getWhyPanelHtml(
   ${rulesHtml}
   
   <div class="section">
-    <div class="section-title">Risk Assessment</div>
-    <div class="section-content">Records show risk level: <strong>${escapeHtml(explanation.risk_level)}</strong></div>
+  <div class="section-title">Risk Assessment</div>
+  <div class="section-content">Risk level: <strong>${escapeHtml(explanation.risk_level)}</strong></div>
   </div>
   
   <div class="section">
@@ -255,19 +255,19 @@ function getWhyPanelHtml(
 function getWhyContent(explanation: WhyExplanation): string {
   switch (explanation.decision) {
     case 'ALLOW':
-      return `Records show this save was allowed because the file did not trigger any rules requiring higher-level review. The risk assessment was ${escapeHtml(explanation.risk_level.toLowerCase())} and no additional proof was required.`;
+      return `This save was allowed. The file did not trigger any rules requiring review. Risk level: <strong>${escapeHtml(explanation.risk_level.toLowerCase())}</strong>.`;
 
     case 'WARN':
-      return `Records show this save triggered a warning because ${escapeHtml(explanation.reason.toLowerCase())}. The file was allowed to proceed after acknowledgment, and the risk was flagged for operator awareness.`;
+      return `This save triggered a warning: ${escapeHtml(explanation.reason.toLowerCase())}. It was allowed to proceed after acknowledgment.`;
 
     case 'REQUIRE_PLAN':
-      return `Records show this save required a governance plan because ${escapeHtml(explanation.reason.toLowerCase())}. A directive-linked blueprint proof was required before the save could proceed.`;
+      return `This save required a linked blueprint: ${escapeHtml(explanation.reason.toLowerCase())}. A directive proof was needed before the save could proceed.`;
 
     case 'BLOCK':
-      return `Records show this save was blocked because ${escapeHtml(explanation.reason.toLowerCase())}. The risk level and matched rules did not meet the threshold for allowed saves.`;
+      return `This save was blocked: ${escapeHtml(explanation.reason.toLowerCase())}. The matched rules required a higher threshold to allow this change.`;
 
     default:
-      return `Records show a decision was made: ${escapeHtml(explanation.decision)}. The reason was: ${escapeHtml(explanation.reason)}`;
+      return `Decision: ${escapeHtml(explanation.decision)} — ${escapeHtml(explanation.reason)}`;
   }
 }
 
@@ -276,13 +276,13 @@ function getWhyContent(explanation: WhyExplanation): string {
  */
 function getEvaluationSource(source: string, fallback_cause?: string): string {
   if (source === 'FALLBACK' && fallback_cause) {
-    return `Records show evaluation fell back to rule-only mode: ${escapeHtml(fallback_cause)}. Model evaluation was not available.`;
+    return `Fell back to rule-only mode: ${escapeHtml(fallback_cause)}. The local model was not available.`;
   }
   if (source === 'RULE') {
-    return 'Records show evaluation used rule-based classification only.';
+    return 'Evaluated using rule-based classification only.';
   }
   if (source === 'MODEL') {
-    return 'Records show evaluation used local model assessment.';
+    return 'Evaluated using local model assessment.';
   }
-  return `Records show evaluation source: ${escapeHtml(source)}`;
+  return `Evaluation source: ${escapeHtml(source)}`;
 }

@@ -7,6 +7,7 @@ import {
   LocalReviewSurfaceService,
   type TaskBoardItem,
 } from '../../extension/reviewSurfaces';
+import { version } from '../../../package.json';
 
 // Phase 7.10 — Task Board v1 (ARC-UI-002)
 export function createTaskBoardPanel(
@@ -497,7 +498,7 @@ export function createTaskBoardPanel(
     </div>
     <span class="footer-label mono" style="opacity:0.5">↻ Local_Only</span>
   </div>
-  <div class="footer-version mono">ARC_ENGINE_V0.1.13</div>
+  <div class="footer-version mono">ARC_XT_V${escapeHtml(version)}</div>
 </footer>
 
 <script nonce="${nonce}">
