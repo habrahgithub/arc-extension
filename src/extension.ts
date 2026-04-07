@@ -410,13 +410,6 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('arc.ui.liquidShell', () => {
       liquidShellProvider.reveal();
     }),
-    // arc.ui.liquidShell.navigate → reveal + switch route inside the shell
-    vscode.commands.registerCommand(
-      'arc.ui.liquidShell.navigate',
-      (route: string) => {
-        liquidShellProvider.navigateTo(route);
-      },
-    ),
     // arc.guardrail.justify → prompt user for justification text and persist
     vscode.commands.registerCommand(
       'arc.guardrail.justify',
