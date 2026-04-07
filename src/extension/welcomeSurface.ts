@@ -202,7 +202,7 @@ export class WelcomeSurfaceService {
 
   /**
    * Show the welcome surface to the user.
-   * Opens a markdown preview with bounded onboarding content.
+   * Opens as a preview editor (no save prompt on close).
    */
   async showWelcome(): Promise<void> {
     const document = await vscode.workspace.openTextDocument({
@@ -210,10 +210,10 @@ export class WelcomeSurfaceService {
       language: 'markdown',
     });
 
-    await vscode.commands.executeCommand(
-      'markdown.showPreviewToSide',
-      document.uri,
-    );
+    await vscode.window.showTextDocument(document, {
+      preview: true,
+      viewColumn: vscode.ViewColumn.Beside,
+    });
   }
 
   /**

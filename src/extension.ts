@@ -19,7 +19,10 @@ import { SaveOrchestrator } from './extension/saveOrchestrator';
 import { StatusBarItemService } from './extension/statusBarItem';
 import { FileAuditIndicator } from './extension/fileAuditIndicator';
 import { TaskBoardViewProvider } from './extension/taskBoardView';
-import { LiquidShellViewProvider } from './ui/webview/LiquidShell';
+import {
+  LiquidShellViewProvider,
+  createLiquidShellPanel,
+} from './ui/webview/LiquidShell';
 import { WelcomeSurfaceService } from './extension/welcomeSurface';
 import { resolveWorkspaceTarget } from './extension/workspaceTargeting';
 import { CommitInterceptor } from './extension/interceptors/commitInterceptor';
@@ -107,11 +110,12 @@ async function openMarkdownPreview(
     content,
     language: 'markdown',
   });
-  void title;
-  await vscode.commands.executeCommand(
-    'markdown.showPreviewToSide',
-    document.uri,
-  );
+  // Use showTextDocument with preview: true instead of markdown.showPreviewToSide
+  // to avoid leaving behind an untitled editor tab that prompts to save on close.
+  await vscode.window.showTextDocument(document, {
+    preview: true,
+    viewColumn: vscode.ViewColumn.Beside,
+  });
 }
 
 const PLAN_LINKED_SAVE_SOP_SEQUENCE =
@@ -387,28 +391,25 @@ export function activate(context: vscode.ExtensionContext): void {
     workspaceFolderRoots,
     fallbackRoot,
   );
-  let retainedRoot = targetForFirstFile.effectiveRoot;
+  // ARCXT-UX-SMOKE-001 — Liquid Shell as single Activity Bar surface
+  // TaskBoardViewProvider kept for effectiveRoot tracking but NOT registered as view
   const taskBoardProvider = new TaskBoardViewProvider(
     context.extensionUri,
     targetForFirstFile.effectiveRoot,
   );
-  context.subscriptions.push(
-    vscode.window.registerWebviewViewProvider(
-      TaskBoardViewProvider.viewType,
-      taskBoardProvider,
-    ),
-  );
+  let retainedRoot = targetForFirstFile.effectiveRoot;
+  // Old sidebar view removed — use Liquid Shell only
 
-  // ARCXT-UX-SMOKE-001 — Liquid Shell as primary Activity Bar surface
   const liquidShellProvider = new LiquidShellViewProvider(context.extensionUri);
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider(
       LiquidShellViewProvider.viewType,
       liquidShellProvider,
     ),
-    // arc.ui.liquidShell → reveal sidebar (not new panel)
+    // arc.ui.liquidShell → open tab panel (primary work surface)
     vscode.commands.registerCommand('arc.ui.liquidShell', () => {
-      liquidShellProvider.reveal();
+      const panel = createLiquidShellPanel(context);
+      panel.reveal(vscode.ViewColumn.One);
     }),
     // arc.guardrail.justify → prompt user for justification text and persist
     vscode.commands.registerCommand(
