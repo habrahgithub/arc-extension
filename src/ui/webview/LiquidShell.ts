@@ -269,21 +269,6 @@ function buildLiquidShellHtml(opts: LiquidShellOpts): string {
       <div class="empty-text">No governed issues in the current file.</div>
       <div class="empty-hint">ARC is monitoring save events.</div>
     </div>
-
-    <div class="issue-card" style="margin-top:16px; opacity:0.65; border-style:dashed;">
-      <div class="issue-header">
-        <span class="risk-badge risk-medium">MEDIUM</span>
-        <span class="file-path">src/auth/service.ts:42</span>
-      </div>
-      <div class="issue-title">Missing strict type enforcement in payload route</div>
-      <div class="issue-reason">Rule BR-02 · Type validation bypass</div>
-      <div class="actions">
-        <button class="btn btn-primary" data-action="explain">Explain</button>
-        <button class="btn" data-action="quick-plan">Quick Plan</button>
-        <button class="btn" data-action="copy-prompt">Copy AI Prompt</button>
-        <button class="btn btn-secondary" data-action="bypass">Bypass Once</button>
-      </div>
-    </div>
   </div>
 
   <div class="view" id="view-review">

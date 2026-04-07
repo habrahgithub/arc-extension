@@ -170,22 +170,21 @@ async function handlePlanLinkedSaveHelpChoice(
   }
 }
 
-// **WRD-0102: Instructional wording — submitted for Warden review**
+// Plain-language prompt for blueprint linkage
 async function promptForDirectiveId(): Promise<string | undefined> {
   return vscode.window.showInputBox({
-    title: 'ARC XT — Plan-Linked Save (Step 3: Change ID)',
-    prompt:
-      'Current SOP: confirm governed root and local ARC config, then enter the Change ID that links this save to a governance plan.',
+    title: 'Link a blueprint',
+    prompt: 'Enter the blueprint ID that plans this change.',
     placeHolder: 'ARC-101',
     ignoreFocusOut: true,
     validateInput: (value) => {
       if (!value.trim()) {
-        return 'Change ID is required for plan-linked saves.';
+        return 'A blueprint ID is required to continue.';
       }
 
       return isValidDirectiveId(value.trim())
         ? undefined
-        : 'Use an uppercase, hyphenated Change ID such as ARC-101.';
+        : 'Use an uppercase, hyphenated ID like ARC-101.';
     },
   });
 }
@@ -197,13 +196,19 @@ async function collectRequirePlanProof(
   const directiveId = (await promptForDirectiveId())?.trim();
   if (!directiveId) {
     const choice = await vscode.window.showWarningMessage(
-      `[ARC XT] Plan-linked save remains blocked until you enter a real Change ID and link a valid local blueprint proof.\nCurrent SOP: ${PLAN_LINKED_SAVE_SOP_SEQUENCE}`,
-      { modal: true },
-      'Guided Workflow',
-      'Runtime Status',
-      'Review SOP',
+      'This change needs a linked blueprint before saving.',
+      {
+        modal: true,
+        detail: 'Enter a blueprint ID to plan this change, or create one now.',
+      },
+      'Create Blueprint',
+      'Explain',
     );
-    await handlePlanLinkedSaveHelpChoice(choice);
+    if (choice === 'Create Blueprint') {
+      await vscode.commands.executeCommand('arc.createFirstBlueprint');
+    } else if (choice === 'Explain') {
+      await showPlanLinkedSaveSopPreview();
+    }
     return { acknowledged: false };
   }
 
@@ -214,15 +219,16 @@ async function collectRequirePlanProof(
 
   if (resolution.status === 'MISSING_ARTIFACT') {
     const choice = await vscode.window.showWarningMessage(
-      `[ARC XT] ${resolution.reason}\nCurrent SOP: ${PLAN_LINKED_SAVE_SOP_SEQUENCE}`,
-      { modal: true },
+      'Blueprint not found.',
+      {
+        modal: true,
+        detail: `No blueprint exists for "${directiveId}". Create one now?`,
+      },
       'Create Blueprint',
-      'Guided Workflow',
-      'Review SOP',
+      'Go Back',
     );
 
     if (choice !== 'Create Blueprint') {
-      await handlePlanLinkedSaveHelpChoice(choice);
       return {
         acknowledged: false,
         proof: { directiveId, blueprintMode: 'LOCAL_ONLY' },
@@ -233,7 +239,10 @@ async function collectRequirePlanProof(
     const blueprintDocument = await vscode.workspace.openTextDocument(
       created.blueprintPath,
     );
-    await vscode.window.showTextDocument(blueprintDocument, { preview: false });
+    await vscode.window.showTextDocument(blueprintDocument, {
+      preview: true,
+      viewColumn: vscode.ViewColumn.Beside,
+    });
     resolution = orchestrator.validateBlueprintProof({
       directiveId,
       blueprintId: created.blueprintId,
@@ -243,13 +252,24 @@ async function collectRequirePlanProof(
 
   if (!resolution.ok || !resolution.link) {
     const choice = await vscode.window.showWarningMessage(
-      `[ARC XT] ${resolution.reason}\nCurrent SOP: ${PLAN_LINKED_SAVE_SOP_SEQUENCE}`,
-      { modal: true },
-      'Blueprint Review',
-      'Guided Workflow',
-      'Review SOP',
+      'Blueprint not valid.',
+      {
+        modal: true,
+        detail: `${resolution.reason}\n\nReview and complete the blueprint, or go back.`,
+      },
+      'Open Blueprint',
+      'Go Back',
     );
-    await handlePlanLinkedSaveHelpChoice(choice);
+    if (choice === 'Open Blueprint') {
+      const bpPath = orchestrator.blueprintArtifacts.blueprintPath(directiveId);
+      if (bpPath && fs.existsSync(bpPath)) {
+        const doc = await vscode.workspace.openTextDocument(bpPath);
+        await vscode.window.showTextDocument(doc, {
+          preview: true,
+          viewColumn: vscode.ViewColumn.Beside,
+        });
+      }
+    }
     return {
       acknowledged: false,
       proof: {
@@ -261,8 +281,11 @@ async function collectRequirePlanProof(
   }
 
   const continueChoice = await vscode.window.showWarningMessage(
-    `[ARC XT] Plan-linked save: ${assessment.decision.reason}\nChange ID ${directiveId} linked to ${resolution.link.blueprintId}.`,
-    { modal: true },
+    'Save requires a linked blueprint.',
+    {
+      modal: true,
+      detail: `${assessment.decision.reason}\n\nLinked to: ${resolution.link.blueprintId}`,
+    },
     'Continue',
     'Cancel',
   );
@@ -543,7 +566,7 @@ export function activate(context: vscode.ExtensionContext): void {
   void refreshStatusBarForEditor(vscode.window.activeTextEditor);
   if (mode === 'afterDelay' || mode === 'onFocusChange') {
     void vscode.window.showInformationMessage(
-      `[ARC XT] Reduced-guarantee auto-save mode detected (${mode}). Explicit save remains the preferred path.`,
+      `ARC found auto-save mode (${mode}). Explicit saves are recommended.`,
     );
   }
 
@@ -776,17 +799,27 @@ export function activate(context: vscode.ExtensionContext): void {
         const bpPath =
           orchestrator.blueprintArtifacts.blueprintPath(directiveId);
         if (!fs.existsSync(bpPath)) {
-          void vscode.window.showWarningMessage(
-            `[ARC XT] Blueprint not found: ${directiveId}`,
-          );
+          void vscode.window
+            .showWarningMessage(
+              'Blueprint not found.',
+              {
+                detail: `No blueprint found for "${directiveId}". Create one?`,
+              },
+              'Create Blueprint',
+            )
+            .then((choice) => {
+              if (choice === 'Create Blueprint') {
+                void vscode.commands.executeCommand('arc.createFirstBlueprint');
+              }
+            });
           return;
         }
         const content = fs.readFileSync(bpPath, 'utf8');
         const parsedTasks = parseBlueprintTasks(content);
         if (parsedTasks.length === 0) {
-          void vscode.window.showWarningMessage(
-            `[ARC XT] No tasks found in blueprint: ${directiveId}`,
-          );
+          void vscode.window.showWarningMessage('No tasks in blueprint.', {
+            detail: `Blueprint "${directiveId}" has no tasks defined.`,
+          });
           return;
         }
 
@@ -798,7 +831,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
         const choice = await vscode.window.showQuickPick(items, {
           placeHolder: 'Select a task for local model context',
-          title: 'ARC XT — Active Task Selection',
+          title: 'Select active task',
         });
 
         if (choice) {
@@ -810,7 +843,7 @@ export function activate(context: vscode.ExtensionContext): void {
             blueprintPath: bpPath,
           });
           void vscode.window.showInformationMessage(
-            `[ARC XT] Active task selected: ${choice.task.text}`,
+            `Active task set: ${choice.task.text}`,
           );
         }
       },
@@ -818,9 +851,7 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('arc.clearActiveTask', async () => {
       const orchestrator = orchestratorFor();
       orchestrator.activeTaskSelection.clear();
-      void vscode.window.showInformationMessage(
-        '[ARC XT] Active task cleared.',
-      );
+      void vscode.window.showInformationMessage('Active task cleared.');
     }),
 
     vscode.workspace.onDidOpenTextDocument((document) => {
@@ -881,8 +912,8 @@ export function activate(context: vscode.ExtensionContext): void {
               );
               taskBoardProvider.refresh();
               void vscode.window.showErrorMessage(
-                `[ARC XT] BLOCK: ${assessment.decision.reason}`,
-                { modal: true },
+                'Save blocked: sensitive file change.',
+                { modal: true, detail: assessment.decision.reason },
               );
               return [];
             }
@@ -895,7 +926,7 @@ export function activate(context: vscode.ExtensionContext): void {
             ) {
               assessment.decision.decision = 'WARN';
               assessment.decision.reason =
-                '[Grace Mode] This would normally require a Change ID. Complete ARC XT setup to activate full enforcement.';
+                'This change would normally need a linked blueprint. Complete ARC setup for full enforcement.';
               assessment.shouldPrompt = true;
             }
 
@@ -923,8 +954,11 @@ export function activate(context: vscode.ExtensionContext): void {
 
             if (assessment.shouldPrompt) {
               const choice = await vscode.window.showWarningMessage(
-                `[ARC XT] ${assessment.decision.decision}: ${assessment.decision.reason}`,
-                { modal: true },
+                'Review this change before saving.',
+                {
+                  modal: true,
+                  detail: `${assessment.decision.decision}: ${assessment.decision.reason}`,
+                },
                 'Continue',
                 'Cancel',
               );
@@ -955,7 +989,10 @@ export function activate(context: vscode.ExtensionContext): void {
             // Any exception here must be surfaced — never silent.
             const message = err instanceof Error ? err.message : String(err);
             void vscode.window.showErrorMessage(
-              `[ARC XT] Save assessment error: ${message}. Save will proceed without governance audit.`,
+              'ARC could not check this save.',
+              {
+                detail: `${message}. Your change was saved without an ARC audit.`,
+              },
             );
             // Fail-open: return empty edit array so save proceeds.
             return [];
@@ -984,10 +1021,10 @@ export function activate(context: vscode.ExtensionContext): void {
         restore.restoreText,
       );
       await vscode.workspace.applyEdit(edit);
-      void vscode.window.showWarningMessage(
-        `[ARC XT] Save reverted: ${restore.reason}`,
-        { modal: true },
-      );
+      void vscode.window.showWarningMessage('Save reverted.', {
+        modal: true,
+        detail: restore.reason,
+      });
     }),
   );
 

@@ -73,14 +73,14 @@ ${filePathsList}
 ⚠️ Existing configs will be overwritten.`;
 
   const choice = await vscode.window.showWarningMessage(
-    'ARC XT: Create Minimal Config Templates',
+    'Create ARC config files?',
     { modal: true, detail: confirmMessage },
-    'Create Templates',
+    'Create',
     'Cancel',
   );
 
   return {
-    confirmed: choice === 'Create Templates',
+    confirmed: choice === 'Create',
     governedRoot,
     filePaths,
   };
@@ -115,10 +115,10 @@ async function writeConfigFile(
 
     // Ask for overwrite confirmation
     const overwriteChoice = await vscode.window.showWarningMessage(
-      'ARC XT: Config File Exists',
+      'Config file exists.',
       {
         modal: true,
-        detail: `File exists at:\n  ${filePath}\n\nOverwrite with minimal template?`,
+        detail: `${filePath}\n\nOverwrite with default template?`,
       },
       'Overwrite',
       'Cancel',
@@ -141,9 +141,7 @@ export async function createMinimalRoutePolicy(): Promise<void> {
   const result = await confirmConfigCreation('route-policy');
 
   if (!result.confirmed) {
-    vscode.window.showInformationMessage(
-      'ARC XT: Route policy creation cancelled.',
-    );
+    vscode.window.showInformationMessage('Route policy creation cancelled.');
     return;
   }
 
@@ -155,13 +153,13 @@ export async function createMinimalRoutePolicy(): Promise<void> {
 
     if (success) {
       vscode.window.showInformationMessage(
-        `ARC XT: Route policy created at ${routerPath}\n\nMode: RULE_ONLY (fail-closed)\nLocal lane: disabled\nCloud lane: disabled`,
+        `Route policy created at ${routerPath}\n\nMode: RULE_ONLY (fail-closed)\nLocal lane: disabled\nCloud lane: disabled`,
       );
     }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     vscode.window.showErrorMessage(
-      `ARC XT: Failed to create route policy: ${errorMessage}`,
+      `Failed to create route policy: ${errorMessage}`,
     );
   }
 }
@@ -174,7 +172,7 @@ export async function createMinimalWorkspaceMapping(): Promise<void> {
 
   if (!result.confirmed) {
     vscode.window.showInformationMessage(
-      'ARC XT: Workspace mapping creation cancelled.',
+      'Workspace mapping creation cancelled.',
     );
     return;
   }
@@ -194,13 +192,13 @@ export async function createMinimalWorkspaceMapping(): Promise<void> {
 
     if (success) {
       vscode.window.showInformationMessage(
-        `ARC XT: Workspace mapping created at ${mappingPath}\n\nMode: LOCAL_ONLY\nRules: none\nUI segments: none`,
+        `Workspace mapping created at ${mappingPath}\n\nMode: LOCAL_ONLY\nRules: none\nUI segments: none`,
       );
     }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     vscode.window.showErrorMessage(
-      `ARC XT: Failed to create workspace mapping: ${errorMessage}`,
+      `Failed to create workspace mapping: ${errorMessage}`,
     );
   }
 }
@@ -212,7 +210,7 @@ export async function createMinimalArcConfig(): Promise<void> {
   const result = await confirmConfigCreation('both');
 
   if (!result.confirmed) {
-    vscode.window.showInformationMessage('ARC XT: Config creation cancelled.');
+    vscode.window.showInformationMessage('Config creation cancelled.');
     return;
   }
 
@@ -239,21 +237,19 @@ export async function createMinimalArcConfig(): Promise<void> {
 
     if (successCount === 2) {
       vscode.window.showInformationMessage(
-        `ARC XT: Both configs created successfully!\n\nRoute policy: ${routerPath}\nWorkspace mapping: ${mappingPath}\n\nBoth use safe fail-closed defaults.`,
+        `Both configs created successfully!\n\nRoute policy: ${routerPath}\nWorkspace mapping: ${mappingPath}\n\nBoth use safe fail-closed defaults.`,
       );
     } else if (successCount === 1) {
       vscode.window.showWarningMessage(
-        'ARC XT: One config created, one skipped (user cancelled overwrite).',
+        'One config created, one skipped (user cancelled overwrite).',
       );
     } else {
       vscode.window.showWarningMessage(
-        'ARC XT: Config creation cancelled (user cancelled overwrite).',
+        'Config creation cancelled (user cancelled overwrite).',
       );
     }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    vscode.window.showErrorMessage(
-      `ARC XT: Failed to create configs: ${errorMessage}`,
-    );
+    vscode.window.showErrorMessage(`Failed to create configs: ${errorMessage}`);
   }
 }

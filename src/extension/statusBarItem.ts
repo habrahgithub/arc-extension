@@ -25,35 +25,33 @@ const STATUS_CONFIG: Record<
   { text: string; tooltip: string; color: string }
 > = {
   READY: {
-    text: '$(shield-check) ARC XT',
-    tooltip: 'ARC XT — Current file posture: allow',
+    text: '$(shield-check) ARC',
+    tooltip: 'ARC found no issues in the current file.',
     color: '#00ff00',
   },
   AUTO_SAVE: {
-    text: '$(clock) ARC XT',
-    tooltip:
-      'ARC XT — Auto-save detected: Reduced guarantee mode (explicit saves recommended)',
+    text: '$(clock) ARC',
+    tooltip: 'ARC is monitoring save events. Explicit saves are recommended.',
     color: '#ffa500',
   },
   BLOCKED: {
-    text: '$(stop) ARC XT',
-    tooltip: 'ARC XT — Current file posture: block',
+    text: '$(stop) ARC',
+    tooltip: 'ARC blocked this save. Click to review the issue.',
     color: '#ff0000',
   },
   WARNED: {
-    text: '$(alert) ARC XT',
-    tooltip: 'ARC XT — Current file posture: warn',
+    text: '$(alert) ARC',
+    tooltip: 'ARC flagged an issue. Click to review.',
     color: '#ffa500',
   },
   REQUIRE_PLAN: {
-    text: '$(link) ARC XT',
-    tooltip: 'ARC XT — Current file posture: requires blueprint proof',
+    text: '$(link) ARC',
+    tooltip: 'This change needs a linked blueprint. Click to review.',
     color: '#007acc',
   },
   ERROR: {
-    text: '$(error) ARC XT',
-    tooltip:
-      'ARC XT — Extension error: Enforcement may be degraded; check output panel',
+    text: '$(error) ARC',
+    tooltip: 'ARC hit an error. Enforcement may be degraded.',
     color: '#ff0000',
   },
 };
@@ -61,24 +59,24 @@ const STATUS_CONFIG: Record<
 export class StatusBarItemService {
   private statusBarItem: vscode.StatusBarItem;
   private currentStatus: EnforcementStatus | 'IDLE' = 'IDLE';
+  private issueCount: number = 0;
 
   constructor() {
     this.statusBarItem = vscode.window.createStatusBarItem(
       vscode.StatusBarAlignment.Right,
-      100, // Priority (higher = more to the right)
+      100,
     );
-    this.statusBarItem.command = 'arc.showRuntimeStatus';
-    this.statusBarItem.text = '$(shield) ARC XT';
-    this.statusBarItem.tooltip = 'ARC XT — waiting for first file assessment';
+    this.statusBarItem.command = 'arc.ui.liquidShell';
+    this.statusBarItem.text = '$(shield) ARC';
+    this.statusBarItem.tooltip = 'ARC is monitoring save events.';
     this.statusBarItem.color = undefined;
     this.statusBarItem.show();
   }
 
-  /**
-   * Update the status bar to reflect current enforcement state.
-   */
-  updateStatus(status: EnforcementStatus): void {
+  /** Update the status bar to reflect current enforcement state. */
+  updateStatus(status: EnforcementStatus, issues?: number): void {
     this.currentStatus = status;
+    if (issues !== undefined) this.issueCount = issues;
     const config = STATUS_CONFIG[status];
 
     this.statusBarItem.text = config.text;
