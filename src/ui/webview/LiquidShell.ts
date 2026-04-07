@@ -1,9 +1,8 @@
 /**
  * ARC XT — Liquid Shell (Command Centre)
  *
- * ARC-UI-MINIMAL-001: Collapsed to single tab surface.
- * Sidebar = launcher only. Tab = Tasks + Review.
- * No rail, no secondary sidebar, no Architect/Runtime tabs.
+ * ARC-UI-MINIMAL-001 / ARC-UI-PLANNING-001
+ * Phase C+D: Issues/Review tabs, action-tightened issue cards, bounded AI handoff.
  */
 
 import * as vscode from 'vscode';
@@ -40,11 +39,7 @@ export function createLiquidShellPanel(
   panel.webview.html = buildLiquidShellHtml({ nonce, csp, logoUri });
 
   panel.webview.onDidReceiveMessage(
-    async (message: {
-      command?: string;
-      commandId?: string;
-      route?: string;
-    }) => {
+    async (message: { command?: string; commandId?: string }) => {
       if (message.command === 'executeCommand' && message.commandId) {
         await vscode.commands.executeCommand(message.commandId);
       }
@@ -170,7 +165,7 @@ function buildSidebarLauncherHtml(opts: {
 </html>`;
 }
 
-/** Minimal tab surface — Tasks + Review only */
+/** Minimal tab surface — Issues + Review only */
 function buildLiquidShellHtml(opts: LiquidShellOpts): string {
   const { nonce, csp, logoUri } = opts;
   return `<!DOCTYPE html>
@@ -190,185 +185,172 @@ function buildLiquidShellHtml(opts: LiquidShellOpts): string {
     height: 100vh; overflow: hidden;
     display: flex; flex-direction: column;
   }
-
-  /* ── Tab Bar ── */
   .tabs {
-    display: flex; align-items: center;
+    display: flex; align-items: center; height: 32px; flex-shrink: 0;
     background: var(--vscode-panel-background, #252526);
-    border-bottom: 1px solid var(--vscode-panel-border, #80808059);
-    flex-shrink: 0;
+    border-bottom: 1px solid var(--vscode-widget-border, #80808059);
   }
   .tab {
-    padding: 8px 16px;
-    font-size: 12px; font-weight: 500;
+    padding: 0 12px; height: 100%;
+    font-size: 11px; font-weight: 500;
     color: var(--vscode-tab-inactiveForeground, #999);
-    background: transparent;
-    border: none; border-bottom: 1px solid transparent;
-    cursor: pointer; transition: color 0.15s, border-color 0.15s;
+    background: transparent; border: none; border-bottom: 1px solid transparent;
+    cursor: pointer; transition: all 0.15s;
   }
   .tab:hover { color: var(--vscode-foreground, #ccc); }
   .tab.active {
     color: var(--vscode-tab-activeForeground, #fff);
     border-bottom-color: var(--vscode-tab-activeBorder, #3794ff);
   }
-
-  /* ── Content ── */
-  .content {
-    flex: 1; overflow-y: auto; padding: 16px;
-  }
+  .content { flex: 1; overflow-y: auto; padding: 12px; }
   .content::-webkit-scrollbar { width: 6px; }
   .content::-webkit-scrollbar-thumb { background: var(--vscode-scrollbarSlider-background, #79797966); border-radius: 3px; }
-
-  .view { display: none; }
+  .view { display: none; max-width: 720px; margin: 0 auto; width: 100%; }
   .view.active { display: block; }
 
-  /* ── Cards ── */
-  .card {
+  .issue-card {
     background: var(--vscode-editor-background, #1e1e1e);
     border: 1px solid var(--vscode-widget-border, #80808059);
-    border-radius: 6px; padding: 14px; margin-bottom: 12px;
+    border-radius: 6px; padding: 12px; margin-bottom: 8px;
+    border-left: 3px solid var(--vscode-editorWarning-foreground, #cca700);
   }
-  .card-label {
-    font-size: 10px; font-weight: 600;
-    text-transform: uppercase; letter-spacing: 0.06em;
-    color: var(--vscode-descriptionForeground, #808080);
-    margin-bottom: 6px;
+  .issue-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+  .risk-badge {
+    font-size: 9px; font-weight: 700; padding: 1px 6px; border-radius: 3px;
+    text-transform: uppercase; letter-spacing: 0.04em;
   }
-  .card-value { font-size: 14px; font-weight: 600; color: var(--vscode-foreground, #ccc); }
-  .card-desc { font-size: 11px; color: var(--vscode-descriptionForeground, #808080); margin-top: 4px; font-style: italic; }
+  .risk-high { background: rgba(241,76,76,0.15); color: var(--vscode-editorError-foreground, #f14c4c); }
+  .risk-medium { background: rgba(204,167,0,0.15); color: var(--vscode-editorWarning-foreground, #cca700); }
+  .risk-low { background: rgba(159,202,255,0.15); color: var(--vscode-textLink-foreground, #3794ff); }
+  .file-path { font-size: 10px; color: var(--vscode-descriptionForeground, #808080); font-family: var(--vscode-editor-font-family, monospace); }
+  .issue-title { font-size: 12px; font-weight: 500; margin-bottom: 2px; }
+  .issue-reason { font-size: 10px; color: var(--vscode-descriptionForeground, #808080); margin-bottom: 8px; }
 
-  /* ── Task Rows ── */
-  .task-row {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 10px 12px; margin-bottom: 4px;
-    border-radius: 4px;
-    background: var(--vscode-list-hoverBackground, #2a2d2e);
-    transition: background 0.1s;
+  .actions { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 8px; }
+  .btn {
+    font-size: 10px; padding: 3px 8px; border-radius: 3px; cursor: pointer;
+    background: var(--vscode-button-secondaryBackground, #3a3d41);
+    color: var(--vscode-button-secondaryForeground, #cccccc);
+    border: 1px solid transparent; transition: opacity 0.15s;
   }
-  .task-row:hover { background: var(--vscode-list-activeSelectionBackground, #094771); }
-  .task-name { font-size: 12px; font-weight: 500; }
-  .task-id { font-size: 10px; color: var(--vscode-textLink-foreground, #3794ff); margin-left: 8px; font-family: var(--vscode-editor-font-family, monospace); }
-  .task-phase { font-size: 10px; color: var(--vscode-descriptionForeground, #808080); }
+  .btn:hover { opacity: 0.9; }
+  .btn-primary { background: var(--vscode-button-background, #0e639c); color: var(--vscode-button-foreground, #ffffff); }
+  .btn-secondary { background: transparent; border-color: var(--vscode-widget-border, #80808059); }
 
-  /* ── Pills ── */
-  .pill {
-    display: inline-flex; align-items: center;
-    border-radius: 999px; padding: 2px 8px;
-    font-size: 9px; font-weight: 700;
-    text-transform: uppercase; letter-spacing: 0.06em;
+  .empty { text-align: center; padding: 48px 16px; color: var(--vscode-descriptionForeground, #808080); }
+  .empty-icon { font-size: 24px; margin-bottom: 6px; opacity: 0.4; }
+  .empty-text { font-size: 11px; font-weight: 500; margin-bottom: 4px; }
+  .empty-hint { font-size: 10px; }
+
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+    display: none; align-items: center; justify-content: center; z-index: 100;
   }
-  .pill-info { background: rgba(56,189,248,0.15); color: rgba(186,230,253,0.9); }
-  .pill-good { background: rgba(16,185,129,0.15); color: rgba(167,243,208,0.9); }
-  .pill-warn { background: rgba(245,158,11,0.15); color: rgba(253,224,71,0.9); }
-  .pill-neutral { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.5); }
-
-  /* ── Deviation Rows ── */
-  .deviation-row {
-    display: flex; align-items: flex-start; gap: 10px;
-    padding: 10px 12px; margin-bottom: 4px;
-    border-radius: 4px; border-left: 3px solid transparent;
-    background: var(--vscode-list-hoverBackground, #2a2d2e);
-  }
-  .deviation-row.sev-high { border-left-color: #ee7d77; }
-  .deviation-row.sev-medium { border-left-color: #f59e0b; }
-  .deviation-row.sev-low { border-left-color: #9fcaff; }
-  .deviation-text { font-size: 11px; line-height: 1.4; flex: 1; }
-  .deviation-loc { font-size: 9px; color: var(--vscode-descriptionForeground, #808080); font-family: var(--vscode-editor-font-family, monospace); white-space: nowrap; }
-
-  /* ── Empty State ── */
-  .empty { text-align: center; padding: 40px 20px; color: var(--vscode-descriptionForeground, #808080); }
-  .empty-icon { font-size: 28px; margin-bottom: 8px; opacity: 0.3; }
-  .empty-text { font-size: 12px; }
-
-  /* ── Terminal ── */
-  .terminal {
-    font-family: var(--vscode-editor-font-family, monospace);
-    font-size: 11px; line-height: 1.6;
-    background: var(--vscode-terminal-background, #000);
+  .modal-overlay.active { display: flex; }
+  .modal {
+    background: var(--vscode-editor-background, #1e1e1e);
     border: 1px solid var(--vscode-widget-border, #80808059);
-    border-radius: 4px; padding: 12px;
-    color: var(--vscode-terminal-foreground, #ccc);
+    border-radius: 6px; padding: 16px; max-width: 480px; width: 90%;
   }
-  .ts-green { color: #7aec8d; }
-  .ts-amber { color: rgba(253,224,71,0.85); }
-  .ts-sky { color: var(--vscode-textLink-foreground, #3794ff); }
+  .modal-title { font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+  .modal-body { font-size: 11px; line-height: 1.5; margin-bottom: 12px; color: var(--vscode-foreground, #ccc); }
+  .modal-actions { display: flex; justify-content: flex-end; gap: 6px; }
 </style>
 </head>
 <body>
-
-<!-- Tab Bar -->
 <div class="tabs">
-  <button class="tab active" data-view="tasks">Tasks</button>
+  <button class="tab active" data-view="issues">Issues</button>
   <button class="tab" data-view="review">Review</button>
 </div>
-
-<!-- Content -->
 <div class="content">
-
-  <!-- ═══ Tasks View ═══ -->
-  <div class="view active" id="view-tasks">
-    <div class="card">
-      <div class="card-label">Active Directive</div>
-      <div class="card-desc">No active directive — open a governed workspace to begin.</div>
+  <div class="view active" id="view-issues">
+    <div class="empty">
+      <div class="empty-icon">🛡️</div>
+      <div class="empty-text">No governed issues in the current file.</div>
+      <div class="empty-hint">ARC is monitoring save events.</div>
     </div>
 
-    <div class="card">
-      <div class="card-label">Task Pipeline</div>
-      <div class="card-desc" style="padding:20px 0">No tasks loaded — open a governed workspace to see your task pipeline.</div>
-    </div>
-
-    <div class="card">
-      <div class="card-label">Recent Activity</div>
-      <div class="terminal">
-        <div><span class="ts-green">[ready]</span> ARC XT loaded</div>
-        <div><span class="ts-sky">[info]</span> Open a governed workspace to activate enforcement</div>
+    <div class="issue-card" style="margin-top:16px; opacity:0.65; border-style:dashed;">
+      <div class="issue-header">
+        <span class="risk-badge risk-medium">MEDIUM</span>
+        <span class="file-path">src/auth/service.ts:42</span>
+      </div>
+      <div class="issue-title">Missing strict type enforcement in payload route</div>
+      <div class="issue-reason">Rule BR-02 · Type validation bypass</div>
+      <div class="actions">
+        <button class="btn btn-primary" data-action="explain">Explain</button>
+        <button class="btn" data-action="quick-plan">Quick Plan</button>
+        <button class="btn" data-action="copy-prompt">Copy AI Prompt</button>
+        <button class="btn btn-secondary" data-action="bypass">Bypass Once</button>
       </div>
     </div>
   </div>
 
-  <!-- ═══ Review View ═══ -->
   <div class="view" id="view-review">
-    <div class="card">
-      <div class="card-label">Review Surface</div>
-      <div class="card-desc">No deviations found — open a governed workspace and save a file to see review results.</div>
-    </div>
-
-    <div class="card">
-      <div class="card-label">Example Deviation Format</div>
-      <div class="deviation-row sev-high">
-        <div style="flex:1">
-          <div class="deviation-text">Missing strict type enforcement in payload route</div>
-          <div class="task-phase">Rule BR-02 · Type validation bypass</div>
-        </div>
-        <div class="deviation-loc">L:08</div>
-        <span class="pill pill-warn">Low confidence</span>
-      </div>
-      <div class="deviation-row sev-medium">
-        <div style="flex:1">
-          <div class="deviation-text">Token TTL configuration is hardcoded</div>
-          <div class="task-phase">Rule BR-04 · Token lifecycle policy</div>
-        </div>
-        <div class="deviation-loc">L:13</div>
-        <span class="pill pill-info">Medium confidence</span>
-      </div>
+    <div class="empty">
+      <div class="empty-icon">📋</div>
+      <div class="empty-text">No review events yet.</div>
+      <div class="empty-hint">Save a file to see audit history here.</div>
     </div>
   </div>
+</div>
 
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-title" id="modal-title">ARC XT</div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" id="modal-ok">OK</button>
+      <button class="btn btn-secondary" id="modal-cancel">Cancel</button>
+    </div>
+  </div>
 </div>
 
 <script nonce="${nonce}">
   (function() {
     var vscode = acquireVsCodeApi();
-
-    // Tab switching
-    document.querySelectorAll('.tab').forEach(function(tab) {
-      tab.addEventListener('click', function() {
-        var viewId = tab.getAttribute('data-view');
-        document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
-        document.querySelectorAll('.view').forEach(function(v) { v.classList.remove('active'); });
-        tab.classList.add('active');
-        document.getElementById('view-' + viewId).classList.add('active');
+    document.querySelectorAll('.tab').forEach(function(t) {
+      t.addEventListener('click', function() {
+        document.querySelectorAll('.tab').forEach(function(x) { x.classList.remove('active'); });
+        document.querySelectorAll('.view').forEach(function(x) { x.classList.remove('active'); });
+        t.classList.add('active');
+        document.getElementById('view-' + t.getAttribute('data-view')).classList.add('active');
       });
+    });
+
+    document.querySelectorAll('.btn[data-action]').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var action = btn.getAttribute('data-action');
+        var content = '';
+        switch(action) {
+          case 'explain':
+            content = 'This violates <strong>Rule BR-02</strong> (Type Validation Bypass).<br/><br/>The payload is cast to <code>any</code> without schema validation, allowing unsafe data to bypass type checks.<br/><br/><strong>Fix:</strong> Add Zod or TypeScript schema validation.';
+            break;
+          case 'quick-plan':
+            content = 'Create a blueprint at:<br/><code>.arc/blueprints/ARC-101.md</code><br/><br/><strong>Objective:</strong> Add strict type enforcement to <code>src/auth/service.ts</code>';
+            break;
+          case 'copy-prompt':
+            var prompt = 'Project: arc-xt\\nFile: src/auth/service.ts:42\\nRisk: MEDIUM\\nIssue: Missing strict type enforcement in payload route (Rule BR-02).\\nConstraint: Do not alter existing logic, only add validation layer.';
+            navigator.clipboard.writeText(prompt).then(function() {
+              content = 'AI Handoff prompt copied to clipboard.';
+            }, function() {
+              content = 'Clipboard access denied. Use browser copy.';
+            });
+            break;
+          case 'bypass':
+            content = 'Bypassing once allows this save but logs an audit deviation. Proceed?';
+            break;
+        }
+        document.getElementById('modal-body').innerHTML = content;
+        document.getElementById('modal-overlay').classList.add('active');
+      });
+    });
+
+    document.getElementById('modal-ok').addEventListener('click', function() {
+      document.getElementById('modal-overlay').classList.remove('active');
+    });
+    document.getElementById('modal-cancel').addEventListener('click', function() {
+      document.getElementById('modal-overlay').classList.remove('active');
     });
   })();
 </script>
