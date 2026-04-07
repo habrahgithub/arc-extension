@@ -945,12 +945,19 @@ export function activate(context: vscode.ExtensionContext): void {
                 orchestrator,
                 assessment,
               );
-              controller.finalizeSave(
-                assessment,
-                planFlow.acknowledged,
-                planFlow.proof,
-                actor,
-              );
+              if (!planFlow.acknowledged) {
+                // ARCXT-CTRL-001: Hard block — no valid blueprint, no save.
+                void vscode.window.showErrorMessage(
+                  'Save blocked: this change needs a linked blueprint.',
+                  {
+                    modal: true,
+                    detail:
+                      'Create or link a blueprint to continue. This change cannot be saved without one.',
+                  },
+                );
+                return [];
+              }
+              controller.finalizeSave(assessment, true, planFlow.proof, actor);
               statusBarItem.updateFromDecision(
                 assessment.decision.decision,
                 !planFlow.acknowledged,
