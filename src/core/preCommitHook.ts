@@ -10,7 +10,6 @@
 import * as vscode from 'vscode';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import * as cp from 'node:child_process';
 
 /**
  * Authorization state for a single file save event.
@@ -29,16 +28,17 @@ export interface FileAuthState {
  */
 export class PreCommitHookManager {
   private readonly workspaceRoot: string;
+  private readonly extensionUri: vscode.Uri;
   private readonly arcDir: string;
   private readonly authStatePath: string;
-  private readonly hookTemplatePath: string;
   private readonly targetHookPath: string;
+  private _corruptState = false;
 
-  constructor(workspaceRoot: string) {
+  constructor(workspaceRoot: string, extensionUri: vscode.Uri) {
     this.workspaceRoot = workspaceRoot;
+    this.extensionUri = extensionUri;
     this.arcDir = path.join(workspaceRoot, '.arc');
     this.authStatePath = path.join(this.arcDir, 'auth-state.json');
-    this.hookTemplatePath = path.join(workspaceRoot, 'hooks', 'pre-commit.sh');
     this.targetHookPath = path.join(
       workspaceRoot,
       '.git',
@@ -53,7 +53,7 @@ export class PreCommitHookManager {
   }
 
   /** Install the pre-commit hook into .git/hooks/pre-commit */
-  installHook(): { success: boolean; error?: string } {
+  installHook(): { success: boolean; newlyInstalled: boolean; error?: string } {
     try {
       // Ensure .git/hooks directory exists
       const gitHooksDir = path.join(this.workspaceRoot, '.git', 'hooks');
@@ -61,11 +61,16 @@ export class PreCommitHookManager {
         fs.mkdirSync(gitHooksDir, { recursive: true });
       }
 
-      // Copy hook template (or use inline script if template missing)
+      // Read hook template from extension bundle (not workspace)
       let hookContent: string;
-      if (fs.existsSync(this.hookTemplatePath)) {
-        hookContent = fs.readFileSync(this.hookTemplatePath, 'utf8');
-      } else {
+      try {
+        const templateUri = vscode.Uri.joinPath(
+          this.extensionUri,
+          'hooks',
+          'pre-commit.sh',
+        );
+        hookContent = fs.readFileSync(templateUri.fsPath, 'utf8');
+      } catch {
         hookContent = this.generateInlineHook();
       }
 
@@ -79,10 +84,11 @@ export class PreCommitHookManager {
         // Non-critical — Windows doesn't use execute bit
       }
 
-      return { success: true };
+      return { success: true, newlyInstalled: true };
     } catch (err) {
       return {
         success: false,
+        newlyInstalled: false,
         error: err instanceof Error ? err.message : String(err),
       };
     }
@@ -136,10 +142,26 @@ export class PreCommitHookManager {
     }
     try {
       const content = fs.readFileSync(this.authStatePath, 'utf8');
+      this._corruptState = false;
       return JSON.parse(content) as FileAuthState[];
     } catch {
-      return [];
+      // WRD-0010-A: Corrupted state — fail closed, treat all as unresolved
+      this._corruptState = true;
+      return [
+        {
+          filePath: '__corrupt_state__',
+          decision: 'REQUIRE_PLAN',
+          blueprintId: null,
+          resolved: false,
+          timestamp: new Date().toISOString(),
+        },
+      ];
     }
+  }
+
+  /** Check if auth state file is corrupted (fail-closed indicator) */
+  hasCorruptState(): boolean {
+    return this._corruptState;
   }
 
   private saveAuthStates(states: FileAuthState[]): void {

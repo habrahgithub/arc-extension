@@ -457,12 +457,39 @@ export function activate(context: vscode.ExtensionContext): void {
 
   // ARCXT-LAYER2-001 — Install pre-commit hook (Git hard gate)
   // This is the first real enforcement boundary — IDE layer is signal-only.
-  const hookManager = new PreCommitHookManager(workspaceRoot);
+  const hookManager = new PreCommitHookManager(
+    workspaceRoot,
+    context.extensionUri,
+  );
   if (hookManager.isGitWorkspace()) {
     if (!hookManager.isHookInstalled()) {
       const result = hookManager.installHook();
       if (result.success) {
-        // Silent install — no interruption to user
+        // WRD-0010-C: Notify user — hook modifies their git workflow
+        void vscode.window
+          .showInformationMessage(
+            'ARC installed a pre-commit hook to enforce blueprint requirements.',
+            'Learn more',
+            'Remove hook',
+          )
+          .then((choice) => {
+            if (choice === 'Learn more') {
+              void vscode.commands.executeCommand('arc.ui.liquidShell');
+            } else if (choice === 'Remove hook') {
+              try {
+                fs.unlinkSync(
+                  path.join(workspaceRoot, '.git', 'hooks', 'pre-commit'),
+                );
+                void vscode.window.showInformationMessage(
+                  'ARC pre-commit hook removed.',
+                );
+              } catch {
+                void vscode.window.showErrorMessage(
+                  'Failed to remove hook. Delete .git/hooks/pre-commit manually.',
+                );
+              }
+            }
+          });
       } else {
         void vscode.window.showWarningMessage(
           'ARC could not install the pre-commit hook.',
