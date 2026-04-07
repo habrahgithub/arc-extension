@@ -1,0 +1,248 @@
+/**
+ * ARC XT — Pre-Commit Hook Manager (Layer 2: Git Hard Gate)
+ *
+ * Installs and manages the arc-pre-commit hook that enforces blueprint
+ * requirements at the git commit boundary — the first real enforcement gate.
+ *
+ * Per ARC-GOV-ARCH-001: IDE layer is signal-only. Git layer is the hard gate.
+ */
+
+import * as vscode from 'vscode';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+import * as cp from 'node:child_process';
+
+/**
+ * Authorization state for a single file save event.
+ * Persisted in .arc/auth-state.json for pre-commit hook consumption.
+ */
+export interface FileAuthState {
+  filePath: string;
+  decision: string;
+  blueprintId: string | null;
+  resolved: boolean;
+  timestamp: string;
+}
+
+/**
+ * Manages the pre-commit hook lifecycle and auth state persistence.
+ */
+export class PreCommitHookManager {
+  private readonly workspaceRoot: string;
+  private readonly arcDir: string;
+  private readonly authStatePath: string;
+  private readonly hookTemplatePath: string;
+  private readonly targetHookPath: string;
+
+  constructor(workspaceRoot: string) {
+    this.workspaceRoot = workspaceRoot;
+    this.arcDir = path.join(workspaceRoot, '.arc');
+    this.authStatePath = path.join(this.arcDir, 'auth-state.json');
+    this.hookTemplatePath = path.join(workspaceRoot, 'hooks', 'pre-commit.sh');
+    this.targetHookPath = path.join(
+      workspaceRoot,
+      '.git',
+      'hooks',
+      'pre-commit',
+    );
+  }
+
+  /** Check if workspace is a git repository with .git directory */
+  isGitWorkspace(): boolean {
+    return fs.existsSync(path.join(this.workspaceRoot, '.git'));
+  }
+
+  /** Install the pre-commit hook into .git/hooks/pre-commit */
+  installHook(): { success: boolean; error?: string } {
+    try {
+      // Ensure .git/hooks directory exists
+      const gitHooksDir = path.join(this.workspaceRoot, '.git', 'hooks');
+      if (!fs.existsSync(gitHooksDir)) {
+        fs.mkdirSync(gitHooksDir, { recursive: true });
+      }
+
+      // Copy hook template (or use inline script if template missing)
+      let hookContent: string;
+      if (fs.existsSync(this.hookTemplatePath)) {
+        hookContent = fs.readFileSync(this.hookTemplatePath, 'utf8');
+      } else {
+        hookContent = this.generateInlineHook();
+      }
+
+      // Write hook file
+      fs.writeFileSync(this.targetHookPath, hookContent, 'utf8');
+
+      // Make executable (Unix only — Windows ignores this bit)
+      try {
+        fs.chmodSync(this.targetHookPath, 0o755);
+      } catch {
+        // Non-critical — Windows doesn't use execute bit
+      }
+
+      return { success: true };
+    } catch (err) {
+      return {
+        success: false,
+        error: err instanceof Error ? err.message : String(err),
+      };
+    }
+  }
+
+  /** Check if hook is currently installed */
+  isHookInstalled(): boolean {
+    if (!fs.existsSync(this.targetHookPath)) {
+      return false;
+    }
+    const content = fs.readFileSync(this.targetHookPath, 'utf8');
+    return content.includes('ARC XT') || content.includes('arc-pre-commit');
+  }
+
+  /** Record an authorization state entry for a file save */
+  recordAuthState(entry: FileAuthState): void {
+    const states = this.loadAuthStates();
+    // Remove any previous entry for this file
+    const filtered = states.filter((s) => s.filePath !== entry.filePath);
+    filtered.push(entry);
+    this.saveAuthStates(filtered);
+  }
+
+  /** Mark a file's auth state as resolved (blueprint linked) */
+  resolveAuthState(filePath: string, blueprintId: string): void {
+    const states = this.loadAuthStates();
+    for (const state of states) {
+      if (state.filePath === filePath) {
+        state.resolved = true;
+        state.blueprintId = blueprintId;
+      }
+    }
+    this.saveAuthStates(states);
+  }
+
+  /** Get count of unresolved auth state entries */
+  getUnresolvedCount(): number {
+    return this.loadAuthStates().filter((s) => !s.resolved).length;
+  }
+
+  /** Get all unresolved entries */
+  getUnresolvedEntries(): FileAuthState[] {
+    return this.loadAuthStates().filter((s) => !s.resolved);
+  }
+
+  // Private helpers
+
+  private loadAuthStates(): FileAuthState[] {
+    if (!fs.existsSync(this.authStatePath)) {
+      return [];
+    }
+    try {
+      const content = fs.readFileSync(this.authStatePath, 'utf8');
+      return JSON.parse(content) as FileAuthState[];
+    } catch {
+      return [];
+    }
+  }
+
+  private saveAuthStates(states: FileAuthState[]): void {
+    if (!fs.existsSync(this.arcDir)) {
+      fs.mkdirSync(this.arcDir, { recursive: true });
+    }
+    fs.writeFileSync(
+      this.authStatePath,
+      JSON.stringify(states, null, 2) + '\n',
+      'utf8',
+    );
+  }
+
+  /** Generate an inline hook script if template file is missing */
+  private generateInlineHook(): string {
+    return (
+      [
+        '#!/bin/sh',
+        '# ARC XT — Pre-Commit Hook (Layer 2: Git Hard Gate)',
+        '# Auto-generated by ARC XT extension.',
+        '',
+        'set -e',
+        '',
+        'ARC_DIR="$(git rev-parse --show-toplevel)/.arc"',
+        'AUDIT_FILE="$ARC_DIR/audit.jsonl"',
+        'AUTH_FILE="$ARC_DIR/auth-state.json"',
+        '',
+        '# If no .arc directory, ARC is not active — allow commit',
+        'if [ ! -d "$ARC_DIR" ]; then',
+        '  exit 0',
+        'fi',
+        '',
+        '# If no audit log, no governed saves have occurred — allow commit',
+        'if [ ! -f "$AUDIT_FILE" ]; then',
+        '  exit 0',
+        'fi',
+        '',
+        '# Check staged files for unauthorized saves',
+        'STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null || true)',
+        '',
+        'if [ -z "$STAGED_FILES" ]; then',
+        '  exit 0',
+        'fi',
+        '',
+        'UNAUTHORIZED=0',
+        'UNAUTHORIZED_FILES=""',
+        '',
+        'for FILE in $STAGED_FILES; do',
+        '  # Check audit log for REQUIRE_PLAN entries without blueprint_id',
+        '  UNAUTH_COUNT=$(grep "\\\"file_path\\\":\\\"[^\\\"]*${FILE}" "$AUDIT_FILE" 2>/dev/null | grep \'"decision":"REQUIRE_PLAN"\' 2>/dev/null | grep -v \'"blueprint_id":"[^"]*"\' 2>/dev/null | wc -l || echo "0")',
+        '',
+        '  # Trim whitespace from wc output',
+        '  UNAUTH_COUNT=$(echo "$UNAUTH_COUNT" | tr -d \' \')',
+        '',
+        '  if [ "$UNAUTH_COUNT" -gt 0 ]; then',
+        '    UNAUTHORIZED=1',
+        '    if [ -n "$UNAUTHORIZED_FILES" ]; then',
+        '      UNAUTHORIZED_FILES="$UNAUTHORIZED_FILES',
+        '  - $FILE"',
+        '    else',
+        '      UNAUTHORIZED_FILES="  - $FILE"',
+        '    fi',
+        '  fi',
+        'done',
+        '',
+        '# If no unauthorized saves, allow commit',
+        'if [ "$UNAUTHORIZED" -eq 0 ]; then',
+        '  exit 0',
+        'fi',
+        '',
+        '# Check auth state for resolved entries',
+        'if [ -f "$AUTH_FILE" ]; then',
+        '  UNRESOLVED=$(grep -c \'"resolved":false\' "$AUTH_FILE" 2>/dev/null || echo "0")',
+        '  UNRESOLVED=$(echo "$UNRESOLVED" | tr -d \' \')',
+        '  if [ "$UNRESOLVED" -eq 0 ]; then',
+        '    exit 0',
+        '  fi',
+        'fi',
+        '',
+        '# Block commit',
+        'cat <<ENDMSG',
+        '',
+        '====================================',
+        ' ARC XT: Commit Blocked',
+        '====================================',
+        '',
+        'The following staged files need a linked blueprint:',
+        '$UNAUTHORIZED_FILES',
+        '',
+        'To fix:',
+        '  1. Open ARC XT Panel',
+        '  2. Link a blueprint for each file',
+        '  3. Retry commit',
+        '',
+        'To bypass (not recommended):',
+        '  git commit --no-verify',
+        '',
+        '====================================',
+        '',
+        'ENDMSG',
+        '',
+        'exit 1',
+      ].join('\n') + '\n'
+    );
+  }
+}

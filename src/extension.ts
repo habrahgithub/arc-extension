@@ -11,6 +11,7 @@ import {
   isValidDirectiveId,
   parseBlueprintTasks,
 } from './core/blueprintArtifacts';
+import { PreCommitHookManager } from './core/preCommitHook';
 import { RoutePolicyStore } from './core/routerPolicy';
 import { LocalReviewSurfaceService } from './extension/reviewSurfaces';
 import { renderRuntimeStatusMarkdown } from './extension/runtimeStatus';
@@ -453,7 +454,46 @@ export function activate(context: vscode.ExtensionContext): void {
 
   // ARCXT-MVG-001 — First-session hook, on-save detector, guardrail→UI bridge
   const workspaceRoot = workspaceFolderRoots[0] ?? fallbackRoot;
+
+  // ARCXT-LAYER2-001 — Install pre-commit hook (Git hard gate)
+  // This is the first real enforcement boundary — IDE layer is signal-only.
+  const hookManager = new PreCommitHookManager(workspaceRoot);
+  if (hookManager.isGitWorkspace()) {
+    if (!hookManager.isHookInstalled()) {
+      const result = hookManager.installHook();
+      if (result.success) {
+        // Silent install — no interruption to user
+      } else {
+        void vscode.window.showWarningMessage(
+          'ARC could not install the pre-commit hook.',
+          {
+            detail: `Error: ${result.error}. Commits will not be blocked for missing blueprints.`,
+          },
+        );
+      }
+    }
+  }
+
   context.subscriptions.push(
+    // Command to manually reinstall the hook
+    vscode.commands.registerCommand('arc.installPreCommitHook', () => {
+      if (!hookManager.isGitWorkspace()) {
+        void vscode.window.showWarningMessage(
+          'This workspace is not a git repository.',
+        );
+        return;
+      }
+      const result = hookManager.installHook();
+      if (result.success) {
+        void vscode.window.showInformationMessage(
+          'ARC pre-commit hook installed.',
+        );
+      } else {
+        void vscode.window.showErrorMessage(
+          `Failed to install hook: ${result.error}`,
+        );
+      }
+    }),
     registerFirstSessionHook(workspaceRoot, guardrailState, context),
     vscode.workspace.onDidSaveTextDocument((doc) => {
       if (doc.uri.scheme !== 'file') return;
@@ -947,6 +987,14 @@ export function activate(context: vscode.ExtensionContext): void {
               );
               if (!planFlow.acknowledged) {
                 // ARCXT-CTRL-001: Hard block — no valid blueprint, no save.
+                // Record unresolved auth state for pre-commit hook consumption
+                hookManager.recordAuthState({
+                  filePath: assessment.input.filePath,
+                  decision: 'REQUIRE_PLAN',
+                  blueprintId: null,
+                  resolved: false,
+                  timestamp: new Date().toISOString(),
+                });
                 void vscode.window.showErrorMessage(
                   'Save blocked: this change needs a linked blueprint.',
                   {
@@ -957,6 +1005,11 @@ export function activate(context: vscode.ExtensionContext): void {
                 );
                 return [];
               }
+              // Blueprint was verified — record resolved auth state
+              hookManager.resolveAuthState(
+                assessment.input.filePath,
+                planFlow.proof?.blueprintId ?? '',
+              );
               controller.finalizeSave(assessment, true, planFlow.proof, actor);
               statusBarItem.updateFromDecision(
                 assessment.decision.decision,
